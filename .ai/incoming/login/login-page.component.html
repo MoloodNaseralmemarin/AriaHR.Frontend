@@ -1,0 +1,130 @@
+<main
+  dir="rtl"
+  lang="fa"
+  class="min-h-dvh w-full bg-gray-50 flex flex-col items-center justify-center px-4 py-10 sm:py-16"
+>
+  <div class="w-full max-w-sm mx-auto flex flex-col items-center animate-page-in">
+
+    <!-- Logo -->
+    <div class="mb-6">
+      <img
+        src="/assets/logo/aria-hr-logo.svg"
+        alt="AriaHR"
+        class="h-12 w-auto select-none"
+        width="120"
+        height="48"
+      />
+    </div>
+
+    <!-- Branding -->
+    <div class="text-center mb-8">
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 leading-snug">
+        حضور و غیاب هوشمند
+      </h1>
+      <p class="mt-2 text-sm text-gray-500 leading-relaxed">
+        سامانه هوشمند مدیریت پرسنل
+      </p>
+    </div>
+
+    <!-- Card -->
+    <section
+      class="w-full bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-6 sm:p-7 animate-card-in"
+      aria-label="ورود به سامانه"
+    >
+      <form (ngSubmit)="onSubmit()" novalidate class="flex flex-col gap-5">
+
+        <div class="flex flex-col gap-1.5">
+          <label for="mobileNumber" class="text-sm font-medium text-gray-700">
+            شماره موبایل
+          </label>
+
+          <input
+            id="mobileNumber"
+            name="mobileNumber"
+            type="tel"
+            inputmode="numeric"
+            autocomplete="tel"
+            dir="rtl"
+            placeholder="شماره موبایل خود را وارد کنید"
+            maxlength="11"
+            [ngModel]="mobileNumberInput()"
+            (ngModelChange)="onMobileInputChange($event)"
+            (blur)="onBlur()"
+            [attr.aria-invalid]="showValidationError()"
+            [attr.aria-describedby]="showValidationError() ? 'mobileNumber-error' : null"
+            class="w-full h-12 px-4 rounded-xl border bg-white text-gray-900 text-base tracking-wide
+                   placeholder:text-gray-400 placeholder:text-sm
+                   transition-colors duration-150
+                   focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500
+                   disabled:bg-gray-50 disabled:text-gray-400"
+            [class.border-gray-200]="!showValidationError()"
+            [class.border-red-400]="showValidationError()"
+            [disabled]="submitState() === 'loading'"
+          />
+
+          <!-- Validation message -->
+          @if (showValidationError()) {
+            <p
+              id="mobileNumber-error"
+              role="alert"
+              class="text-xs text-red-600 mt-0.5 animate-msg-in"
+            >
+              {{ validationMessage() }}
+            </p>
+          }
+        </div>
+
+        <!-- Submit button -->
+        <button
+          type="submit"
+          [disabled]="isSubmitDisabled()"
+          class="relative h-12 w-full rounded-xl font-semibold text-sm text-white
+                 bg-blue-600 transition-all duration-150
+                 hover:bg-blue-700 active:bg-blue-800 active:scale-[0.99]
+                 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2
+                 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:active:scale-100"
+        >
+          @if (submitState() === 'loading') {
+            <span class="inline-flex items-center justify-center gap-2">
+              <span
+                class="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin"
+                aria-hidden="true"
+              ></span>
+              <span>در حال ارسال...</span>
+            </span>
+          } @else {
+            <span>دریافت کد تایید</span>
+          }
+        </button>
+
+        <!-- Success message -->
+        @if (submitState() === 'success') {
+          <p
+            role="status"
+            class="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2.5 animate-msg-in"
+          >
+            <span
+              class="flex-shrink-0 h-4 w-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center"
+              aria-hidden="true"
+            >✓</span>
+            کد تایید با موفقیت ارسال شد.
+          </p>
+        }
+
+        <!-- Error message -->
+        @if (submitState() === 'error') {
+          <p
+            role="alert"
+            class="flex items-center gap-2 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2.5 animate-msg-in"
+          >
+            <span
+              class="flex-shrink-0 h-4 w-4 rounded-full bg-red-600 text-white text-[10px] flex items-center justify-center"
+              aria-hidden="true"
+            >!</span>
+            ارسال کد تایید با خطا مواجه شد. لطفاً دوباره تلاش کنید.
+          </p>
+        }
+      </form>
+    </section>
+  </div>
+</main>
