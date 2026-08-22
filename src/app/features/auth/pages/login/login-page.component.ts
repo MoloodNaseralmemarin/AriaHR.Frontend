@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { isValidIranianMobile, normalizeMobileNumber } from '../../../shared/utils/mobile-number.util';
+import { AuthService, OtpRequestResponse } from '../../../../core/auth/auth.service';
+import { isValidIranianMobile, normalizeMobileNumber } from '../../../../shared/utils/mobile-number.util';
 
 /** The page's interaction state, kept explicit and mutually exclusive. */
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
@@ -15,6 +16,8 @@ type SubmitState = 'idle' | 'loading' | 'success' | 'error';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginPageComponent {
+  private readonly authService = inject(AuthService);
+
   /** Raw text bound to the input — may briefly contain Persian/Arabic digits as the user types. */
   readonly mobileNumberInput = signal('');
 
@@ -41,12 +44,10 @@ export class LoginPageComponent {
   );
 
   onMobileInputChange(value: string): void {
-    // Keep only digit-like characters as the user types; normalization/validation
-    // happens continuously via the computed signals above.
+    // Keep raw value bound; continuous normalization/validation occurs in computed signals
     this.mobileNumberInput.set(value);
 
-    // Once the user is actively correcting the field, drop any stale error state
-    // so the message updates immediately instead of feeling stuck.
+    // Drop stale error state once the user edits input
     if (this.submitState() === 'error') {
       this.submitState.set('idle');
     }
@@ -64,23 +65,17 @@ export class LoginPageComponent {
     this.touched.set(true);
     this.submitState.set('loading');
 
-    // TODO: replace this local simulation with a real call once the backend
-    // OTP endpoint exists, e.g.:
-    //
-    //   this.authService.requestOtp(this.normalizedMobileNumber()).subscribe({
-    //     next: () => this.submitState.set('success'),
-    //     error: () => this.submitState.set('error'),
-    //   });
-    //
-    // The component's public surface (state signals, template bindings) is
-    // already shaped for that swap — only this method body needs to change.
-    this.simulateOtpRequest();
-  }
-
-  private simulateOtpRequest(): void {
-    const SIMULATED_LATENCY_MS = 1400;
-    setTimeout(() => {
-      this.submitState.set('success');
-    }, SIMULATED_LATENCY_MS);
+    this.authService.requestOtp(this.normalizedMobileNumber()).subscribe({
+      next: (res: OtpRequestResponse) => {
+        if (res.success) {
+          this.submitState.set('success');
+        } else {
+          this.submitState.set('error');
+        }
+      },
+      error: () => {
+        this.submitState.set('error');
+      },
+    });
   }
 }
