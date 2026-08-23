@@ -6,7 +6,7 @@ import { OtpFlowService } from '../../../core/services/otp-flow.service';
 import { isValidIranianMobile, normalizeMobileNumber } from '../../../shared/utils/mobile-number.util';
 
 /** The page's interaction state, kept explicit and mutually exclusive. */
-type SubmitState = 'idle' | 'loading' | 'success' | 'error';
+type SubmitState = 'idle' | 'loading' | 'error';
 
 @Component({
   selector: 'app-login-page',
@@ -99,14 +99,12 @@ export class LoginPageComponent implements OnInit {
   }
 
   private onOtpRequestSucceeded(): void {
-    this.submitState.set('success');
+    // No success feedback shown here by design — the confirmation
+    // ("کد تایید با موفقیت ارسال شد.") is shown as a toast on /verify-otp
+    // instead, once the destination page is actually visible. Showing it
+    // here too would duplicate the message and get cut off by navigation.
     this.otpFlow.setPendingMobileNumber(this.normalizedMobileNumber());
-
-    // Briefly show the success message before moving on, so the confirmation
-    // doesn't feel like it flashed past unnoticed.
-    const SUCCESS_MESSAGE_DISPLAY_MS = 600;
-    setTimeout(() => {
-      this.router.navigate(['/verify-otp']);
-    }, SUCCESS_MESSAGE_DISPLAY_MS);
+    this.otpFlow.markOtpJustSent();
+    this.router.navigate(['/verify-otp']);
   }
 }

@@ -6,12 +6,8 @@ import { SplashComponent } from './features/auth/pages/splash/splash.component';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'splash',
+    redirectTo: 'login',
     pathMatch: 'full',
-  },
-  {
-    path: 'splash',
-    component: SplashComponent,
   },
   {
     path: 'login',

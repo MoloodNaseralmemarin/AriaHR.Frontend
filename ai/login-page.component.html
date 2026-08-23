@@ -97,20 +97,6 @@
           }
         </button>
 
-        <!-- Success message -->
-        @if (submitState() === 'success') {
-          <p
-            role="status"
-            class="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2.5 animate-msg-in"
-          >
-            <span
-              class="flex-shrink-0 h-4 w-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center"
-              aria-hidden="true"
-            >✓</span>
-            کد تایید با موفقیت ارسال شد.
-          </p>
-        }
-
         <!-- Error message -->
         @if (submitState() === 'error') {
           <p

@@ -14,6 +14,8 @@ import {
 import { Router } from '@angular/router';
 
 import { OtpFlowService } from '../../../core/services/otp-flow.service';
+import { ToastComponent } from '../../../shared/ui/toast/toast.component';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -31,7 +33,7 @@ function maskMobileNumber(mobileNumber: string): string {
 @Component({
   selector: 'app-verify-otp-page',
   standalone: true,
-  imports: [],
+  imports: [ToastComponent],
   templateUrl: './verify-otp-page.component.html',
   styleUrl: './verify-otp-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +42,7 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
   private readonly otpFlow = inject(OtpFlowService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toastService = inject(ToastService);
 
   @ViewChildren('digitInput') private digitInputs?: QueryList<ElementRef<HTMLInputElement>>;
 
@@ -60,6 +63,14 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit {
   private cooldownIntervalId?: ReturnType<typeof setInterval>;
 
   ngOnInit(): void {
+    // Shows exactly once: only true on the navigation that follows a
+    // successful OTP request. A refresh, a resend, or coming back via
+    // "ویرایش شماره موبایل" won't re-trigger it — takeOtpJustSentFlag()
+    // consumes the flag the first time it's read.
+    if (this.otpFlow.takeOtpJustSentFlag()) {
+      this.toastService.show('کد تایید با موفقیت ارسال شد.', 'success');
+    }
+
     this.startResendCooldown();
     this.destroyRef.onDestroy(() => {
       if (this.cooldownIntervalId !== undefined) {
