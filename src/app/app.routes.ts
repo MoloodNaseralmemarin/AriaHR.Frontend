@@ -5,12 +5,8 @@ import { VerifyOtpPageComponent } from './features/auth/pages/verify-otp/verify-
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'splash',
+    redirectTo: 'login',
     pathMatch: 'full',
-  },
-  {
-    path: 'splash',
-    component: SplashComponent,
   },
   {
     path: 'login',
