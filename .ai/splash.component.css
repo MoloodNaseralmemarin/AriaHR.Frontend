@@ -1,0 +1,37 @@
+/*
+  Subtle, premium fade + scale-in animation for the AriaHR logo.
+  - Starts slightly smaller and transparent
+  - Fades and scales gently up to natural size
+  - Calm easing, no bounce, no rotation
+  - Respects prefers-reduced-motion
+*/
+
+.splash-logo {
+  animation: splash-fade-scale-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes splash-fade-scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-logo {
+    animation: splash-fade-in-only 400ms linear both;
+  }
+
+  @keyframes splash-fade-in-only {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
