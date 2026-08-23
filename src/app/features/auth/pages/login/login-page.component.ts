@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { AuthService, OtpRequestResponse } from '../../../../core/auth/auth.service';
 import { isValidIranianMobile, normalizeMobileNumber } from '../../../../shared/utils/mobile-number.util';
@@ -17,6 +18,7 @@ type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 })
 export class LoginPageComponent {
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   /** Raw text bound to the input — may briefly contain Persian/Arabic digits as the user types. */
   readonly mobileNumberInput = signal('');
@@ -65,10 +67,15 @@ export class LoginPageComponent {
     this.touched.set(true);
     this.submitState.set('loading');
 
-    this.authService.requestOtp(this.normalizedMobileNumber()).subscribe({
+    const mobile = this.normalizedMobileNumber();
+    this.authService.requestOtp(mobile).subscribe({
       next: (res: OtpRequestResponse) => {
         if (res.success) {
           this.submitState.set('success');
+          // Navigate to OTP verification page passing mobile number in state
+          setTimeout(() => {
+            this.router.navigate(['/verify-otp'], { state: { mobileNumber: mobile } });
+          }, 400);
         } else {
           this.submitState.set('error');
         }
