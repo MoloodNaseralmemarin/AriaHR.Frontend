@@ -1,0 +1,38 @@
+<section class="space-y-6">
+  <div class="animate-in">
+    <p class="text-sm font-medium text-blue-600">مدیریت سامانه AriaHR</p>
+    <div class="mt-1 flex items-end justify-between gap-3">
+      <div><h1 class="text-2xl font-bold tracking-tight text-slate-900">سلام، مدیر سیستم</h1><p class="mt-1 text-sm text-slate-500">نمای کلی عملکرد امروز سامانه</p></div>
+      <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-600 text-lg font-bold text-white shadow-sm">م</div>
+    </div>
+  </div>
+
+  <section aria-label="آمار سامانه" class="grid grid-cols-2 gap-3">
+    <article class="stat-card"><span class="stat-icon blue">▣</span><span class="stat-label">کل مراکز</span><strong>{{ stats().totalCenters }}</strong><span class="stat-note">+{{ stats().newCentersThisMonth }} این ماه</span></article>
+    <article class="stat-card"><span class="stat-icon green">✓</span><span class="stat-label">مراکز فعال</span><strong>{{ stats().activeCenters }}</strong><span class="stat-note">از {{ stats().totalCenters }} مرکز</span></article>
+    <article class="stat-card"><span class="stat-icon amber">♙</span><span class="stat-label">مدیران مراکز</span><strong>{{ stats().totalManagers }}</strong><span class="stat-note">مدیر ثبت شده</span></article>
+    <article class="stat-card"><span class="stat-icon violet">♟</span><span class="stat-label">کل کارکنان</span><strong>{{ stats().totalEmployees }}</strong><span class="stat-note">در سراسر مراکز</span></article>
+  </section>
+
+  <a routerLink="/system-admin/centers/create" class="primary-action"><span class="action-plus">+</span><span><strong>ثبت مرکز جدید</strong><small>مرکز و مدیر آن را در چند مرحله ثبت کنید</small></span><span class="action-arrow">←</span></a>
+
+  <section class="section-block">
+    <div class="section-heading"><div><h2>آخرین مراکز</h2><p>جدیدترین مراکز ثبت شده</p></div><a routerLink="/system-admin/centers" class="view-all">مشاهده همه <span>←</span></a></div>
+    <div class="list-card">
+      @for (center of recentCenters(); track center.id) {
+        <a [routerLink]="['/system-admin/centers', center.id]" class="center-row">
+          <div class="center-avatar">{{ center.name.slice(0, 1) }}</div><div class="center-main"><strong>{{ center.name }}</strong><span>مدیر: {{ center.managerName }}</span></div><span class="status-pill" [class]="getStatusClass(center.status)">{{ getStatusLabel(center.status) }}</span><span class="row-arrow">‹</span>
+        </a>
+      }
+    </div>
+  </section>
+
+  <section class="section-block">
+    <div class="section-heading"><div><h2>فعالیت‌های اخیر</h2><p>آخرین تغییرات سامانه</p></div></div>
+    <div class="list-card activity-card">
+      @for (item of recentActivity(); track item.id) {
+        <div class="activity-row"><span class="activity-dot" [class]="getActivityClass(item)"></span><div class="activity-main"><strong>{{ item.label }}</strong><span>{{ item.detail }}</span></div><time>{{ getRelativeTime(item.timestamp) }}</time></div>
+      }
+    </div>
+  </section>
+</section>

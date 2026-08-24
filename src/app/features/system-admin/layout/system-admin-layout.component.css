@@ -1,0 +1,21 @@
+.nav-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 500;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.nav-item:active { background: #f8fafc; }
+.nav-item.active { color: #2563eb; font-weight: 700; }
+.nav-icon { font-size: 22px; line-height: 1; font-weight: 400; }
+.nav-item.active .nav-icon { font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-item { transition: none; }
+}
