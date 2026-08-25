@@ -59,6 +59,7 @@
                 inputmode="numeric"
                 maxlength="1"
                 [value]="digit"
+                (focus)="onFocus($event)"
                 (input)="onDigitInput($event, $index)"
                 (keydown)="onKeyDown($event, $index)"
                 [disabled]="submitState() === 'loading'"

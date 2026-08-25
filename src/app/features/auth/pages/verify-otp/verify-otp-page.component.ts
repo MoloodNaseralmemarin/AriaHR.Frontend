@@ -1,5 +1,3 @@
-
-
 import {
   ChangeDetectionStrategy,
   Component,
@@ -73,10 +71,17 @@ export class VerifyOtpPageComponent implements OnInit, OnDestroy {
     this.clearCountdown();
   }
 
+  onFocus(event: FocusEvent): void {
+    const input = event.target as HTMLInputElement;
+    input?.select();
+  }
+
   onDigitInput(event: Event, index: number): void {
     const input = event.target as HTMLInputElement;
     const normalized = normalizeMobileNumber(input.value);
     const lastChar = normalized.length > 0 ? normalized.slice(-1) : '';
+
+    input.value = lastChar;
 
     const currentDigits = [...this.digits()];
     currentDigits[index] = lastChar;
@@ -87,10 +92,14 @@ export class VerifyOtpPageComponent implements OnInit, OnDestroy {
       this.errorMessage.set('');
     }
 
-    // Auto focus next box
+    // Auto focus next box if a digit was entered
     if (lastChar && index < 3) {
       const inputsArray = this.otpInputs.toArray();
-      inputsArray[index + 1]?.nativeElement.focus();
+      const nextInput = inputsArray[index + 1]?.nativeElement;
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.select();
+      }
     }
 
     // Auto submit on last digit
@@ -100,28 +109,83 @@ export class VerifyOtpPageComponent implements OnInit, OnDestroy {
   }
 
   onKeyDown(event: KeyboardEvent, index: number): void {
+    const inputsArray = this.otpInputs.toArray();
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      if (index > 0) {
+        const prevInput = inputsArray[index - 1]?.nativeElement;
+        prevInput?.focus();
+        prevInput?.select();
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      if (index < 3) {
+        const nextInput = inputsArray[index + 1]?.nativeElement;
+        nextInput?.focus();
+        nextInput?.select();
+      }
+      return;
+    }
+
     if (event.key === 'Backspace' && !this.digits()[index] && index > 0) {
-      const inputsArray = this.otpInputs.toArray();
-      inputsArray[index - 1]?.nativeElement.focus();
+      event.preventDefault();
+      const prevInput = inputsArray[index - 1]?.nativeElement;
+      prevInput?.focus();
+      prevInput?.select();
     }
   }
 
   onPaste(event: ClipboardEvent): void {
     event.preventDefault();
     const clipboardData = event.clipboardData?.getData('text') || '';
-    const normalized = normalizeMobileNumber(clipboardData).slice(0, 4);
+    const normalized = normalizeMobileNumber(clipboardData);
 
     if (!normalized) return;
 
-    const newDigits = ['', '', '', ''];
-    for (let i = 0; i < normalized.length; i++) {
-      newDigits[i] = normalized[i];
-    }
-    this.digits.set(newDigits);
-
-    const targetIndex = Math.min(normalized.length, 3);
     const inputsArray = this.otpInputs.toArray();
-    inputsArray[targetIndex]?.nativeElement.focus();
+    const targetElement = event.target as HTMLInputElement;
+    let startIndex = inputsArray.findIndex(
+      (ref) => ref.nativeElement === targetElement
+    );
+    if (startIndex === -1) {
+      startIndex = 0;
+    }
+
+    const currentDigits = [...this.digits()];
+
+    if (normalized.length >= 4) {
+      for (let i = 0; i < 4; i++) {
+        currentDigits[i] = normalized[i];
+      }
+      this.digits.set(currentDigits);
+
+      const lastIndex = 3;
+      const targetInput = inputsArray[lastIndex]?.nativeElement;
+      targetInput?.focus();
+      targetInput?.select();
+    } else {
+      for (let i = 0; i < normalized.length; i++) {
+        const insertIndex = startIndex + i;
+        if (insertIndex < 4) {
+          currentDigits[insertIndex] = normalized[i];
+        }
+      }
+      this.digits.set(currentDigits);
+
+      const nextFocusIndex = Math.min(startIndex + normalized.length, 3);
+      const targetInput = inputsArray[nextFocusIndex]?.nativeElement;
+      targetInput?.focus();
+      targetInput?.select();
+    }
+
+    if (this.submitState() === 'error') {
+      this.submitState.set('idle');
+      this.errorMessage.set('');
+    }
 
     if (this.isCodeComplete()) {
       this.onSubmit();
@@ -137,12 +201,14 @@ export class VerifyOtpPageComponent implements OnInit, OnDestroy {
 
     this.submitState.set('loading');
     this.authService.resendOtp(this.mobileNumber()).subscribe({
-      next: (res) => {
+      next: () => {
         this.submitState.set('idle');
         this.digits.set(['', '', '', '']);
         this.startCountdown();
         const inputsArray = this.otpInputs.toArray();
-        inputsArray[0]?.nativeElement.focus();
+        const firstInput = inputsArray[0]?.nativeElement;
+        firstInput?.focus();
+        firstInput?.select();
       },
       error: () => {
         this.submitState.set('error');
