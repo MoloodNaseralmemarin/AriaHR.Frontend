@@ -1,27 +1,37 @@
-import { Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
+import { Observable, of } from 'rxjs';
+import { catchError, delay, map } from 'rxjs/operators';
 
-export interface OtpRequestResponse {
-  success: boolean;
-  message?: string;
-}
+import { AuthApiService } from './auth-api.service';
+import { OtpRequestResponse, OtpVerifyResponse } from './auth.models';
 
-export interface OtpVerifyResponse {
-  success: boolean;
-  message?: string;
-  token?: string;
-}
+export type { OtpRequestResponse, OtpVerifyResponse } from './auth.models';
 
 /**
- * Auth API surface for AriaHR.
+ * Auth application service for AriaHR.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  /** Simulates requesting an OTP for a given mobile number. */
+  private readonly authApiService = inject(AuthApiService);
+
+  /** Requests an OTP for a given mobile number via AuthApiService. */
   requestOtp(mobileNumber: string): Observable<OtpRequestResponse> {
-    return of({ success: true, message: 'کد تایید با موفقیت ارسال شد.' }).pipe(
-      delay(1200)
+    return this.authApiService.sendOtp({ phoneNumber: mobileNumber }).pipe(
+      map((res) => ({
+        success: true,
+        message: res.message,
+        otpCode: res.otpCode,
+      })),
+      catchError((error) => {
+        let errorMessage = 'ارسال کد تایید با خطا مواجه شد.';
+        if (error.error && typeof error.error.message === 'string') {
+          errorMessage = error.error.message;
+        }
+        return of({
+          success: false,
+          message: errorMessage,
+        });
+      })
     );
   }
 
@@ -41,6 +51,6 @@ export class AuthService {
 
   /** Simulates resending OTP code. */
   resendOtp(mobileNumber: string): Observable<OtpRequestResponse> {
-    return of({ success: true, message: 'کد مجدداً ارسال شد.' }).pipe(delay(1000));
+    return this.requestOtp(mobileNumber);
   }
 }
