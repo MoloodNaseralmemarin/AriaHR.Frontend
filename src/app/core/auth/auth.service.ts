@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, delay, map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import { AuthApiService } from './auth-api.service';
 import { OtpRequestResponse, OtpVerifyResponse } from './auth.models';
@@ -35,21 +35,34 @@ export class AuthService {
     );
   }
 
-  /** Simulates verifying a 4-digit OTP code for a given mobile number. */
+  /** Verifies a 4-digit OTP code for a given mobile number via AuthApiService. */
   verifyOtp(mobileNumber: string, code: string): Observable<OtpVerifyResponse> {
-    // For demonstration, reject '0000' as invalid code, accept everything else
-    if (code === '0000') {
-      return of({ success: false, message: 'کد وارد شده نادرست است.' }).pipe(delay(1000));
-    }
-
-    return of({
-      success: true,
-      message: 'ورود با موفقیت انجام شد.',
-      token: 'simulated-jwt-token-12345',
-    }).pipe(delay(1200));
+    const otpCodeStr = String(code).trim();
+    return this.authApiService
+      .verifyOtp({ phoneNumber: mobileNumber, otpCode: otpCodeStr })
+      .pipe(
+        map((res) => {
+          const token = res.token || res.accessToken;
+          return {
+            success: true,
+            message: res.message || 'ورود با موفقیت انجام شد.',
+            token,
+          };
+        }),
+        catchError((error) => {
+          let errorMessage = 'کد وارد شده معتبر نیست.';
+          if (error.error && typeof error.error.message === 'string') {
+            errorMessage = error.error.message;
+          }
+          return of({
+            success: false,
+            message: errorMessage,
+          });
+        })
+      );
   }
 
-  /** Simulates resending OTP code. */
+  /** Resends OTP code for a given mobile number. */
   resendOtp(mobileNumber: string): Observable<OtpRequestResponse> {
     return this.requestOtp(mobileNumber);
   }
