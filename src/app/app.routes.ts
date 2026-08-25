@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { LoginPageComponent } from './features/auth/pages/login/login-page.component';
+import { SplashComponent } from './features/auth/pages/splash/splash.component';
 import { VerifyOtpPageComponent } from './features/auth/pages/verify-otp/verify-otp-page.component';
 
 export const routes: Routes = [
