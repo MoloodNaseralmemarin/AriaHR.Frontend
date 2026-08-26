@@ -1,0 +1,180 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <p class="text-lg font-bold text-slate-800">
+      سلام، {{ managerName }} 👋
+    </p>
+    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
+      <span class="inline-flex items-center gap-1.5">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1"/></svg>
+        مرکز: {{ centerName }}
+      </span>
+      <span class="inline-flex items-center gap-1.5">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        {{ persianDate }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Today's Overview -->
+  <section>
+    <h2 class="mb-3 text-sm font-semibold text-slate-500">نمای امروز</h2>
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <app-summary-card label="کارکنان فعال" [value]="summary.activeEmployees" tone="default">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </app-summary-card>
+      <app-summary-card label="حاضر امروز" [value]="summary.present" tone="success">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </app-summary-card>
+      <app-summary-card label="غایب" [value]="summary.absent" tone="danger">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+      </app-summary-card>
+      <app-summary-card label="در انتظار ورود" [value]="summary.pendingCheckIn" tone="warning">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      </app-summary-card>
+    </div>
+  </section>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <!-- Main column -->
+    <div class="space-y-6 lg:col-span-2">
+      <!-- Today's Attendance -->
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-slate-700">وضعیت حضور امروز</h2>
+        </div>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div class="rounded-xl bg-emerald-50 p-3 text-center">
+            <p class="text-lg font-bold text-emerald-700">{{ todayAttendance.present }}</p>
+            <p class="mt-0.5 text-xs text-emerald-700/80">حاضر</p>
+          </div>
+          <div class="rounded-xl bg-amber-50 p-3 text-center">
+            <p class="text-lg font-bold text-amber-700">{{ todayAttendance.late }}</p>
+            <p class="mt-0.5 text-xs text-amber-700/80">تأخیر</p>
+          </div>
+          <div class="rounded-xl bg-rose-50 p-3 text-center">
+            <p class="text-lg font-bold text-rose-700">{{ todayAttendance.absent }}</p>
+            <p class="mt-0.5 text-xs text-rose-700/80">غایب</p>
+          </div>
+          <div class="rounded-xl bg-sky-50 p-3 text-center">
+            <p class="text-lg font-bold text-sky-700">{{ todayAttendance.onLeave }}</p>
+            <p class="mt-0.5 text-xs text-sky-700/80">مرخصی</p>
+          </div>
+        </div>
+        <a
+          routerLink="/center/attendance"
+          class="mt-4 flex w-full items-center justify-center rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+        >
+          مشاهده جزئیات حضور
+        </a>
+      </section>
+
+      <!-- Today's Shifts -->
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="mb-4 text-sm font-semibold text-slate-700">شیفت‌های امروز</h2>
+        <div class="space-y-3">
+          <div
+            *ngFor="let shift of todayShifts"
+            class="rounded-xl border border-slate-100 bg-slate-50/60 p-4"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <span>{{ shift.startTime }}</span>
+                <span class="h-px w-8 bg-slate-300"></span>
+                <span>{{ shift.endTime }}</span>
+              </div>
+              <app-status-badge
+                [label]="shiftStatusMap[shift.status].label"
+                [tone]="shiftStatusMap[shift.status].tone"
+              ></app-status-badge>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+              <span>{{ shift.plannedCount }} نفر برنامه‌ریزی شده</span>
+              <span *ngIf="shift.presentCount > 0">{{ shift.presentCount }} نفر حاضر</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Side column -->
+    <div class="space-y-6">
+      <!-- Action Required -->
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="mb-4 text-sm font-semibold text-slate-700">نیازمند بررسی</h2>
+
+        <div *ngIf="hasActionItems; else noActions" class="space-y-2">
+          <button
+            *ngFor="let item of actionItems"
+            type="button"
+            (click)="onActionClick(item.id)"
+            class="flex w-full items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3.5 py-3 text-start transition-colors hover:bg-slate-100"
+          >
+            <span class="flex items-center gap-2.5">
+              <span class="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">
+                {{ item.count }}
+              </span>
+              <span class="text-sm text-slate-700">{{ item.label }}</span>
+            </span>
+            <span class="shrink-0 text-xs font-semibold text-blue-600">{{ item.actionLabel }}</span>
+          </button>
+        </div>
+
+        <ng-template #noActions>
+          <app-empty-state
+            title="همه موارد بررسی شده‌اند"
+            description="در حال حاضر موردی برای بررسی وجود ندارد."
+          ></app-empty-state>
+        </ng-template>
+      </section>
+
+      <!-- Employee Status -->
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="mb-4 text-sm font-semibold text-slate-700">وضعیت کارکنان</h2>
+        <div class="space-y-2">
+          <div
+            *ngFor="let emp of employeePreview"
+            class="flex items-center justify-between gap-3 rounded-xl px-1 py-2"
+          >
+            <div class="flex min-w-0 items-center gap-2.5">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[11px] font-bold text-blue-700">
+                {{ emp.avatarInitials }}
+              </div>
+              <p class="truncate text-sm text-slate-700">{{ emp.fullName }}</p>
+            </div>
+            <div class="flex shrink-0 items-center gap-2">
+              <span *ngIf="emp.checkInTime" class="text-xs text-slate-400">{{ emp.checkInTime }}</span>
+              <app-status-badge
+                [label]="attendanceStatusMap[emp.todayAttendance].label"
+                [tone]="attendanceStatusMap[emp.todayAttendance].tone"
+              ></app-status-badge>
+            </div>
+          </div>
+        </div>
+        <a
+          routerLink="/center/employees"
+          class="mt-4 flex w-full items-center justify-center rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+        >
+          مشاهده همه کارکنان
+        </a>
+      </section>
+
+      <!-- Notifications -->
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="mb-4 text-sm font-semibold text-slate-700">اعلان‌ها</h2>
+        <ul class="space-y-3">
+          <li *ngFor="let n of notifications" class="flex items-start gap-2.5 text-sm text-slate-600">
+            <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500"></span>
+            <span>{{ n.text }}</span>
+          </li>
+        </ul>
+        <a
+          routerLink="/center/notifications"
+          class="mt-4 flex w-full items-center justify-center rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+        >
+          مشاهده همه
+        </a>
+      </section>
+    </div>
+  </div>
+</div>
