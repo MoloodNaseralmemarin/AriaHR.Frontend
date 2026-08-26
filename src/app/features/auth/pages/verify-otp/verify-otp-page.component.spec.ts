@@ -121,7 +121,7 @@ describe('VerifyOtpPageComponent (RTL layout)', () => {
     expect(component.formattedCountdown()).toBe('۰۰:۵۹');
   });
 
-  it('should handle pasting full 4-digit OTP starting from index 0 in correct digit order', () => {
+  it('should handle pasting full 4-digit Persian OTP starting from index 0 in correct digit order', () => {
     const inputs: HTMLInputElement[] = Array.from(
       fixture.nativeElement.querySelectorAll('input')
     );
@@ -129,7 +129,7 @@ describe('VerifyOtpPageComponent (RTL layout)', () => {
 
     const pasteEvent = new Event('paste', { bubbles: true, cancelable: true }) as any;
     pasteEvent.clipboardData = {
-      getData: (format: string) => (format === 'text' || format === 'text/plain' ? '1234' : ''),
+      getData: (format: string) => (format === 'text' || format === 'text/plain' ? '۱۲۳۴' : ''),
     };
 
     inputs[0].dispatchEvent(pasteEvent);
@@ -141,7 +141,7 @@ describe('VerifyOtpPageComponent (RTL layout)', () => {
     expect(mockAuthService.verifyOtp).toHaveBeenCalledWith('09123456789', '1234');
   });
 
-  it('should handle pasting partial OTP starting from focused index', () => {
+  it('should handle pasting partial Persian OTP starting from focused index', () => {
     const inputs: HTMLInputElement[] = Array.from(
       fixture.nativeElement.querySelectorAll('input')
     );
@@ -149,7 +149,7 @@ describe('VerifyOtpPageComponent (RTL layout)', () => {
 
     const pasteEvent = new Event('paste', { bubbles: true, cancelable: true }) as any;
     pasteEvent.clipboardData = {
-      getData: (format: string) => (format === 'text' || format === 'text/plain' ? '89' : ''),
+      getData: (format: string) => (format === 'text' || format === 'text/plain' ? '۸۹' : ''),
     };
 
     inputs[1].dispatchEvent(pasteEvent);
@@ -157,6 +157,20 @@ describe('VerifyOtpPageComponent (RTL layout)', () => {
 
     expect(component.digits()).toEqual(['', '8', '9', '']);
     expect(document.activeElement).toBe(inputs[3]);
+  });
+
+  it('should support typing Persian digits directly into input boxes', () => {
+    const inputs: HTMLInputElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('input')
+    );
+
+    inputs[0].focus();
+    inputs[0].value = '۱';
+    inputs[0].dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(component.digits()).toEqual(['1', '', '', '']);
+    expect(document.activeElement).toBe(inputs[1]);
   });
 
   it('should keep focus on 4th input and auto submit on final digit', () => {
