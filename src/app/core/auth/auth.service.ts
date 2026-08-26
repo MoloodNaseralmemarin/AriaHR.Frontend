@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, delay, map } from 'rxjs/operators';
 
 import { AuthApiService } from './auth-api.service';
 import { OtpRequestResponse, OtpVerifyResponse } from './auth.models';
@@ -35,7 +35,7 @@ export class AuthService {
     );
   }
 
-  /** Verifies a 4-digit OTP code for a given mobile number via AuthApiService. */
+  /** Simulates verifying a 4-digit OTP code for a given mobile number. */
   verifyOtp(mobileNumber: string, code: string): Observable<OtpVerifyResponse> {
     // Standard test OTP in mock/dev mode is '1234'
     const normalizedCode = code ? code.trim() : '';
@@ -54,7 +54,7 @@ export class AuthService {
     }).pipe(delay(800));
   }
 
-  /** Resends OTP code for a given mobile number. */
+  /** Simulates resending OTP code. */
   resendOtp(mobileNumber: string): Observable<OtpRequestResponse> {
     return this.requestOtp(mobileNumber);
   }

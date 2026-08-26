@@ -83,6 +83,11 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
     this.clearCountdown();
   }
 
+  getDigitLabel(index: number): string {
+    const labels = ['اول', 'دوم', 'سوم', 'چهارم'];
+    return labels[index] || `${index + 1}`;
+  }
+
   onFocus(event: FocusEvent): void {
     const input = event.target as HTMLInputElement;
     input?.select();
@@ -91,8 +96,14 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
   onDigitInput(event: Event, index: number): void {
     const input = event.target as HTMLInputElement;
     const normalized = normalizeMobileNumber(input.value);
-    const lastChar = normalized.length > 0 ? normalized.slice(-1) : '';
 
+    // If user typed/pasted multiple digits at once (e.g. autofill or fast typing)
+    if (normalized.length > 1) {
+      this.handleMultiDigitInsert(normalized, index);
+      return;
+    }
+
+    const lastChar = normalized.length > 0 ? normalized.slice(-1) : '';
     input.value = lastChar;
 
     const currentDigits = [...this.digits()];
@@ -115,6 +126,42 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
     }
 
     // Auto submit on last digit
+    if (this.isCodeComplete()) {
+      this.onSubmit();
+    }
+  }
+
+  private handleMultiDigitInsert(normalized: string, startIndex: number): void {
+    const inputsArray = this.otpInputs.toArray();
+    const currentDigits = [...this.digits()];
+
+    if (normalized.length >= 4) {
+      for (let i = 0; i < 4; i++) {
+        currentDigits[i] = normalized[i];
+      }
+      this.digits.set(currentDigits);
+      const targetInput = inputsArray[3]?.nativeElement;
+      targetInput?.focus();
+      targetInput?.select();
+    } else {
+      for (let i = 0; i < normalized.length; i++) {
+        const targetIdx = startIndex + i;
+        if (targetIdx < 4) {
+          currentDigits[targetIdx] = normalized[i];
+        }
+      }
+      this.digits.set(currentDigits);
+      const nextIdx = Math.min(startIndex + normalized.length, 3);
+      const targetInput = inputsArray[nextIdx]?.nativeElement;
+      targetInput?.focus();
+      targetInput?.select();
+    }
+
+    if (this.submitState() === 'error') {
+      this.submitState.set('idle');
+      this.errorMessage.set('');
+    }
+
     if (this.isCodeComplete()) {
       this.onSubmit();
     }

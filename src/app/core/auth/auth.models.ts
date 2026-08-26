@@ -7,18 +7,6 @@ export interface SendOtpResponse {
   readonly otpCode?: string;
 }
 
-export interface VerifyOtpRequest {
-  readonly phoneNumber: string;
-  readonly otpCode: string;
-}
-
-export interface VerifyOtpResponse {
-  readonly message?: string;
-  readonly token?: string;
-  readonly accessToken?: string;
-  readonly success?: boolean;
-}
-
 export interface OtpRequestResponse {
   readonly success: boolean;
   readonly message?: string;
