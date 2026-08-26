@@ -1,1 +1,16 @@
-<section class="space-y-5"><div class="page-title"><div><p>مدیریت سامانه</p><h1>مراکز</h1></div><a routerLink="/system-admin/centers/create" class="add-button">+ ثبت مرکز</a></div><div class="search-box"><span>⌕</span><input aria-label="جستجوی مرکز" placeholder="جستجوی نام مرکز یا مدیر..." [ngModel]="query()" (ngModelChange)="query.set($event)" /></div><div class="filters"><button [class.selected]="filter() === 'all'" (click)="filter.set('all')">همه</button><button [class.selected]="filter() === 'active'" (click)="filter.set('active')">فعال</button><button [class.selected]="filter() === 'pending'" (click)="filter.set('pending')">در انتظار</button><button [class.selected]="filter() === 'inactive'" (click)="filter.set('inactive')">غیرفعال</button></div><div class="center-list">@for (center of filteredCenters(); track center.id) {<a class="center-card" [routerLink]="['/system-admin/centers', center.id]"><div class="card-top"><div class="avatar">{{ center.name.slice(0, 1) }}</div><div class="info"><strong>{{ center.name }}</strong><span>مدیر: {{ center.managerName }}</span></div><span class="status" [class]="'status-' + center.status">{{ getStatusLabel(center.status) }}</span></div><div class="card-meta"><span>{{ center.employeeCount }} کارمند</span><span>{{ center.attendanceToday ? center.attendanceToday + '% حضور امروز' : 'هنوز فعال نشده' }}</span><span>‹</span></div></a>} @empty {<p class="empty">مرکزی با این مشخصات پیدا نشد.</p>}</div></section>
+<section class="space-y-5">
+  <div class="page-title">
+    <div>
+      <p>مدیریت سامانه</p>
+      <h1>مراکز</h1>
+    </div>
+    <a routerLink="/system-admin/centers/create" class="add-button">+ ثبت مرکز</a>
+  </div>
+  <div class="search-box">
+    <span>⌕</span>
+    <input aria-label="جستجوی مرکز" placeholder="جستجوی نام مرکز یا مدیر..." [ngModel]="query()" (ngModelChange)="query.set($event)" />
+  </div>
+  <div class="filters">
+    <button [class.selected]="filter() === 'all'" (click)="filter.set('all')">همه</button>
+    <button [class.selected]="filter() === 'active'" (click)="filter.set('active')">فعال</button>
+    <button [class.selected]="filter() === 'pending'" (click)="filter.set('pending')">در انتظار</button><button [class.selected]="filter() === 'inactive'" (click)="filter.set('inactive')">غیرفعال</button></div><div class="center-list">@for (center of filteredCenters(); track center.id) {<a class="center-card" [routerLink]="['/system-admin/centers', center.id]"><div class="card-top"><div class="avatar">{{ center.name.slice(0, 1) }}</div><div class="info"><strong>{{ center.name }}</strong><span>مدیر: {{ center.managerName }}</span></div><span class="status" [class]="'status-' + center.status">{{ getStatusLabel(center.status) }}</span></div><div class="card-meta"><span>{{ center.employeeCount }} کارمند</span><span>{{ center.attendanceToday ? center.attendanceToday + '% حضور امروز' : 'هنوز فعال نشده' }}</span><span>‹</span></div></a>} @empty {<p class="empty">مرکزی با این مشخصات پیدا نشد.</p>}</div></section>
