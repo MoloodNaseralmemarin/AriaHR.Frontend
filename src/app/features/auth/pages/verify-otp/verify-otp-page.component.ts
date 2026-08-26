@@ -294,6 +294,10 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
       next: (res: OtpVerifyResponse) => {
         if (res.success) {
           this.submitState.set('success');
+          setTimeout(() => {
+            this.digits.set(['', '', '', '']);
+            this.router.navigate(['/system-admin/dashboard']);
+          }, 400);
         } else {
           this.hasFailedAttempt.set(true);
           this.submitState.set('error');
