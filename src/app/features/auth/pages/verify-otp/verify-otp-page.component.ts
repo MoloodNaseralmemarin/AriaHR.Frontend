@@ -111,22 +111,25 @@ export class VerifyOtpPageComponent implements OnInit, OnDestroy {
   onKeyDown(event: KeyboardEvent, index: number): void {
     const inputsArray = this.otpInputs.toArray();
 
+    // In RTL layout:
+    // ArrowLeft moves focus visually left (towards index + 1)
     if (event.key === 'ArrowLeft') {
-      event.preventDefault();
-      if (index > 0) {
-        const prevInput = inputsArray[index - 1]?.nativeElement;
-        prevInput?.focus();
-        prevInput?.select();
-      }
-      return;
-    }
-
-    if (event.key === 'ArrowRight') {
       event.preventDefault();
       if (index < 3) {
         const nextInput = inputsArray[index + 1]?.nativeElement;
         nextInput?.focus();
         nextInput?.select();
+      }
+      return;
+    }
+
+    // ArrowRight moves focus visually right (towards index - 1)
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      if (index > 0) {
+        const prevInput = inputsArray[index - 1]?.nativeElement;
+        prevInput?.focus();
+        prevInput?.select();
       }
       return;
     }

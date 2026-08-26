@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 
-describe('VerifyOtpPageComponent', () => {
+describe('VerifyOtpPageComponent (RTL layout)', () => {
   let component: VerifyOtpPageComponent;
   let fixture: ComponentFixture<VerifyOtpPageComponent>;
   let mockAuthService: { verifyOtp: any; resendOtp: any };
@@ -40,7 +40,7 @@ describe('VerifyOtpPageComponent', () => {
     expect(inputs.length).toBe(4);
   });
 
-  it('should auto focus next input when entering digit 1 by 1', () => {
+  it('should auto focus next input (index + 1) when entering digit 1 by 1', () => {
     const inputs: HTMLInputElement[] = Array.from(
       fixture.nativeElement.querySelectorAll('input')
     );
@@ -96,22 +96,25 @@ describe('VerifyOtpPageComponent', () => {
     expect(component.digits()).toEqual(['1', '', '', '']);
   });
 
-  it('should support Left and Right arrow navigation', () => {
+  it('should support ArrowLeft and ArrowRight navigation under RTL layout', () => {
     const inputs: HTMLInputElement[] = Array.from(
       fixture.nativeElement.querySelectorAll('input')
     );
-    inputs[1].focus();
+    // In RTL, input[0] is on the far RIGHT, input[1] is to its LEFT.
+    inputs[0].focus();
 
-    inputs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
-    fixture.detectChanges();
-    expect(document.activeElement).toBe(inputs[0]);
-
-    inputs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+    // Pressing ArrowLeft moves visually left (index 0 -> index 1)
+    inputs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
     fixture.detectChanges();
     expect(document.activeElement).toBe(inputs[1]);
+
+    // Pressing ArrowRight moves visually right (index 1 -> index 0)
+    inputs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(inputs[0]);
   });
 
-  it('should handle pasting full 4-digit OTP starting from index 0', () => {
+  it('should handle pasting full 4-digit OTP starting from index 0 in correct digit order', () => {
     const inputs: HTMLInputElement[] = Array.from(
       fixture.nativeElement.querySelectorAll('input')
     );
@@ -126,6 +129,7 @@ describe('VerifyOtpPageComponent', () => {
     fixture.detectChanges();
 
     expect(component.digits()).toEqual(['1', '2', '3', '4']);
+    expect(component.fullCode()).toBe('1234');
     expect(document.activeElement).toBe(inputs[3]);
     expect(mockAuthService.verifyOtp).toHaveBeenCalledWith('09123456789', '1234');
   });
