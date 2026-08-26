@@ -82,36 +82,43 @@ describe('VerifyOtpPageComponent (RTL layout)', () => {
     );
     inputs[1].focus();
 
-    // Backspace when box 1 has '2' -> clear box 1
+    // Backspace when box 1 has '2' -> clear box 1 via input event
     inputs[1].value = '';
     inputs[1].dispatchEvent(new Event('input'));
     fixture.detectChanges();
     expect(component.digits()).toEqual(['1', '', '', '']);
 
-    // Backspace keydown when box 1 is already empty -> move focus to box 0 without deleting box 0 digit
+    // Backspace keydown when box 1 is empty -> move focus to box 0 and clear box 0
     inputs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace' }));
     fixture.detectChanges();
 
     expect(document.activeElement).toBe(inputs[0]);
-    expect(component.digits()).toEqual(['1', '', '', '']);
+    expect(component.digits()).toEqual(['', '', '', '']);
   });
 
-  it('should support ArrowLeft and ArrowRight navigation under RTL layout', () => {
+  it('should support ArrowLeft and ArrowRight navigation under LTR input container', () => {
     const inputs: HTMLInputElement[] = Array.from(
       fixture.nativeElement.querySelectorAll('input')
     );
-    // In RTL, input[0] is on the far RIGHT, input[1] is to its LEFT.
     inputs[0].focus();
 
-    // Pressing ArrowLeft moves visually left (index 0 -> index 1)
-    inputs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+    // Pressing ArrowRight moves visually right (index 0 -> index 1)
+    inputs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
     fixture.detectChanges();
     expect(document.activeElement).toBe(inputs[1]);
 
-    // Pressing ArrowRight moves visually right (index 1 -> index 0)
-    inputs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+    // Pressing ArrowLeft moves visually left (index 1 -> index 0)
+    inputs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
     fixture.detectChanges();
     expect(document.activeElement).toBe(inputs[0]);
+  });
+
+  it('should format countdown timer with Persian digits', () => {
+    component.countdown.set(120);
+    expect(component.formattedCountdown()).toBe('۰۲:۰۰');
+
+    component.countdown.set(59);
+    expect(component.formattedCountdown()).toBe('۰۰:۵۹');
   });
 
   it('should handle pasting full 4-digit OTP starting from index 0 in correct digit order', () => {
