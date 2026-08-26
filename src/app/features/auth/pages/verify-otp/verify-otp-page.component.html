@@ -51,11 +51,12 @@
             کد تایید ۴ رقمی
           </label>
 
-          <div class="flex items-center justify-center gap-3 dir-ltr" (paste)="onPaste($event)">
+          <div class="flex items-center justify-center gap-3 dir-ltr" dir="ltr" (paste)="onPaste($event)">
             @for (digit of digits(); track $index) {
               <input
                 #otpInput
                 type="text"
+                dir="ltr"
                 inputmode="numeric"
                 autocomplete="one-time-code"
                 maxlength="1"
@@ -68,7 +69,7 @@
                 class="w-13 h-14 text-center text-xl font-bold text-gray-900 rounded-xl border border-gray-200 bg-white
                        transition-colors duration-150
                        focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500
-                       disabled:bg-gray-50 disabled:text-gray-400"
+                       disabled:bg-gray-50 disabled:text-gray-400 dir-ltr"
               />
             }
           </div>

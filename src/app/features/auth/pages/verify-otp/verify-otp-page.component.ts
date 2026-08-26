@@ -125,8 +125,8 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
       }
     }
 
-    // Auto submit on last digit
-    if (this.isCodeComplete()) {
+    // Auto submit only when typing into the last digit box (index 3) and code is complete
+    if (index === 3 && lastChar && this.isCodeComplete()) {
       this.onSubmit();
     }
   }

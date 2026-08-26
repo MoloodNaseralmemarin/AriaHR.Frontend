@@ -56,21 +56,50 @@ describe('VerifyOtpPageComponent (RTL layout)', () => {
     expect(document.activeElement).toBe(inputs[1]);
   });
 
-  it('should overwrite existing digit and move focus to next input', () => {
-    component.digits.set(['1', '2', '', '']);
+  it('should overwrite existing digit and move focus to next input without auto submitting', () => {
+    component.digits.set(['1', '2', '3', '4']);
     fixture.detectChanges();
 
     const inputs: HTMLInputElement[] = Array.from(
       fixture.nativeElement.querySelectorAll('input')
     );
-    inputs[0].focus();
+    inputs[1].focus();
 
-    inputs[0].value = '5';
-    inputs[0].dispatchEvent(new Event('input'));
+    inputs[1].value = '5';
+    inputs[1].dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    expect(component.digits()).toEqual(['5', '2', '', '']);
-    expect(document.activeElement).toBe(inputs[1]);
+    expect(component.digits()).toEqual(['1', '5', '3', '4']);
+    expect(document.activeElement).toBe(inputs[2]);
+    expect(mockAuthService.verifyOtp).not.toHaveBeenCalled();
+  });
+
+  it('should preserve 2565 LTR order and verify exactly once on 4th digit', () => {
+    const inputs: HTMLInputElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('input')
+    );
+
+    inputs[0].value = '2';
+    inputs[0].dispatchEvent(new Event('input'));
+    expect(component.digits()).toEqual(['2', '', '', '']);
+
+    inputs[1].value = '5';
+    inputs[1].dispatchEvent(new Event('input'));
+    expect(component.digits()).toEqual(['2', '5', '', '']);
+
+    inputs[2].value = '6';
+    inputs[2].dispatchEvent(new Event('input'));
+    expect(component.digits()).toEqual(['2', '5', '6', '']);
+    expect(mockAuthService.verifyOtp).not.toHaveBeenCalled();
+
+    inputs[3].value = '5';
+    inputs[3].dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(component.digits()).toEqual(['2', '5', '6', '5']);
+    expect(component.fullCode()).toBe('2565');
+    expect(mockAuthService.verifyOtp).toHaveBeenCalledTimes(1);
+    expect(mockAuthService.verifyOtp).toHaveBeenCalledWith('09123456789', '2565');
   });
 
   it('should handle Backspace when box is filled vs when empty', () => {
