@@ -1,0 +1,70 @@
+<div>
+  <app-page-header title="گزارش‌ها" subtitle="مشاهده و خروجی گزارش‌های عملکرد مرکز">
+    <button
+      actions
+      type="button"
+      (click)="onExport()"
+      class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+      خروجی گزارش
+    </button>
+  </app-page-header>
+
+  <!-- Date range filter -->
+  <div class="mb-6 flex items-center gap-1.5 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5">
+    <button
+      *ngFor="let range of rangeOptions"
+      type="button"
+      (click)="selectRange(range)"
+      class="shrink-0 rounded-xl px-3.5 py-2 text-xs font-medium transition-colors"
+      [ngClass]="selectedRange() === range
+        ? 'bg-blue-600 text-white'
+        : 'text-slate-500 hover:bg-slate-50'"
+    >
+      {{ range }}
+    </button>
+  </div>
+
+  <!-- Report cards -->
+  <div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <button
+      *ngFor="let card of reportCards"
+      type="button"
+      (click)="onOpenReport(card)"
+      class="flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-start shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50/30"
+    >
+      <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+        <svg *ngIf="card.icon === 'attendance'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <svg *ngIf="card.icon === 'late'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <svg *ngIf="card.icon === 'absence'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+        <svg *ngIf="card.icon === 'hours'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-slate-800">{{ card.title }}</p>
+        <p class="mt-0.5 text-xs text-slate-500">{{ card.description }}</p>
+      </div>
+    </button>
+  </div>
+
+  <!-- Weekly attendance chart -->
+  <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-slate-700">روند حضور هفتگی</h2>
+      <span class="text-xs text-slate-400">درصد حضور کارکنان</span>
+    </div>
+
+    <div class="flex h-40 items-end justify-between gap-2 sm:gap-4">
+      <div *ngFor="let bar of weeklyTrend" class="flex flex-1 flex-col items-center gap-2">
+        <div class="flex h-32 w-full items-end justify-center">
+          <div
+            class="w-full max-w-[28px] rounded-t-md bg-blue-500/85 transition-all"
+            [style.height.%]="bar.presentPercent"
+            [title]="bar.presentPercent + '%'"
+          ></div>
+        </div>
+        <span class="text-xs text-slate-400">{{ bar.label }}</span>
+      </div>
+    </div>
+  </section>
+</div>
