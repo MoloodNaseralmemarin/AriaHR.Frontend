@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, delay, map } from 'rxjs/operators';
 
 import { AuthApiService } from './auth-api.service';
 import { OtpRequestResponse, OtpVerifyResponse } from './auth.models';
