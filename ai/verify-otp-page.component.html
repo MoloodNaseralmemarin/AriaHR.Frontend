@@ -1,0 +1,148 @@
+<main
+  dir="rtl"
+  lang="fa"
+  class="min-h-dvh w-full bg-gray-50 flex flex-col items-center justify-center px-4 py-10 sm:py-16"
+>
+  <div class="w-full max-w-sm mx-auto flex flex-col items-center animate-page-in">
+
+    <!-- Logo -->
+    <div class="mb-6">
+      <img
+        src="/assets/logo/aria-hr-logo.svg"
+        alt="AriaHR"
+        class="h-12 w-auto select-none"
+        width="120"
+        height="48"
+      />
+    </div>
+
+    <!-- Branding -->
+    <div class="text-center mb-8">
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 leading-snug">
+        تایید شماره موبایل
+      </h1>
+      <p class="mt-2 text-sm text-gray-500 leading-relaxed">
+        کد تایید ۴ رقمی به شماره
+        <span class="text-gray-700 font-medium" dir="ltr">{{ maskedMobileNumber() }}</span>
+        ارسال شد
+      </p>
+      <button
+        type="button"
+        (click)="onEditNumber()"
+        class="mt-1.5 text-xs text-blue-600 hover:text-blue-700 underline underline-offset-2
+               focus:outline-none focus:ring-2 focus:ring-blue-500/40 rounded"
+      >
+        ویرایش شماره موبایل
+      </button>
+    </div>
+
+    <!-- Card -->
+    <section
+      class="w-full bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-6 sm:p-7 animate-card-in"
+      aria-label="تایید کد ارسال شده"
+    >
+      <form (ngSubmit)="onManualSubmit()" novalidate class="flex flex-col gap-5">
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-gray-700 text-center">
+            کد تایید را وارد کنید
+          </label>
+
+          <!-- Digit boxes are kept LTR: numeric codes read left-to-right even
+               inside an RTL page, matching how OTP entry normally looks in
+               Persian apps (first digit typed lands in the leftmost box). -->
+          <div dir="ltr" class="flex items-center justify-center gap-3" role="group" aria-label="کد تایید">
+            @for (digit of digits(); track $index; let i = $index) {
+              <input
+                #digitInput
+                type="text"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="1"
+                [value]="digit"
+                (input)="onDigitInput(i, $any($event.target).value)"
+                (keydown)="onKeydown(i, $event)"
+                (paste)="onPaste($event)"
+                [disabled]="submitState() === 'loading'"
+                [attr.aria-label]="'رقم ' + (i + 1) + ' کد تایید'"
+                [attr.aria-invalid]="submitState() === 'error'"
+                class="h-14 w-12 sm:h-14 sm:w-13 text-center text-xl font-semibold rounded-xl border bg-white text-gray-900
+                       transition-colors duration-150
+                       focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500
+                       disabled:bg-gray-50 disabled:text-gray-400"
+                [class.border-gray-200]="submitState() !== 'error'"
+                [class.border-red-400]="submitState() === 'error'"
+              />
+            }
+          </div>
+
+          @if (submitState() === 'error') {
+            <p role="alert" class="text-xs text-red-600 mt-1 text-center animate-msg-in">
+              کد وارد شده صحیح نیست. لطفاً دوباره تلاش کنید.
+            </p>
+          }
+        </div>
+
+        <!-- Verify button -->
+        <button
+          type="submit"
+          [disabled]="!isComplete() || submitState() === 'loading'"
+          class="relative h-12 w-full rounded-xl font-semibold text-sm text-white
+                 bg-blue-600 transition-all duration-150
+                 hover:bg-blue-700 active:bg-blue-800 active:scale-[0.99]
+                 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2
+                 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:active:scale-100"
+        >
+          @if (submitState() === 'loading') {
+            <span class="inline-flex items-center justify-center gap-2">
+              <span
+                class="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin"
+                aria-hidden="true"
+              ></span>
+              <span>در حال بررسی...</span>
+            </span>
+          } @else {
+            <span>تایید و ورود</span>
+          }
+        </button>
+
+        <!-- Success message -->
+        @if (submitState() === 'success') {
+          <p
+            role="status"
+            class="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2.5 animate-msg-in"
+          >
+            <span
+              class="flex-shrink-0 h-4 w-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center"
+              aria-hidden="true"
+            >✓</span>
+            ورود با موفقیت انجام شد.
+          </p>
+        }
+
+        <!-- Resend -->
+        <div class="flex flex-col items-center gap-1 pt-1">
+          @if (resendJustSent()) {
+            <p class="text-xs text-emerald-600 animate-msg-in">کد جدید برای شما ارسال شد.</p>
+          } @else if (canResend()) {
+            <button
+              type="button"
+              (click)="onResend()"
+              class="text-sm text-blue-600 hover:text-blue-700 font-medium
+                     focus:outline-none focus:ring-2 focus:ring-blue-500/40 rounded px-2 py-1"
+            >
+              ارسال مجدد کد
+            </button>
+          } @else {
+            <p class="text-xs text-gray-400">
+              ارسال مجدد کد تا
+              <span dir="ltr">0:{{ resendCooldown().toString().padStart(2, '0') }}</span>
+            </p>
+          }
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <app-toast />
+</main>
