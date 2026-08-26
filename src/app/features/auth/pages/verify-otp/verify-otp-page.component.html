@@ -26,7 +26,7 @@
       </p>
 
       <!-- Mobile info & Edit action -->
-      <div class="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full dir-ltr">
+      <div class="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full dir-ltr" dir="ltr">
         <span>{{ mobileNumber() }}</span>
         <button
           type="button"
@@ -51,7 +51,7 @@
             کد تایید ۴ رقمی
           </label>
 
-          <div class="flex items-center justify-center gap-3 dir-ltr" (paste)="onPaste($event)">
+          <div class="flex items-center justify-center gap-3 dir-ltr" dir="ltr" (paste)="onPaste($event)">
             @for (digit of digits(); track $index) {
               <input
                 #otpInput
@@ -59,6 +59,7 @@
                 inputmode="numeric"
                 autocomplete="one-time-code"
                 maxlength="1"
+                dir="ltr"
                 [value]="digit"
                 [attr.aria-label]="'رقم ' + getDigitLabel($index) + ' کد تایید'"
                 (focus)="onFocus($event)"
@@ -77,9 +78,9 @@
         <!-- Timer & Resend -->
         <div class="text-center text-xs text-gray-500 min-h-[24px] flex items-center justify-center">
           @if (countdown() > 0) {
-            <span class="inline-flex items-center gap-1.5 dir-rtl">
+            <span class="inline-flex items-center gap-1.5 dir-rtl" dir="rtl">
               <span>ارسال مجدد کد تا</span>
-              <span class="font-semibold text-gray-700 dir-ltr inline-block tabular-nums text-sm">{{ formattedCountdown() }}</span>
+              <span class="font-semibold text-gray-700 dir-ltr inline-block tabular-nums text-sm" dir="ltr">{{ formattedCountdown() }}</span>
               <span>دیگر</span>
             </span>
           } @else {
