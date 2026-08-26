@@ -10,6 +10,16 @@ import { SystemAdminCreateCenterComponent } from './features/system-admin/pages/
 import { SystemAdminManagersComponent } from './features/system-admin/pages/managers/system-admin-managers.component';
 import { SystemAdminSettingsComponent } from './features/system-admin/pages/settings/system-admin-settings.component';
 
+import { CenterLayoutComponent } from './features/center-manager/layout/center-layout.component';
+import { DashboardComponent as CenterDashboardComponent } from './features/center-manager/pages/dashboard/dashboard.component';
+import { EmployeesComponent as CenterEmployeesComponent } from './features/center-manager/pages/employees/employees.component';
+import { AttendanceComponent as CenterAttendanceComponent } from './features/center-manager/pages/attendance/attendance.component';
+import { ShiftsComponent as CenterShiftsComponent } from './features/center-manager/pages/shifts/shifts.component';
+import { RequestsComponent as CenterRequestsComponent } from './features/center-manager/pages/requests/requests.component';
+import { ReportsComponent as CenterReportsComponent } from './features/center-manager/pages/reports/reports.component';
+import { NotificationsComponent as CenterNotificationsComponent } from './features/center-manager/pages/notifications/notifications.component';
+import { SettingsComponent as CenterSettingsComponent } from './features/center-manager/pages/settings/settings.component';
+
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginPageComponent },
@@ -24,6 +34,21 @@ export const routes: Routes = [
       { path: 'centers/:id', component: SystemAdminCenterDetailsComponent },
       { path: 'managers', component: SystemAdminManagersComponent },
       { path: 'settings', component: SystemAdminSettingsComponent },
+    ],
+  },
+  {
+    path: 'center-manager',
+    component: CenterLayoutComponent,
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: CenterDashboardComponent },
+      { path: 'employees', component: CenterEmployeesComponent },
+      { path: 'attendance', component: CenterAttendanceComponent },
+      { path: 'shifts', component: CenterShiftsComponent },
+      { path: 'requests', component: CenterRequestsComponent },
+      { path: 'reports', component: CenterReportsComponent },
+      { path: 'notifications', component: CenterNotificationsComponent },
+      { path: 'settings', component: CenterSettingsComponent },
     ],
   },
 ];
