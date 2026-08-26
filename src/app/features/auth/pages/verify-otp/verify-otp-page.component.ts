@@ -22,6 +22,24 @@ type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
 const COUNTDOWN_SECONDS = 120;
 
+const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+const ARABIC_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+function extractRawDigits(raw: string): string[] {
+  if (!raw) return [];
+  const result: string[] = [];
+  for (const char of raw) {
+    if (
+      PERSIAN_DIGITS.includes(char) ||
+      ARABIC_DIGITS.includes(char) ||
+      (char >= '0' && char <= '9')
+    ) {
+      result.push(char);
+    }
+  }
+  return result;
+}
+
 @Component({
   selector: 'app-verify-otp-page',
   standalone: true,
@@ -41,6 +59,7 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
   readonly submitState = signal<SubmitState>('idle');
   readonly errorMessage = signal('');
   readonly countdown = signal(COUNTDOWN_SECONDS);
+  readonly hasFailedAttempt = signal(false);
 
   private timerRef: ReturnType<typeof setInterval> | null = null;
 
@@ -53,7 +72,7 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
     return toPersianDigits(`${padMin}:${padSec}`);
   });
 
-  readonly fullCode = computed(() => this.digits().join(''));
+  readonly fullCode = computed(() => normalizeMobileNumber(this.digits().join('')));
 
   readonly isCodeComplete = computed(() => this.fullCode().length === 4);
 
@@ -95,20 +114,23 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
 
   onDigitInput(event: Event, index: number): void {
     const input = event.target as HTMLInputElement;
-    const normalized = normalizeMobileNumber(input.value);
+    const rawDigits = extractRawDigits(input.value);
 
-    // If user typed/pasted multiple digits at once (e.g. autofill or fast typing)
-    if (normalized.length > 1) {
-      this.handleMultiDigitInsert(normalized, index);
+    if (rawDigits.length > 1) {
+      this.handleMultiDigitInsert(rawDigits, index);
       return;
     }
 
-    const lastChar = normalized.length > 0 ? normalized.slice(-1) : '';
+    const lastChar = rawDigits.length > 0 ? rawDigits[rawDigits.length - 1] : '';
     input.value = lastChar;
 
     const currentDigits = [...this.digits()];
     currentDigits[index] = lastChar;
     this.digits.set(currentDigits);
+
+    if (currentDigits.every((d) => !d)) {
+      this.hasFailedAttempt.set(false);
+    }
 
     if (this.submitState() === 'error') {
       this.submitState.set('idle');
@@ -125,33 +147,33 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
       }
     }
 
-    // Auto submit on last digit
-    if (this.isCodeComplete()) {
+    // Auto submit on last digit ONLY if fresh entry (no previous failed attempt)
+    if (!this.hasFailedAttempt() && this.isCodeComplete()) {
       this.onSubmit();
     }
   }
 
-  private handleMultiDigitInsert(normalized: string, startIndex: number): void {
+  private handleMultiDigitInsert(rawDigits: string[], startIndex: number): void {
     const inputsArray = this.otpInputs.toArray();
     const currentDigits = [...this.digits()];
 
-    if (normalized.length >= 4) {
+    if (rawDigits.length >= 4) {
       for (let i = 0; i < 4; i++) {
-        currentDigits[i] = normalized[i];
+        currentDigits[i] = rawDigits[i];
       }
       this.digits.set(currentDigits);
       const targetInput = inputsArray[3]?.nativeElement;
       targetInput?.focus();
       targetInput?.select();
     } else {
-      for (let i = 0; i < normalized.length; i++) {
+      for (let i = 0; i < rawDigits.length; i++) {
         const targetIdx = startIndex + i;
         if (targetIdx < 4) {
-          currentDigits[targetIdx] = normalized[i];
+          currentDigits[targetIdx] = rawDigits[i];
         }
       }
       this.digits.set(currentDigits);
-      const nextIdx = Math.min(startIndex + normalized.length, 3);
+      const nextIdx = Math.min(startIndex + rawDigits.length, 3);
       const targetInput = inputsArray[nextIdx]?.nativeElement;
       targetInput?.focus();
       targetInput?.select();
@@ -162,13 +184,21 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
       this.errorMessage.set('');
     }
 
-    if (this.isCodeComplete()) {
+    if (!this.hasFailedAttempt() && this.isCodeComplete()) {
       this.onSubmit();
     }
   }
 
   onKeyDown(event: KeyboardEvent, index: number): void {
     const inputsArray = this.otpInputs.toArray();
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (this.isCodeComplete()) {
+        this.onSubmit();
+      }
+      return;
+    }
 
     // Input container uses dir="ltr" (Box 0 is left, Box 3 is right)
     // ArrowRight moves focus visually right (towards index + 1)
@@ -200,6 +230,9 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
         const currentDigits = [...this.digits()];
         currentDigits[index - 1] = '';
         this.digits.set(currentDigits);
+        if (currentDigits.every((d) => !d)) {
+          this.hasFailedAttempt.set(false);
+        }
         prevInput?.focus();
         prevInput?.select();
       }
@@ -209,9 +242,9 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
   onPaste(event: ClipboardEvent): void {
     event.preventDefault();
     const clipboardData = event.clipboardData?.getData('text') || '';
-    const normalized = normalizeMobileNumber(clipboardData);
+    const rawDigits = extractRawDigits(clipboardData);
 
-    if (!normalized) return;
+    if (rawDigits.length === 0) return;
 
     const inputsArray = this.otpInputs.toArray();
     const targetElement = event.target as HTMLInputElement;
@@ -222,41 +255,7 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
       startIndex = 0;
     }
 
-    const currentDigits = [...this.digits()];
-
-    if (normalized.length >= 4) {
-      for (let i = 0; i < 4; i++) {
-        currentDigits[i] = normalized[i];
-      }
-      this.digits.set(currentDigits);
-
-      const lastIndex = 3;
-      const targetInput = inputsArray[lastIndex]?.nativeElement;
-      targetInput?.focus();
-      targetInput?.select();
-    } else {
-      for (let i = 0; i < normalized.length; i++) {
-        const insertIndex = startIndex + i;
-        if (insertIndex < 4) {
-          currentDigits[insertIndex] = normalized[i];
-        }
-      }
-      this.digits.set(currentDigits);
-
-      const nextFocusIndex = Math.min(startIndex + normalized.length, 3);
-      const targetInput = inputsArray[nextFocusIndex]?.nativeElement;
-      targetInput?.focus();
-      targetInput?.select();
-    }
-
-    if (this.submitState() === 'error') {
-      this.submitState.set('idle');
-      this.errorMessage.set('');
-    }
-
-    if (this.isCodeComplete()) {
-      this.onSubmit();
-    }
+    this.handleMultiDigitInsert(rawDigits, startIndex);
   }
 
   onChangeMobileNumber(): void {
@@ -271,6 +270,7 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
       next: () => {
         this.submitState.set('idle');
         this.digits.set(['', '', '', '']);
+        this.hasFailedAttempt.set(false);
         this.startCountdown();
         const inputsArray = this.otpInputs.toArray();
         const firstInput = inputsArray[0]?.nativeElement;
@@ -295,11 +295,13 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
         if (res.success) {
           this.submitState.set('success');
         } else {
+          this.hasFailedAttempt.set(true);
           this.submitState.set('error');
           this.errorMessage.set(res.message || 'کد وارد شده معتبر نیست.');
         }
       },
       error: () => {
+        this.hasFailedAttempt.set(true);
         this.submitState.set('error');
         this.errorMessage.set('تایید کد با خطا مواجه شد. دوباره تلاش کنید.');
       },
