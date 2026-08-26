@@ -1,4 +1,5 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
@@ -15,7 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService, OtpVerifyResponse } from '../../../../core/auth/auth.service';
-import { normalizeMobileNumber } from '../../../../shared/utils/mobile-number.util';
+import { normalizeMobileNumber, toPersianDigits } from '../../../../shared/utils/mobile-number.util';
 
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -29,7 +30,7 @@ const COUNTDOWN_SECONDS = 120;
   styleUrl: './verify-otp-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VerifyOtpPageComponent implements OnInit, OnDestroy {
+export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -47,8 +48,9 @@ export class VerifyOtpPageComponent implements OnInit, OnDestroy {
     const total = this.countdown();
     const minutes = Math.floor(total / 60);
     const seconds = total % 60;
+    const padMin = minutes < 10 ? `0${minutes}` : `${minutes}`;
     const padSec = seconds < 10 ? `0${seconds}` : `${seconds}`;
-    return `0${minutes}:${padSec}`;
+    return toPersianDigits(`${padMin}:${padSec}`);
   });
 
   readonly fullCode = computed(() => this.digits().join(''));
@@ -65,6 +67,16 @@ export class VerifyOtpPageComponent implements OnInit, OnDestroy {
       this.mobileNumber.set(navState.mobileNumber);
     }
     this.startCountdown();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      const firstInput = this.otpInputs.first?.nativeElement;
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -111,9 +123,9 @@ export class VerifyOtpPageComponent implements OnInit, OnDestroy {
   onKeyDown(event: KeyboardEvent, index: number): void {
     const inputsArray = this.otpInputs.toArray();
 
-    // In RTL layout:
-    // ArrowLeft moves focus visually left (towards index + 1)
-    if (event.key === 'ArrowLeft') {
+    // Input container uses dir="ltr" (Box 0 is left, Box 3 is right)
+    // ArrowRight moves focus visually right (towards index + 1)
+    if (event.key === 'ArrowRight') {
       event.preventDefault();
       if (index < 3) {
         const nextInput = inputsArray[index + 1]?.nativeElement;
@@ -123,8 +135,8 @@ export class VerifyOtpPageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // ArrowRight moves focus visually right (towards index - 1)
-    if (event.key === 'ArrowRight') {
+    // ArrowLeft moves focus visually left (towards index - 1)
+    if (event.key === 'ArrowLeft') {
       event.preventDefault();
       if (index > 0) {
         const prevInput = inputsArray[index - 1]?.nativeElement;
@@ -134,11 +146,16 @@ export class VerifyOtpPageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (event.key === 'Backspace' && !this.digits()[index] && index > 0) {
-      event.preventDefault();
-      const prevInput = inputsArray[index - 1]?.nativeElement;
-      prevInput?.focus();
-      prevInput?.select();
+    if (event.key === 'Backspace') {
+      if (!this.digits()[index] && index > 0) {
+        event.preventDefault();
+        const prevInput = inputsArray[index - 1]?.nativeElement;
+        const currentDigits = [...this.digits()];
+        currentDigits[index - 1] = '';
+        this.digits.set(currentDigits);
+        prevInput?.focus();
+        prevInput?.select();
+      }
     }
   }
 
