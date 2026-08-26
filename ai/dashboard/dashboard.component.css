@@ -1,0 +1,6 @@
+/* Most styling is handled with Tailwind utility classes in the template.
+   This file is reserved for any rules Tailwind can't express cleanly. */
+
+:host {
+  display: block;
+}

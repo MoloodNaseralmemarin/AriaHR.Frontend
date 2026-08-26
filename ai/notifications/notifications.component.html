@@ -1,0 +1,75 @@
+<div>
+  <app-page-header title="اعلان‌ها" subtitle="آخرین رویدادها و به‌روزرسانی‌های مرکز">
+    <button
+      actions
+      *ngIf="unreadCount() > 0"
+      type="button"
+      (click)="markAllAsRead()"
+      class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+    >
+      علامت‌گذاری همه به‌عنوان خوانده‌شده
+    </button>
+  </app-page-header>
+
+  <!-- Filters -->
+  <div class="mb-4 flex items-center gap-1.5">
+    <button
+      *ngFor="let f of filters"
+      type="button"
+      (click)="setFilter(f.value)"
+      class="relative shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors"
+      [ngClass]="activeFilter() === f.value
+        ? 'bg-blue-600 text-white'
+        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+    >
+      {{ f.label }}
+      <span
+        *ngIf="f.value === 'unread' && unreadCount() > 0"
+        class="ms-1 rounded-full px-1.5 text-[10px]"
+        [ngClass]="activeFilter() === f.value ? 'bg-white/25' : 'bg-blue-100 text-blue-700'"
+      >
+        {{ unreadCount() }}
+      </span>
+    </button>
+  </div>
+
+  <!-- Empty -->
+  <app-empty-state
+    *ngIf="filteredNotifications().length === 0"
+    title="اعلانی برای نمایش وجود ندارد"
+  ></app-empty-state>
+
+  <!-- List -->
+  <div class="space-y-2" *ngIf="filteredNotifications().length > 0">
+    <button
+      *ngFor="let n of filteredNotifications()"
+      type="button"
+      (click)="markAsRead(n)"
+      class="flex w-full items-start gap-3 rounded-2xl border p-4 text-start transition-colors"
+      [ngClass]="n.isRead
+        ? 'border-slate-100 bg-white'
+        : 'border-blue-100 bg-blue-50/40 hover:bg-blue-50/70'"
+    >
+      <div
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+        [ngClass]="n.isRead ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'"
+      >
+        <svg *ngIf="n.type === 'shift'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <svg *ngIf="n.type === 'request'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        <svg *ngIf="n.type === 'report'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+        <svg *ngIf="n.type === 'system'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82"/></svg>
+      </div>
+
+      <div class="min-w-0 flex-1">
+        <div class="flex items-start justify-between gap-2">
+          <p class="text-sm" [ngClass]="n.isRead ? 'font-medium text-slate-600' : 'font-semibold text-slate-800'">
+            {{ n.title }}
+          </p>
+          <span *ngIf="!n.isRead" class="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-500"></span>
+        </div>
+        <p class="mt-1 text-xs text-slate-500">{{ n.detail }}</p>
+        <p class="mt-2 text-[11px] text-slate-400">{{ n.dateTimeLabel }}</p>
+      </div>
+    </button>
+  </div>
+</div>
