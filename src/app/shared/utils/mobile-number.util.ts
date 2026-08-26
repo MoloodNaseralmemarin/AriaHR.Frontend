@@ -46,3 +46,12 @@ const IRAN_MOBILE_REGEX = /^09\d{9}$/;
 export function isValidIranianMobile(normalized: string): boolean {
   return IRAN_MOBILE_REGEX.test(normalized);
 }
+
+/** Converts ASCII digits (0-9) in a string to Persian digits (۰-۹). */
+export function toPersianDigits(input: string | number): string {
+  if (input === null || input === undefined) {
+    return '';
+  }
+  const str = String(input);
+  return str.replace(/\d/g, (digit) => PERSIAN_DIGITS[parseInt(digit, 10)]);
+}

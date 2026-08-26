@@ -37,16 +37,21 @@ export class AuthService {
 
   /** Simulates verifying a 4-digit OTP code for a given mobile number. */
   verifyOtp(mobileNumber: string, code: string): Observable<OtpVerifyResponse> {
-    // For demonstration, reject '0000' as invalid code, accept everything else
-    if (code === '0000') {
-      return of({ success: false, message: 'کد وارد شده نادرست است.' }).pipe(delay(1000));
+    // Standard test OTP in mock/dev mode is '1234'
+    const normalizedCode = code ? code.trim() : '';
+
+    if (normalizedCode !== '1234') {
+      return of({
+        success: false,
+        message: 'کد وارد شده معتبر نیست.',
+      }).pipe(delay(800));
     }
 
     return of({
       success: true,
       message: 'ورود با موفقیت انجام شد.',
       token: 'simulated-jwt-token-12345',
-    }).pipe(delay(1200));
+    }).pipe(delay(800));
   }
 
   /** Simulates resending OTP code. */
