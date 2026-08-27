@@ -3,10 +3,17 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
-import { SystemAdminDataService } from '../../services/system-admin-data.service';
+import { OrganizationService } from '../../../organizations/services/organization.service';
+import { CreateOrganizationDto } from '../../../organizations/models/create-organization.dto';
 
 const IRAN_LANDLINE_PATTERN = /^0\d{2,3}[-\s]?\d{7,8}$/;
 const IRAN_MOBILE_PATTERN = /^09\d{9}$/;
+
+const CENTER_TYPE_MAP: Record<string, number> = {
+  'کلینیک': 1,
+  'مرکز درمانی': 2,
+  'مرکز تصویربرداری': 3,
+};
 
 @Component({
   selector: 'app-system-admin-create-center',
@@ -18,7 +25,7 @@ const IRAN_MOBILE_PATTERN = /^09\d{9}$/;
 })
 export class SystemAdminCreateCenterComponent {
   private readonly fb = inject(NonNullableFormBuilder);
-  private readonly dataService = inject(SystemAdminDataService);
+  private readonly organizationService = inject(OrganizationService);
   private readonly router = inject(Router);
 
   readonly step = signal<1 | 2>(1);
@@ -140,10 +147,23 @@ export class SystemAdminCreateCenterComponent {
     this.saving.set(true);
     this.errorMessage.set(null);
 
-    const payload = this.form.getRawValue();
+    const formValues = this.form.getRawValue();
 
-    this.dataService
-      .createCenter(payload)
+    const requestDto: CreateOrganizationDto = {
+      name: formValues.centerName,
+      code: '',
+      type: CENTER_TYPE_MAP[formValues.centerType] ?? 1,
+      nationalIdentifier: null,
+      phone: formValues.phone ? formValues.phone : null,
+      address: formValues.address ? formValues.address : null,
+      managerFirstName: formValues.managerFirstName ? formValues.managerFirstName : null,
+      managerLastName: formValues.managerLastName ? formValues.managerLastName : null,
+      managerMobile: formValues.managerMobile ? formValues.managerMobile : null,
+      isActive: true,
+    };
+
+    this.organizationService
+      .createOrganization(requestDto)
       .pipe(
         finalize(() => {
           this.saving.set(false);
@@ -155,7 +175,7 @@ export class SystemAdminCreateCenterComponent {
         },
         error: (err) => {
           this.errorMessage.set(
-            err?.message || 'خطایی در ثبت مرکز رخ داد. لطفا مجدداً تلاش کنید.'
+            err?.error?.message || err?.message || 'خطایی در ثبت مرکز رخ داد. لطفا مجدداً تلاش کنید.'
           );
         },
       });
