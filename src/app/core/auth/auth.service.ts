@@ -63,9 +63,24 @@ export class AuthService {
   /** Verifies an OTP code for a given mobile number via AuthApiService. */
   verifyOtp(mobileNumber: string, code: string): Observable<OtpVerifyResponse> {
     const normalizedCode = code ? code.trim() : '';
+    const normalizedPhone = mobileNumber ? mobileNumber.trim() : '';
+
+    if (!normalizedPhone) {
+      return of({
+        success: false,
+        message: 'شماره موبایل وارد نشده است.',
+      });
+    }
+
+    if (!/^\d{4}$/.test(normalizedCode)) {
+      return of({
+        success: false,
+        message: 'کد تایید باید دقیقا ۴ رقم باشد.',
+      });
+    }
 
     return this.authApiService
-      .verifyOtp({ phoneNumber: mobileNumber, otpCode: normalizedCode })
+      .verifyOtp({ phoneNumber: normalizedPhone, code: normalizedCode, otpCode: normalizedCode })
       .pipe(
         map((res: VerifyOtpResponseDto) => {
           const isSuccess = res.success !== false;
