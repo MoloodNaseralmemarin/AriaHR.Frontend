@@ -182,10 +182,11 @@ export class SystemAdminDataService {
 
   /** Simulates creating a center + manager pair. */
   createCenter(payload: CreateCenterPayload): Observable<{ success: boolean; centerId: string }> {
+    const managerFullName = `${payload.managerFirstName} ${payload.managerLastName}`.trim();
     const newCenter: Center = {
       id: 'c' + (this._centers().length + 1),
       name: payload.centerName,
-      managerName: payload.managerName,
+      managerName: managerFullName,
       employeeCount: 0,
       status: 'pending',
       createdAt: new Date().toISOString(),
