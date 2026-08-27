@@ -16,7 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService, OtpVerifyResponse } from '../../../../core/auth/auth.service';
-import { normalizeMobileNumber, toPersianDigits } from '../../../../shared/utils/mobile-number.util';
+import { isValidIranianMobile, normalizeMobileNumber, toPersianDigits } from '../../../../shared/utils/mobile-number.util';
 
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -285,12 +285,22 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   onSubmit(): void {
-    if (this.isSubmitDisabled()) return;
+    if (this.isSubmitDisabled() || this.submitState() === 'loading') return;
+
+    const currentPhone = normalizeMobileNumber(this.mobileNumber());
+    if (!currentPhone || !isValidIranianMobile(currentPhone)) {
+      this.errorMessage.set('شماره موبایل معتبر نیست.');
+      return;
+    }
+
+    if (!this.isCodeComplete()) {
+      return;
+    }
 
     this.submitState.set('loading');
     this.errorMessage.set('');
 
-    this.authService.verifyOtp(this.mobileNumber(), this.fullCode()).subscribe({
+    this.authService.verifyOtp(currentPhone, this.fullCode()).subscribe({
       next: (res: OtpVerifyResponse) => {
         if (res.success) {
           this.submitState.set('success');
