@@ -1,1 +1,134 @@
-<section class="space-y-5"><a routerLink="/system-admin/centers" class="back">→ بازگشت</a><div><p class="eyebrow">مرحله {{ step() }} از ۲</p><h1>{{ step() === 1 ? 'ثبت مرکز جدید' : 'اطلاعات مدیر مرکز' }}</h1><p class="subtitle">{{ step() === 1 ? 'اطلاعات اصلی مرکز را وارد کنید' : 'مدیر این مرکز را مشخص کنید' }}</p></div><div class="progress"><span [class.done]="step() >= 1"></span><span [class.done]="step() >= 2"></span></div><form (ngSubmit)="next()" class="form-card">@if(step()===1){<label>نام مرکز<input name="centerName" [(ngModel)]="form.centerName" required placeholder="مثلاً کلینیک آریا" /></label><label>نوع مرکز<select name="centerType" [(ngModel)]="form.centerType" required><option value="">انتخاب کنید</option><option>کلینیک</option><option>مرکز درمانی</option><option>مرکز تصویربرداری</option></select></label><label>آدرس مرکز<textarea name="address" [(ngModel)]="form.address" rows="3" placeholder="آدرس کامل مرکز"></textarea></label><label>شماره تماس<input name="phone" [(ngModel)]="form.phone" inputmode="tel" placeholder="021-12345678" /></label>}@else{<label>نام و نام خانوادگی مدیر<input name="managerName" [(ngModel)]="form.managerName" required placeholder="نام مدیر مرکز" /></label><label>شماره موبایل مدیر<input name="managerMobile" [(ngModel)]="form.managerMobile" inputmode="tel" required placeholder="0912•••••••" /></label><label>ایمیل مدیر<input name="managerEmail" [(ngModel)]="form.managerEmail" type="email" placeholder="manager@example.com" /></label>}<button class="submit" type="submit" [disabled]="saving()">{{ saving() ? 'در حال ثبت...' : step() === 1 ? 'ادامه' : 'ثبت مرکز و مدیر' }} <span>←</span></button></form></section>
+<section class="space-y-5">
+  <a routerLink="/system-admin/centers" class="back">→ بازگشت</a>
+
+  <div>
+    <p class="eyebrow">مرحله {{ step() }} از ۲</p>
+    <h1>{{ step() === 1 ? 'ثبت مرکز جدید' : 'اطلاعات مدیر مرکز' }}</h1>
+    <p class="subtitle">
+      {{ step() === 1 ? 'اطلاعات اصلی مرکز را وارد کنید' : 'مدیر این مرکز را مشخص کنید' }}
+    </p>
+  </div>
+
+  <div class="progress" aria-label="پیشرفت ثبت مرکز">
+    <span [class.done]="step() >= 1"></span>
+    <span [class.done]="step() >= 2"></span>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-message" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="continue()" class="form-card" novalidate>
+    @if (step() === 1) {
+      <label>
+        نام مرکز
+        <input
+          formControlName="centerName"
+          placeholder="مثلاً کلینیک آریا"
+          autocomplete="organization"
+        />
+        @if (form.controls.centerName.touched && form.controls.centerName.invalid) {
+          <small>نام مرکز الزامی است و باید بین ۲ تا ۱۵۰ کاراکتر باشد.</small>
+        }
+      </label>
+
+      <label>
+        نوع مرکز
+        <select formControlName="centerType">
+          <option value="">انتخاب کنید</option>
+          <option value="کلینیک">کلینیک</option>
+          <option value="مرکز درمانی">مرکز درمانی</option>
+          <option value="مرکز تصویربرداری">مرکز تصویربرداری</option>
+        </select>
+        @if (form.controls.centerType.touched && form.controls.centerType.invalid) {
+          <small>نوع مرکز را انتخاب کنید.</small>
+        }
+      </label>
+
+      <label>
+        آدرس مرکز
+        <textarea
+          formControlName="address"
+          rows="3"
+          placeholder="آدرس کامل مرکز"
+          autocomplete="street-address"
+        ></textarea>
+        @if (form.controls.address.touched && form.controls.address.invalid) {
+          <small>آدرس نمی‌تواند بیشتر از ۵۰۰ کاراکتر باشد.</small>
+        }
+      </label>
+
+      <label>
+        شماره تماس
+        <input
+          formControlName="phone"
+          inputmode="tel"
+          placeholder="021-12345678"
+          autocomplete="tel"
+        />
+        @if (form.controls.phone.touched && form.controls.phone.invalid) {
+          <small>شماره تماس را در قالب معتبر وارد کنید.</small>
+        }
+      </label>
+    } @else {
+      <label>
+        نام و نام خانوادگی مدیر
+        <input
+          formControlName="managerName"
+          required
+          placeholder="نام مدیر مرکز"
+          autocomplete="name"
+        />
+        @if (form.controls.managerName.touched && form.controls.managerName.invalid) {
+          <small>نام مدیر الزامی است و باید بین ۲ تا ۱۵۰ کاراکتر باشد.</small>
+        }
+      </label>
+
+      <label>
+        شماره موبایل مدیر
+        <input
+          formControlName="managerMobile"
+          inputmode="tel"
+          required
+          placeholder="0912•••••••"
+          autocomplete="tel"
+        />
+        @if (form.controls.managerMobile.touched && form.controls.managerMobile.invalid) {
+          <small>شماره موبایل باید ۱۱ رقم و با 09 شروع شود.</small>
+        }
+      </label>
+
+      <label>
+        ایمیل مدیر
+        <input
+          formControlName="managerEmail"
+          type="email"
+          placeholder="manager@example.com"
+          autocomplete="email"
+        />
+        @if (form.controls.managerEmail.touched && form.controls.managerEmail.invalid) {
+          <small>ایمیل واردشده معتبر نیست.</small>
+        }
+      </label>
+    }
+
+    <div class="form-actions">
+      @if (step() === 2) {
+        <button class="back-button" type="button" (click)="back()" [disabled]="saving()">
+          مرحله قبل
+        </button>
+      }
+
+      <button
+        class="submit"
+        type="submit"
+        [disabled]="saving()"
+      >
+        {{ saving() ? 'در حال ثبت...' : step() === 1 ? 'ادامه' : 'ثبت مرکز و مدیر' }}
+        <span>←</span>
+      </button>
+    </div>
+  </form>
+</section>
