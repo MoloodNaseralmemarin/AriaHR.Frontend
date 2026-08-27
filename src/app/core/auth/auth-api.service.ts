@@ -3,17 +3,30 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { SendOtpRequest, SendOtpResponse } from './auth.models';
+import {
+  SendOtpDto,
+  SendOtpResponseDto,
+  VerifyOtpDto,
+  VerifyOtpResponseDto,
+} from './auth.models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
 
-  /** Sends an OTP to the given phone number using backend API endpoint. */
-  sendOtp(request: SendOtpRequest): Observable<SendOtpResponse> {
-    return this.http.post<SendOtpResponse>(
+  /** Sends an OTP code to the specified phone number. */
+  sendOtp(request: SendOtpDto): Observable<SendOtpResponseDto> {
+    return this.http.post<SendOtpResponseDto>(
       `${this.baseUrl}/api/auth/send-otp`,
+      request
+    );
+  }
+
+  /** Verifies an OTP code for the specified phone number. */
+  verifyOtp(request: VerifyOtpDto): Observable<VerifyOtpResponseDto> {
+    return this.http.post<VerifyOtpResponseDto>(
+      `${this.baseUrl}/api/auth/verify-otp`,
       request
     );
   }
