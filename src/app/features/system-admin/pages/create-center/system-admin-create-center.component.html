@@ -1,1 +1,106 @@
-<section class="space-y-5"><a routerLink="/system-admin/centers" class="back">→ بازگشت</a><div><p class="eyebrow">مرحله {{ step() }} از ۲</p><h1>{{ step() === 1 ? 'ثبت مرکز جدید' : 'اطلاعات مدیر مرکز' }}</h1><p class="subtitle">{{ step() === 1 ? 'اطلاعات اصلی مرکز را وارد کنید' : 'مدیر این مرکز را مشخص کنید' }}</p></div><div class="progress"><span [class.done]="step() >= 1"></span><span [class.done]="step() >= 2"></span></div><form (ngSubmit)="next()" class="form-card">@if(step()===1){<label>نام مرکز<input name="centerName" [(ngModel)]="form.centerName" required placeholder="مثلاً کلینیک آریا" /></label><label>نوع مرکز<select name="centerType" [(ngModel)]="form.centerType" required><option value="">انتخاب کنید</option><option>کلینیک</option><option>مرکز درمانی</option><option>مرکز تصویربرداری</option></select></label><label>آدرس مرکز<textarea name="address" [(ngModel)]="form.address" rows="3" placeholder="آدرس کامل مرکز"></textarea></label><label>شماره تماس<input name="phone" [(ngModel)]="form.phone" inputmode="tel" placeholder="021-12345678" /></label>}@else{<label>نام و نام خانوادگی مدیر<input name="managerName" [(ngModel)]="form.managerName" required placeholder="نام مدیر مرکز" /></label><label>شماره موبایل مدیر<input name="managerMobile" [(ngModel)]="form.managerMobile" inputmode="tel" required placeholder="0912•••••••" /></label><label>ایمیل مدیر<input name="managerEmail" [(ngModel)]="form.managerEmail" type="email" placeholder="manager@example.com" /></label>}<button class="submit" type="submit" [disabled]="saving()">{{ saving() ? 'در حال ثبت...' : step() === 1 ? 'ادامه' : 'ثبت مرکز و مدیر' }} <span>←</span></button></form></section>
+<section class="space-y-5">
+  <a routerLink="/system-admin/centers" class="back">→ بازگشت</a>
+  <div>
+    <p class="eyebrow">مرحله {{ step() }} از ۲</p>
+    <h1>{{ step() === 1 ? 'ثبت مرکز جدید' : 'اطلاعات مدیر مرکز' }}</h1>
+    <p class="subtitle">{{ step() === 1 ? 'اطلاعات اصلی مرکز را وارد کنید' : 'مدیر این مرکز را مشخص کنید' }}</p>
+  </div>
+  <div class="progress">
+    <span [class.done]="step() >= 1"></span>
+    <span [class.done]="step() >= 2"></span>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-card">
+    @if (step() === 1) {
+      <label>
+        نام مرکز *
+        <input formControlName="centerName" placeholder="مثلاً کلینیک آریا" [class.invalid]="isControlInvalid('centerName')" />
+        @if (getControlError('centerName')) {
+          <span class="error-msg">{{ getControlError('centerName') }}</span>
+        }
+      </label>
+
+      <label>
+        نوع مرکز *
+        <select formControlName="centerType" [class.invalid]="isControlInvalid('centerType')">
+          <option value="">انتخاب کنید</option>
+          <option value="کلینیک">کلینیک</option>
+          <option value="مرکز درمانی">مرکز درمانی</option>
+          <option value="مرکز تصویربرداری">مرکز تصویربرداری</option>
+        </select>
+        @if (getControlError('centerType')) {
+          <span class="error-msg">{{ getControlError('centerType') }}</span>
+        }
+      </label>
+
+      <label>
+        آدرس مرکز
+        <textarea formControlName="address" rows="3" placeholder="آدرس کامل مرکز" [class.invalid]="isControlInvalid('address')"></textarea>
+        @if (getControlError('address')) {
+          <span class="error-msg">{{ getControlError('address') }}</span>
+        }
+      </label>
+
+      <label>
+        شماره تماس
+        <input formControlName="phone" inputmode="tel" placeholder="021-12345678" [class.invalid]="isControlInvalid('phone')" />
+        @if (getControlError('phone')) {
+          <span class="error-msg">{{ getControlError('phone') }}</span>
+        }
+      </label>
+
+      <div class="actions">
+        <button class="submit" type="submit" [disabled]="saving()">
+          ادامه <span>←</span>
+        </button>
+      </div>
+    } @else {
+      <label>
+        نام مدیر *
+        <input formControlName="managerFirstName" placeholder="مثلاً علی" [class.invalid]="isControlInvalid('managerFirstName')" />
+        @if (getControlError('managerFirstName')) {
+          <span class="error-msg">{{ getControlError('managerFirstName') }}</span>
+        }
+      </label>
+
+      <label>
+        نام خانوادگی مدیر *
+        <input formControlName="managerLastName" placeholder="مثلاً محمدی" [class.invalid]="isControlInvalid('managerLastName')" />
+        @if (getControlError('managerLastName')) {
+          <span class="error-msg">{{ getControlError('managerLastName') }}</span>
+        }
+      </label>
+
+      <label>
+        شماره موبایل مدیر *
+        <input formControlName="managerMobile" inputmode="tel" placeholder="0912•••••••" [class.invalid]="isControlInvalid('managerMobile')" />
+        @if (getControlError('managerMobile')) {
+          <span class="error-msg">{{ getControlError('managerMobile') }}</span>
+        }
+      </label>
+
+      <label>
+        ایمیل مدیر
+        <input formControlName="managerEmail" type="email" placeholder="manager@example.com" [class.invalid]="isControlInvalid('managerEmail')" />
+        @if (getControlError('managerEmail')) {
+          <span class="error-msg">{{ getControlError('managerEmail') }}</span>
+        }
+      </label>
+
+      <div class="actions">
+        <button class="secondary" type="button" (click)="prevStep()" [disabled]="saving()">
+          مرحله قبل
+        </button>
+        <button class="submit" type="submit" [disabled]="saving()">
+          {{ saving() ? 'در حال ثبت...' : 'ثبت مرکز و مدیر' }} <span>←</span>
+        </button>
+      </div>
+    }
+  </form>
+</section>
