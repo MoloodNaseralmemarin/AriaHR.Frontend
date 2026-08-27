@@ -25,9 +25,13 @@ export class AuthApiService {
 
   /** Verifies an OTP code for the specified phone number. */
   verifyOtp(request: VerifyOtpDto): Observable<VerifyOtpResponseDto> {
+    const payload = {
+      phoneNumber: request.phoneNumber,
+      code: request.code ?? request.otpCode ?? '',
+    };
     return this.http.post<VerifyOtpResponseDto>(
       `${this.baseUrl}/api/auth/verify-otp`,
-      request
+      payload
     );
   }
 }

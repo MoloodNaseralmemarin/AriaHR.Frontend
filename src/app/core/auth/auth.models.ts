@@ -12,7 +12,8 @@ export interface SendOtpResponseDto {
 /** Request DTO for verifying an OTP code. */
 export interface VerifyOtpDto {
   readonly phoneNumber: string;
-  readonly otpCode: string;
+  readonly code: string;
+  readonly otpCode?: string;
 }
 
 /** User information returned upon successful authentication. */
