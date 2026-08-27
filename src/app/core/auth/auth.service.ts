@@ -19,6 +19,7 @@ export interface OtpVerifyResponse {
   readonly success: boolean;
   readonly message?: string;
   readonly token?: string;
+  readonly role?: string;
   readonly user?: AuthUserDto;
 }
 
@@ -85,6 +86,12 @@ export class AuthService {
         map((res: VerifyOtpResponseDto) => {
           const isSuccess = res.success !== false;
           const accessToken = res.token || res.accessToken;
+          const extractedRole =
+            res.role ||
+            res.userRole ||
+            res.user?.role ||
+            res.user?.userRole ||
+            res.user?.roles?.[0];
 
           if (isSuccess && accessToken) {
             this.saveAuthentication(accessToken, res.refreshToken, res.user);
@@ -92,6 +99,7 @@ export class AuthService {
               success: true,
               message: res.message || 'ورود با موفقیت انجام شد.',
               token: accessToken,
+              role: extractedRole,
               user: res.user,
             };
           }
@@ -100,6 +108,7 @@ export class AuthService {
             success: isSuccess && !!accessToken,
             message: res.message || (isSuccess ? 'ورود با موفقیت انجام شد.' : 'کد وارد شده معتبر نیست.'),
             token: accessToken,
+            role: extractedRole,
             user: res.user,
           };
         }),

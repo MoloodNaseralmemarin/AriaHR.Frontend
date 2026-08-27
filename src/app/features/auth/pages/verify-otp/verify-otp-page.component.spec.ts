@@ -12,7 +12,7 @@ describe('VerifyOtpPageComponent (OTP flow & LTR alignment)', () => {
 
   beforeEach(async () => {
     mockAuthService = {
-      verifyOtp: vi.fn().mockReturnValue(of({ success: true })),
+      verifyOtp: vi.fn().mockReturnValue(of({ success: true, role: 'SystemAdmin' })),
       resendOtp: vi.fn().mockReturnValue(of({ success: true })),
     };
 
@@ -149,7 +149,7 @@ describe('VerifyOtpPageComponent (OTP flow & LTR alignment)', () => {
     }
 
     mockAuthService.verifyOtp.mockClear();
-    mockAuthService.verifyOtp.mockReturnValue(of({ success: true }));
+    mockAuthService.verifyOtp.mockReturnValue(of({ success: true, role: 'SystemAdmin' }));
 
     // User edits second digit to 5
     inputs[1].focus();
@@ -165,6 +165,40 @@ describe('VerifyOtpPageComponent (OTP flow & LTR alignment)', () => {
 
     expect(mockAuthService.verifyOtp).toHaveBeenCalledTimes(1);
     expect(mockAuthService.verifyOtp).toHaveBeenCalledWith('09123456789', '1534');
+  });
+
+  it('should handle CenterManager role with placeholder error message', () => {
+    mockAuthService.verifyOtp.mockReturnValue(of({ success: true, role: 'CenterManager' }));
+
+    const inputs: HTMLInputElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('input')
+    );
+    for (let i = 0; i < 4; i++) {
+      inputs[i].focus();
+      inputs[i].value = '1';
+      inputs[i].dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    }
+
+    expect(component.submitState()).toBe('error');
+    expect(component.errorMessage()).toContain('مسیر مربوط به مدیر مرکز');
+  });
+
+  it('should handle missing or unknown role without routing to incorrect dashboard', () => {
+    mockAuthService.verifyOtp.mockReturnValue(of({ success: true, role: 'UnknownRole' }));
+
+    const inputs: HTMLInputElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('input')
+    );
+    for (let i = 0; i < 4; i++) {
+      inputs[i].focus();
+      inputs[i].value = '1';
+      inputs[i].dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    }
+
+    expect(component.submitState()).toBe('error');
+    expect(component.errorMessage()).toBe('نقش کاربری نامشخص است.');
   });
 
   it('Test F & Backspace: should move focus LEFT and clear digits correctly', () => {

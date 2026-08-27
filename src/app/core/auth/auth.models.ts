@@ -21,6 +21,8 @@ export interface AuthUserDto {
   readonly id?: string;
   readonly mobileNumber?: string;
   readonly fullName?: string;
+  readonly role?: string;
+  readonly userRole?: string;
   readonly roles?: string[];
   readonly permissions?: string[];
 }
@@ -32,6 +34,8 @@ export interface VerifyOtpResponseDto {
   readonly token?: string;
   readonly accessToken?: string;
   readonly refreshToken?: string;
+  readonly role?: string;
+  readonly userRole?: string;
   readonly user?: AuthUserDto;
 }
 

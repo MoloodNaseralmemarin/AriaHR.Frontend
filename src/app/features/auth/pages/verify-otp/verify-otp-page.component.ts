@@ -303,11 +303,22 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
     this.authService.verifyOtp(currentPhone, this.fullCode()).subscribe({
       next: (res: OtpVerifyResponse) => {
         if (res.success) {
-          this.submitState.set('success');
-          setTimeout(() => {
-            this.digits.set(['', '', '', '']);
-            this.router.navigate(['/system-admin/dashboard']);
-          }, 400);
+          const role = res.role || res.user?.role || res.user?.userRole || res.user?.roles?.[0];
+
+          if (role === 'SystemAdmin') {
+            this.submitState.set('success');
+            setTimeout(() => {
+              this.digits.set(['', '', '', '']);
+              this.router.navigate(['/system-admin/dashboard']);
+            }, 400);
+          } else if (role === 'CenterManager') {
+            // TODO: CenterManager dashboard route will be provided later
+            this.submitState.set('error');
+            this.errorMessage.set('مسیر مربوط به مدیر مرکز به زودی اضافه خواهد شد.');
+          } else {
+            this.submitState.set('error');
+            this.errorMessage.set('نقش کاربری نامشخص است.');
+          }
         } else {
           this.hasFailedAttempt.set(true);
           this.submitState.set('error');
