@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
+  CurrentUserDto,
   SendOtpDto,
   SendOtpResponseDto,
   VerifyOtpDto,
@@ -32,6 +33,13 @@ export class AuthApiService {
     return this.http.post<VerifyOtpResponseDto>(
       `${this.baseUrl}/api/auth/verify-otp`,
       payload
+    );
+  }
+
+  /** Retrieves the currently authenticated user details. */
+  getCurrentUser(): Observable<CurrentUserDto> {
+    return this.http.get<CurrentUserDto>(
+      `${this.baseUrl}/api/auth/me`
     );
   }
 }
