@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { AuthService } from '../../../../core/auth/auth.service';
 import { SystemAdminDataService } from '../../services/system-admin-data.service';
 import { CenterStatus, SystemActivity } from '../../models/system-admin.models';
 
@@ -12,11 +13,38 @@ import { CenterStatus, SystemActivity } from '../../models/system-admin.models';
   styleUrl: './system-admin-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SystemAdminDashboardComponent {
+export class SystemAdminDashboardComponent implements OnInit {
+  private readonly authService = inject(AuthService);
   private readonly data = inject(SystemAdminDataService);
+
   readonly stats = this.data.stats;
   readonly recentCenters = computed(() => this.data.getRecentCenters(3));
   readonly recentActivity = computed(() => this.data.getRecentActivity(3));
+
+  readonly userDetails = this.authService.userDetails;
+
+  readonly userGreetingName = computed(() => {
+    const user = this.userDetails();
+    if (user && user.firstName && user.lastName) {
+      return `${user.firstName.trim()} ${user.lastName.trim()}`;
+    }
+    if (user && user.firstName) {
+      return user.firstName.trim();
+    }
+    return 'مدیر سیستم';
+  });
+
+  readonly avatarInitial = computed(() => {
+    const user = this.userDetails();
+    if (user && user.firstName) {
+      return user.firstName.trim().charAt(0);
+    }
+    return 'م';
+  });
+
+  ngOnInit(): void {
+    this.authService.getCurrentUser().subscribe();
+  }
 
   getStatusLabel(status: CenterStatus): string {
     return status === 'active' ? 'فعال' : status === 'pending' ? 'در انتظار تکمیل' : 'غیرفعال';

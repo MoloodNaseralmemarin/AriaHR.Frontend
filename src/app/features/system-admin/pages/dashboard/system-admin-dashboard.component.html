@@ -2,8 +2,8 @@
   <div class="animate-in">
     <p class="text-sm font-medium text-blue-600">مدیریت سامانه AriaHR</p>
     <div class="mt-1 flex items-end justify-between gap-3">
-      <div><h1 class="text-2xl font-bold tracking-tight text-slate-900">سلام، مدیر سیستم</h1><p class="mt-1 text-sm text-slate-500">نمای کلی عملکرد امروز سامانه</p></div>
-      <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-600 text-lg font-bold text-white shadow-sm">م</div>
+      <div><h1 class="text-2xl font-bold tracking-tight text-slate-900">سلام، {{ userGreetingName() }}</h1><p class="mt-1 text-sm text-slate-500">نمای کلی عملکرد امروز سامانه</p></div>
+      <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-600 text-lg font-bold text-white shadow-sm">{{ avatarInitial() }}</div>
     </div>
   </div>
 

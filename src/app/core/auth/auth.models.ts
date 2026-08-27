@@ -16,6 +16,16 @@ export interface VerifyOtpDto {
   readonly otpCode?: string;
 }
 
+/** Strongly typed authenticated user information returned by /api/auth/me. */
+export interface CurrentUserDto {
+  readonly id: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly phoneNumber: string;
+  readonly roles: string[];
+  readonly organizationId: string | null;
+}
+
 /** User information returned upon successful authentication. */
 export interface AuthUserDto {
   readonly id?: string;
