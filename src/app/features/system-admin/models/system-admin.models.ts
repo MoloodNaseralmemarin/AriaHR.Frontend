@@ -45,7 +45,8 @@ export interface CreateCenterPayload {
   address: string;
   phone: string;
   // Manager info
-  managerName: string;
+  managerFirstName: string;
+  managerLastName: string;
   managerMobile: string;
   managerEmail: string;
 }
