@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, finalize } from 'rxjs/operators';
 
 import { AuthApiService } from './auth-api.service';
 import {
@@ -34,6 +35,7 @@ const CURRENT_USER_KEY = 'aria_hr_current_user';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly authApiService = inject(AuthApiService);
+  private readonly router = inject(Router);
 
   readonly token = signal<string | null>(this.getStoredToken());
   readonly currentUser = signal<AuthUserDto | null>(this.loadUserFromStorage());
@@ -155,15 +157,30 @@ export class AuthService {
     );
   }
 
-  /** Clears authentication session. */
+  /** Clears authentication session locally and calls backend POST /api/auth/logout. */
   logout(): void {
+    this.authApiService.logout().pipe(
+      catchError(() => of(null)),
+      finalize(() => {
+        this.clearLocalSession();
+        if (this.router.url !== '/login') {
+          this.router.navigate(['/login']);
+        }
+      })
+    ).subscribe();
+  }
+
+  /** Clears token, user details and local storage keys synchronously. */
+  clearLocalSession(): void {
     this.token.set(null);
     this.currentUser.set(null);
     this.userDetails.set(null);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(CURRENT_USER_KEY);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(CURRENT_USER_KEY);
+    }
   }
 
   private getStoredToken(): string | null {
