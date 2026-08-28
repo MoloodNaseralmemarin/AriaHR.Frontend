@@ -42,4 +42,12 @@ export class AuthApiService {
       `${this.baseUrl}/api/auth/me`
     );
   }
+
+  /** Sends a POST request to logout the currently authenticated session. */
+  logout(): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/api/auth/logout`,
+      {}
+    );
+  }
 }
