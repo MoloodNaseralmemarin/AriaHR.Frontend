@@ -28,6 +28,7 @@ describe('Authenticated User Information Flow', () => {
   };
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [SystemAdminDashboardComponent],
       providers: [
@@ -40,6 +41,13 @@ describe('Authenticated User Information Flow', () => {
           provide: SystemAdminDataService,
           useValue: {
             stats: () => ({ totalCenters: 10, activeCenters: 8, totalManagers: 5, totalEmployees: 100, newCentersThisMonth: 2 }),
+            statsLoading: () => false,
+            statsError: () => null,
+            recentOrganizations: () => [],
+            recentOrganizationsLoading: () => false,
+            recentOrganizationsError: () => null,
+            loadDashboardSummary: () => of(null),
+            loadRecentOrganizations: () => of([]),
             getRecentCenters: () => [],
             getRecentActivity: () => [],
           },
@@ -51,7 +59,7 @@ describe('Authenticated User Information Flow', () => {
     authApiService = TestBed.inject(AuthApiService);
     httpMock = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
-    authService.logout();
+    authService.clearLocalSession();
   });
 
   afterEach(() => {
@@ -107,5 +115,20 @@ describe('Authenticated User Information Flow', () => {
 
     const avatar = compiled.querySelector('.rounded-2xl.bg-blue-600')?.textContent;
     expect(avatar).toBe('م');
+  });
+
+  it('should call POST /api/auth/logout and clear local session even on HTTP error', () => {
+    authService.saveAuthentication('valid-jwt-token');
+    const navigateSpy = vi.spyOn(router, 'navigate');
+
+    authService.logout();
+
+    const req = httpMock.expectOne('https://localhost:7151/api/auth/logout');
+    expect(req.request.method).toBe('POST');
+    req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+
+    expect(authService.token()).toBeNull();
+    expect(authService.userDetails()).toBeNull();
+    expect(navigateSpy).toHaveBeenCalledWith(['/login']);
   });
 });
