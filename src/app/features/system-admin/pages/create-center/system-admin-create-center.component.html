@@ -33,6 +33,18 @@
       </label>
 
       <label>
+        کد مرکز *
+        <input
+          formControlName="centerCode"
+          placeholder="مثلاً C-101"
+          [class.invalid]="isControlInvalid('centerCode')"
+        />
+        @if (getControlError('centerCode')) {
+          <span class="error-msg">{{ getControlError('centerCode') }}</span>
+        }
+      </label>
+
+      <label>
         نوع مرکز *
         <select formControlName="centerType" [class.invalid]="isControlInvalid('centerType')">
           <option value="">انتخاب کنید</option>

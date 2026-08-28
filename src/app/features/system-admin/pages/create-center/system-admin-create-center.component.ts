@@ -34,6 +34,7 @@ export class SystemAdminCreateCenterComponent {
 
   readonly form = this.fb.group({
     centerName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
+    centerCode: ['', [Validators.required, Validators.maxLength(50)]],
     centerType: ['', [Validators.required]],
     address: ['', [Validators.maxLength(500)]],
     phone: ['', [Validators.pattern(IRAN_LANDLINE_PATTERN)]],
@@ -43,7 +44,7 @@ export class SystemAdminCreateCenterComponent {
     managerEmail: ['', [Validators.email]],
   });
 
-  private step1ControlNames = ['centerName', 'centerType', 'address', 'phone'];
+  private step1ControlNames = ['centerName', 'centerCode', 'centerType', 'address', 'phone'];
   private step2ControlNames = ['managerFirstName', 'managerLastName', 'managerMobile', 'managerEmail'];
 
   isControlInvalid(name: string): boolean {
@@ -62,6 +63,8 @@ export class SystemAdminCreateCenterComponent {
       switch (name) {
         case 'centerName':
           return 'نام مرکز الزامی است.';
+        case 'centerCode':
+          return 'کد مرکز الزامی است.';
         case 'centerType':
           return 'انتخاب نوع مرکز الزامی است.';
         case 'managerFirstName':
@@ -151,7 +154,7 @@ export class SystemAdminCreateCenterComponent {
 
     const requestDto: CreateOrganizationDto = {
       name: formValues.centerName,
-      code: '',
+      code: formValues.centerCode ? formValues.centerCode.trim() : '',
       type: CENTER_TYPE_MAP[formValues.centerType] ?? 1,
       nationalIdentifier: null,
       phone: formValues.phone ? formValues.phone : null,

@@ -41,6 +41,7 @@ export interface SystemAdminStats {
 export interface CreateCenterPayload {
   // Center info
   centerName: string;
+  centerCode: string;
   centerType: string;
   address: string;
   phone: string;
