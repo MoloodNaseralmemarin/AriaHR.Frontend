@@ -4,7 +4,6 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { SystemAdminDataService } from '../../services/system-admin-data.service';
 import { CenterStatus, SystemActivity } from '../../models/system-admin.models';
-import { OrganizationRecentDto } from '../../../organizations/models/organization-recent.dto';
 
 @Component({
   selector: 'app-system-admin-dashboard',
@@ -19,13 +18,6 @@ export class SystemAdminDashboardComponent implements OnInit {
   private readonly data = inject(SystemAdminDataService);
 
   readonly stats = this.data.stats;
-  readonly statsLoading = this.data.statsLoading;
-  readonly statsError = this.data.statsError;
-
-  readonly recentOrgs = this.data.recentOrganizations;
-  readonly recentOrgsLoading = this.data.recentOrganizationsLoading;
-  readonly recentOrgsError = this.data.recentOrganizationsError;
-
   readonly recentCenters = computed(() => this.data.getRecentCenters(3));
   readonly recentActivity = computed(() => this.data.getRecentActivity(3));
 
@@ -52,28 +44,6 @@ export class SystemAdminDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.authService.getCurrentUser().subscribe();
-    this.data.loadDashboardSummary().subscribe();
-    this.data.loadRecentOrganizations().subscribe();
-  }
-
-  getRecentOrgManagerName(org: OrganizationRecentDto): string {
-    if (org.managerName) return org.managerName;
-    if (org.managerFirstName || org.managerLastName) {
-      return `${org.managerFirstName || ''} ${org.managerLastName || ''}`.trim();
-    }
-    return 'نامشخص';
-  }
-
-  getRecentOrgStatusLabel(org: OrganizationRecentDto): string {
-    if (org.isActive === true || org.status === 'active') return 'فعال';
-    if (org.status === 'pending') return 'در انتظار تکمیل';
-    return 'غیرفعال';
-  }
-
-  getRecentOrgStatusClass(org: OrganizationRecentDto): string {
-    const isAct = org.isActive === true || org.status === 'active';
-    const statusStr = isAct ? 'active' : org.status === 'pending' ? 'pending' : 'inactive';
-    return `status-${statusStr}`;
   }
 
   getStatusLabel(status: CenterStatus): string {
