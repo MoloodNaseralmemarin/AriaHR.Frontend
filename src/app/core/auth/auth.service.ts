@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, finalize, map, tap } from 'rxjs/operators';
 
 import { AuthApiService } from './auth-api.service';
 import {
@@ -23,6 +24,11 @@ export interface OtpVerifyResponse {
   readonly user?: AuthUserDto;
 }
 
+export interface LogoutResponse {
+  readonly success: boolean;
+  readonly message?: string;
+}
+
 const TOKEN_KEY = 'aria_hr_access_token';
 const REFRESH_TOKEN_KEY = 'aria_hr_refresh_token';
 const USER_KEY = 'aria_hr_user';
@@ -34,11 +40,13 @@ const CURRENT_USER_KEY = 'aria_hr_current_user';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly authApiService = inject(AuthApiService);
+  private readonly router = inject(Router);
 
   readonly token = signal<string | null>(this.getStoredToken());
   readonly currentUser = signal<AuthUserDto | null>(this.loadUserFromStorage());
   readonly userDetails = signal<CurrentUserDto | null>(this.loadCurrentUserFromStorage());
   readonly isAuthenticated = computed(() => !!this.token());
+  readonly isLoggingOut = signal(false);
 
   /** Requests an OTP code for a given mobile number via AuthApiService. */
   requestOtp(mobileNumber: string): Observable<OtpRequestResponse> {
@@ -155,15 +163,55 @@ export class AuthService {
     );
   }
 
-  /** Clears authentication session. */
-  logout(): void {
+  /**
+   * Logs out the user by making API call to POST /api/auth/logout,
+   * clearing local authentication storage/signals, and navigating to /login.
+   */
+  logout(): Observable<LogoutResponse> {
+    if (this.isLoggingOut()) {
+      return of({ success: false, message: 'در حال خروج از حساب...' });
+    }
+
+    this.isLoggingOut.set(true);
+
+    return this.authApiService.logout().pipe(
+      map(() => ({
+        success: true,
+        message: 'با موفقیت از حساب کاربری خارج شدید.',
+      })),
+      catchError((error) => {
+        let errorMessage = 'خروج از حساب کاربری انجام نشد. لطفاً دوباره تلاش کنید.';
+        if (error?.error && typeof error.error.message === 'string') {
+          errorMessage = error.error.message;
+        }
+        return of({
+          success: false,
+          message: errorMessage,
+        });
+      }),
+      tap(() => {
+        this.clearSession();
+        if (this.router.url !== '/login') {
+          this.router.navigate(['/login'], { replaceUrl: true });
+        }
+      }),
+      finalize(() => {
+        this.isLoggingOut.set(false);
+      })
+    );
+  }
+
+  /** Clears authentication session state and local storage. */
+  clearSession(): void {
     this.token.set(null);
     this.currentUser.set(null);
     this.userDetails.set(null);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(CURRENT_USER_KEY);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(CURRENT_USER_KEY);
+    }
   }
 
   private getStoredToken(): string | null {
