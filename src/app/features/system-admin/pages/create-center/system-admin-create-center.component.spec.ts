@@ -55,6 +55,7 @@ describe('SystemAdminCreateCenterComponent', () => {
   it('Step 1 valid data moves to Step 2', () => {
     component.form.patchValue({
       centerName: 'کلینیک پارس',
+      centerCode: 'C-101',
       centerType: 'کلینیک',
       address: 'تهران، خیابان ولیعصر',
       phone: '02188888888',
@@ -65,9 +66,24 @@ describe('SystemAdminCreateCenterComponent', () => {
     expect(component.step()).toBe(2);
   });
 
+  it('Step 1 invalid data (missing centerCode) stays on Step 1 and marks invalid controls as touched', () => {
+    component.form.patchValue({
+      centerName: 'کلینیک پارس',
+      centerCode: '', // Required
+      centerType: 'کلینیک',
+    });
+
+    component.nextStep();
+
+    expect(component.step()).toBe(1);
+    expect(component.form.get('centerCode')?.touched).toBe(true);
+    expect(component.form.get('centerCode')?.invalid).toBe(true);
+  });
+
   it('Step 1 invalid data stays on Step 1 and marks invalid controls as touched', () => {
     component.form.patchValue({
       centerName: '', // Required
+      centerCode: '', // Required
       centerType: '', // Required
     });
 
@@ -75,12 +91,14 @@ describe('SystemAdminCreateCenterComponent', () => {
 
     expect(component.step()).toBe(1);
     expect(component.form.get('centerName')?.touched).toBe(true);
+    expect(component.form.get('centerCode')?.touched).toBe(true);
     expect(component.form.get('centerType')?.touched).toBe(true);
   });
 
   it('optional address does not block progression when empty', () => {
     component.form.patchValue({
       centerName: 'مرکز درمانی شفا',
+      centerCode: 'MED-202',
       centerType: 'مرکز درمانی',
       address: '',
       phone: '',
@@ -94,6 +112,7 @@ describe('SystemAdminCreateCenterComponent', () => {
   it('optional phone does not block progression when empty', () => {
     component.form.patchValue({
       centerName: 'مرکز درمانی شفا',
+      centerCode: 'MED-202',
       centerType: 'مرکز درمانی',
       address: 'خیابان اصلی',
       phone: '',
@@ -107,6 +126,7 @@ describe('SystemAdminCreateCenterComponent', () => {
   it('invalid phone format is rejected', () => {
     component.form.patchValue({
       centerName: 'مرکز تصویربرداری نور',
+      centerCode: 'RAD-303',
       centerType: 'مرکز تصویربرداری',
       phone: '123456', // Invalid phone
     });
@@ -121,6 +141,7 @@ describe('SystemAdminCreateCenterComponent', () => {
   it('Step 2 Back button returns to Step 1 and preserves form values', () => {
     component.form.patchValue({
       centerName: 'کلینیک آریا',
+      centerCode: 'C-101',
       centerType: 'کلینیک',
       address: 'خیابان بهار',
       phone: '02122223333',
@@ -138,6 +159,7 @@ describe('SystemAdminCreateCenterComponent', () => {
 
     expect(component.form.value).toEqual({
       centerName: 'کلینیک آریا',
+      centerCode: 'C-101',
       centerType: 'کلینیک',
       address: 'خیابان بهار',
       phone: '02122223333',
@@ -151,6 +173,7 @@ describe('SystemAdminCreateCenterComponent', () => {
   it('invalid managerFirstName is rejected', () => {
     component.form.patchValue({
       centerName: 'کلینیک آریا',
+      centerCode: 'C-101',
       centerType: 'کلینیک',
     });
     component.nextStep();
@@ -170,6 +193,7 @@ describe('SystemAdminCreateCenterComponent', () => {
   it('invalid managerLastName is rejected', () => {
     component.form.patchValue({
       centerName: 'کلینیک آریا',
+      centerCode: 'C-101',
       centerType: 'کلینیک',
     });
     component.nextStep();
@@ -189,6 +213,7 @@ describe('SystemAdminCreateCenterComponent', () => {
   it('invalid managerMobile is rejected', () => {
     component.form.patchValue({
       centerName: 'کلینیک آریا',
+      centerCode: 'C-101',
       centerType: 'کلینیک',
     });
     component.nextStep();
@@ -208,6 +233,7 @@ describe('SystemAdminCreateCenterComponent', () => {
   it('invalid managerEmail is rejected', () => {
     component.form.patchValue({
       centerName: 'کلینیک آریا',
+      centerCode: 'C-101',
       centerType: 'کلینیک',
     });
     component.nextStep();
@@ -225,9 +251,10 @@ describe('SystemAdminCreateCenterComponent', () => {
     expect(component.form.get('managerEmail')?.invalid).toBe(true);
   });
 
-  it('valid Step 2 submits successfully with correct CreateOrganizationDto mapping and navigates to /system-admin/centers', () => {
+  it('valid Step 2 submits successfully with correct CreateOrganizationDto mapping (centerCode -> code trimmed) and navigates to /system-admin/centers', () => {
     component.form.patchValue({
       centerName: 'کلینیک سلامت',
+      centerCode: '  C-101  ',
       centerType: 'کلینیک',
       address: 'خیابان آزادی',
       phone: '02166667777',
@@ -242,7 +269,7 @@ describe('SystemAdminCreateCenterComponent', () => {
 
     expect(mockOrganizationService.createOrganization).toHaveBeenCalledWith({
       name: 'کلینیک سلامت',
-      code: '',
+      code: 'C-101',
       type: 1,
       nationalIdentifier: null,
       phone: '02166667777',
@@ -260,6 +287,7 @@ describe('SystemAdminCreateCenterComponent', () => {
   it('maps centerType correctly for مرکز درمانی (2) and مرکز تصویربرداری (3)', () => {
     component.form.patchValue({
       centerName: 'مرکز تصویربرداری پارس',
+      centerCode: 'RAD-303',
       centerType: 'مرکز تصویربرداری',
       managerFirstName: 'علی',
       managerLastName: 'رضایی',
@@ -271,6 +299,7 @@ describe('SystemAdminCreateCenterComponent', () => {
 
     expect(mockOrganizationService.createOrganization).toHaveBeenCalledWith(
       expect.objectContaining({
+        code: 'RAD-303',
         type: 3,
       })
     );
@@ -282,6 +311,7 @@ describe('SystemAdminCreateCenterComponent', () => {
 
     component.form.patchValue({
       centerName: 'کلینیک سلامت',
+      centerCode: 'C-101',
       centerType: 'کلینیک',
       managerFirstName: 'مریم',
       managerLastName: 'حسینی',
@@ -308,6 +338,7 @@ describe('SystemAdminCreateCenterComponent', () => {
 
     component.form.patchValue({
       centerName: 'کلینیک سلامت',
+      centerCode: 'C-101',
       centerType: 'کلینیک',
       managerFirstName: 'مریم',
       managerLastName: 'حسینی',
@@ -324,6 +355,7 @@ describe('SystemAdminCreateCenterComponent', () => {
   it('saving returns to false after success', () => {
     component.form.patchValue({
       centerName: 'کلینیک سلامت',
+      centerCode: 'C-101',
       centerType: 'کلینیک',
       managerFirstName: 'مریم',
       managerLastName: 'حسینی',
