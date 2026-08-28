@@ -5,6 +5,7 @@ import { catchError, map } from 'rxjs/operators';
 import { AuthApiService } from './auth-api.service';
 import {
   AuthUserDto,
+  CurrentUserDto,
   SendOtpResponseDto,
   VerifyOtpResponseDto,
 } from './auth.models';
@@ -25,6 +26,7 @@ export interface OtpVerifyResponse {
 const TOKEN_KEY = 'aria_hr_access_token';
 const REFRESH_TOKEN_KEY = 'aria_hr_refresh_token';
 const USER_KEY = 'aria_hr_user';
+const CURRENT_USER_KEY = 'aria_hr_current_user';
 
 /**
  * Authentication service managing user state, tokens, and API communication.
@@ -35,6 +37,7 @@ export class AuthService {
 
   readonly token = signal<string | null>(this.getStoredToken());
   readonly currentUser = signal<AuthUserDto | null>(this.loadUserFromStorage());
+  readonly userDetails = signal<CurrentUserDto | null>(this.loadCurrentUserFromStorage());
   readonly isAuthenticated = computed(() => !!this.token());
 
   /** Requests an OTP code for a given mobile number via AuthApiService. */
@@ -136,13 +139,31 @@ export class AuthService {
     }
   }
 
+  /** Retrieves currently authenticated user profile from /api/auth/me and updates state. */
+  getCurrentUser(): Observable<CurrentUserDto | null> {
+    return this.authApiService.getCurrentUser().pipe(
+      map((user: CurrentUserDto) => {
+        this.userDetails.set(user);
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+        }
+        return user;
+      }),
+      catchError((error) => {
+        return of(null);
+      })
+    );
+  }
+
   /** Clears authentication session. */
   logout(): void {
     this.token.set(null);
     this.currentUser.set(null);
+    this.userDetails.set(null);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(CURRENT_USER_KEY);
   }
 
   private getStoredToken(): string | null {
@@ -156,6 +177,17 @@ export class AuthService {
     if (!json) return null;
     try {
       return JSON.parse(json) as AuthUserDto;
+    } catch {
+      return null;
+    }
+  }
+
+  private loadCurrentUserFromStorage(): CurrentUserDto | null {
+    if (typeof localStorage === 'undefined') return null;
+    const json = localStorage.getItem(CURRENT_USER_KEY);
+    if (!json) return null;
+    try {
+      return JSON.parse(json) as CurrentUserDto;
     } catch {
       return null;
     }

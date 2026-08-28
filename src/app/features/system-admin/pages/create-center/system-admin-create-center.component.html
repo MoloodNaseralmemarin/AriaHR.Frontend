@@ -3,7 +3,9 @@
   <div>
     <p class="eyebrow">مرحله {{ step() }} از ۲</p>
     <h1>{{ step() === 1 ? 'ثبت مرکز جدید' : 'اطلاعات مدیر مرکز' }}</h1>
-    <p class="subtitle">{{ step() === 1 ? 'اطلاعات اصلی مرکز را وارد کنید' : 'مدیر این مرکز را مشخص کنید' }}</p>
+    <p class="subtitle">
+      {{ step() === 1 ? 'اطلاعات اصلی مرکز را وارد کنید' : 'مدیر این مرکز را مشخص کنید' }}
+    </p>
   </div>
   <div class="progress">
     <span [class.done]="step() >= 1"></span>
@@ -20,9 +22,25 @@
     @if (step() === 1) {
       <label>
         نام مرکز *
-        <input formControlName="centerName" placeholder="مثلاً کلینیک آریا" [class.invalid]="isControlInvalid('centerName')" />
+        <input
+          formControlName="centerName"
+          placeholder="مثلاً کلینیک آریا"
+          [class.invalid]="isControlInvalid('centerName')"
+        />
         @if (getControlError('centerName')) {
           <span class="error-msg">{{ getControlError('centerName') }}</span>
+        }
+      </label>
+
+      <label>
+        کد مرکز *
+        <input
+          formControlName="centerCode"
+          placeholder="مثلاً C-101"
+          [class.invalid]="isControlInvalid('centerCode')"
+        />
+        @if (getControlError('centerCode')) {
+          <span class="error-msg">{{ getControlError('centerCode') }}</span>
         }
       </label>
 
@@ -38,10 +56,14 @@
           <span class="error-msg">{{ getControlError('centerType') }}</span>
         }
       </label>
-
       <label>
         آدرس مرکز
-        <textarea formControlName="address" rows="3" placeholder="آدرس کامل مرکز" [class.invalid]="isControlInvalid('address')"></textarea>
+        <textarea
+          formControlName="address"
+          rows="3"
+          placeholder="آدرس کامل مرکز"
+          [class.invalid]="isControlInvalid('address')"
+        ></textarea>
         @if (getControlError('address')) {
           <span class="error-msg">{{ getControlError('address') }}</span>
         }
@@ -49,21 +71,28 @@
 
       <label>
         شماره تماس
-        <input formControlName="phone" inputmode="tel" placeholder="021-12345678" [class.invalid]="isControlInvalid('phone')" />
+        <input
+          formControlName="phone"
+          inputmode="tel"
+          placeholder="021-12345678"
+          [class.invalid]="isControlInvalid('phone')"
+        />
         @if (getControlError('phone')) {
           <span class="error-msg">{{ getControlError('phone') }}</span>
         }
       </label>
 
       <div class="actions">
-        <button class="submit" type="submit" [disabled]="saving()">
-          ادامه <span>←</span>
-        </button>
+        <button class="submit" type="submit" [disabled]="saving()">ادامه <span>←</span></button>
       </div>
     } @else {
       <label>
         نام مدیر *
-        <input formControlName="managerFirstName" placeholder="مثلاً علی" [class.invalid]="isControlInvalid('managerFirstName')" />
+        <input
+          formControlName="managerFirstName"
+          placeholder="مثلاً علی"
+          [class.invalid]="isControlInvalid('managerFirstName')"
+        />
         @if (getControlError('managerFirstName')) {
           <span class="error-msg">{{ getControlError('managerFirstName') }}</span>
         }
@@ -71,7 +100,11 @@
 
       <label>
         نام خانوادگی مدیر *
-        <input formControlName="managerLastName" placeholder="مثلاً محمدی" [class.invalid]="isControlInvalid('managerLastName')" />
+        <input
+          formControlName="managerLastName"
+          placeholder="مثلاً محمدی"
+          [class.invalid]="isControlInvalid('managerLastName')"
+        />
         @if (getControlError('managerLastName')) {
           <span class="error-msg">{{ getControlError('managerLastName') }}</span>
         }
@@ -79,7 +112,12 @@
 
       <label>
         شماره موبایل مدیر *
-        <input formControlName="managerMobile" inputmode="tel" placeholder="0912•••••••" [class.invalid]="isControlInvalid('managerMobile')" />
+        <input
+          formControlName="managerMobile"
+          inputmode="tel"
+          placeholder="0912•••••••"
+          [class.invalid]="isControlInvalid('managerMobile')"
+        />
         @if (getControlError('managerMobile')) {
           <span class="error-msg">{{ getControlError('managerMobile') }}</span>
         }
@@ -87,7 +125,12 @@
 
       <label>
         ایمیل مدیر
-        <input formControlName="managerEmail" type="email" placeholder="manager@example.com" [class.invalid]="isControlInvalid('managerEmail')" />
+        <input
+          formControlName="managerEmail"
+          type="email"
+          placeholder="manager@example.com"
+          [class.invalid]="isControlInvalid('managerEmail')"
+        />
         @if (getControlError('managerEmail')) {
           <span class="error-msg">{{ getControlError('managerEmail') }}</span>
         }
