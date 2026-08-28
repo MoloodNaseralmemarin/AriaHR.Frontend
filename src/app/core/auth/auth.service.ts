@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { catchError, map, finalize } from 'rxjs/operators';
+import { catchError, finalize, map } from 'rxjs/operators';
 
 import { AuthApiService } from './auth-api.service';
 import {
@@ -30,7 +30,7 @@ const USER_KEY = 'aria_hr_user';
 const CURRENT_USER_KEY = 'aria_hr_current_user';
 
 /**
- * Authentication service managing user state, tokens, and API communication.
+ * Authentication service managing user state, tokens, role detection, and API communication.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -129,15 +129,15 @@ export class AuthService {
   /** Saves token and user info in state and persistent storage. */
   saveAuthentication(token: string, refreshToken?: string, user?: AuthUserDto): void {
     this.token.set(token);
-    localStorage.setItem(TOKEN_KEY, token);
-
-    if (refreshToken) {
-      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-    }
-
-    if (user) {
-      this.currentUser.set(user);
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(TOKEN_KEY, token);
+      if (refreshToken) {
+        localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      }
+      if (user) {
+        this.currentUser.set(user);
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+      }
     }
   }
 
@@ -151,27 +151,67 @@ export class AuthService {
         }
         return user;
       }),
-      catchError((error) => {
+      catchError(() => {
         return of(null);
       })
     );
   }
 
-  /** Clears authentication session locally and calls backend POST /api/auth/logout. */
-  logout(): void {
-    this.authApiService.logout().pipe(
-      catchError(() => of(null)),
-      finalize(() => {
-        this.clearLocalSession();
-        if (this.router.url !== '/login') {
-          this.router.navigate(['/login']);
-        }
-      })
-    ).subscribe();
+  /** Returns the primary backend role string ('SystemAdmin', 'CenterManager', 'Employee') for the active session. */
+  getUserRole(): string | null {
+    const details = this.userDetails();
+    if (details && details.roles && details.roles.length > 0) {
+      return details.roles[0];
+    }
+
+    const user = this.currentUser();
+    if (user && user.roles && user.roles.length > 0) {
+      return user.roles[0];
+    }
+
+    // Fallback checking user object permissions/roles properties if present
+    const legacyRole = (user as unknown as Record<string, unknown>)?.['role'] as string | undefined;
+    if (legacyRole) {
+      return legacyRole;
+    }
+
+    return null;
   }
 
-  /** Clears token, user details and local storage keys synchronously. */
-  clearLocalSession(): void {
+  /** Returns the default dashboard route path based on the authenticated user's role. */
+  getDefaultDashboardRoute(): string {
+    const role = this.getUserRole();
+    switch (role) {
+      case 'SystemAdmin':
+        return '/system-admin/dashboard';
+      case 'CenterManager':
+        return '/center-manager/dashboard';
+      case 'Employee':
+        return '/employee/dashboard';
+      default:
+        return '/login';
+    }
+  }
+
+  /** Clears authentication session client-side and attempts backend POST /api/auth/logout. */
+  logout(): void {
+    this.authApiService
+      .logout()
+      .pipe(
+        finalize(() => {
+          this.clearClientSession();
+          this.router.navigate(['/login'], { replaceUrl: true });
+        })
+      )
+      .subscribe({
+        error: () => {
+          // Failure ignored as finalize handles client cleanup
+        },
+      });
+  }
+
+  /** Synchronously clears all authentication signals and stored token/user items. */
+  clearClientSession(): void {
     this.token.set(null);
     this.currentUser.set(null);
     this.userDetails.set(null);

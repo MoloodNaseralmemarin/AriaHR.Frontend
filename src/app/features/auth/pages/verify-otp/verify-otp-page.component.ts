@@ -23,7 +23,7 @@ type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 const COUNTDOWN_SECONDS = 120;
 
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-const ARABIC_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+const ARABIC_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '۷', '۸', '۹'];
 
 function extractRawDigits(raw: string): string[] {
   if (!raw) return [];
@@ -303,10 +303,18 @@ export class VerifyOtpPageComponent implements OnInit, AfterViewInit, OnDestroy 
     this.authService.verifyOtp(currentPhone, this.fullCode()).subscribe({
       next: (res: OtpVerifyResponse) => {
         if (res.success) {
+          const targetRoute = this.authService.getDefaultDashboardRoute();
+          if (targetRoute === '/login') {
+            this.hasFailedAttempt.set(true);
+            this.submitState.set('error');
+            this.errorMessage.set('نقش کاربر مشخص نیست. ورود انجام نشد.');
+            return;
+          }
+
           this.submitState.set('success');
           setTimeout(() => {
             this.digits.set(['', '', '', '']);
-            this.router.navigate(['/system-admin/dashboard']);
+            this.router.navigate([targetRoute]);
           }, 400);
         } else {
           this.hasFailedAttempt.set(true);

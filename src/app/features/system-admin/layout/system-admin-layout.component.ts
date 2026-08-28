@@ -21,4 +21,8 @@ export class SystemAdminLayoutComponent {
     }
     return 'م';
   });
+
+  onLogout(): void {
+    this.authService.logout();
+  }
 }
