@@ -1,0 +1,153 @@
+<div>
+  <app-page-header title="کارکنان" subtitle="مدیریت لیست کارکنان و مشاهده وضعیت حضور امروز">
+    <button
+      actions
+      type="button"
+      class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      افزودن کارمند
+    </button>
+  </app-page-header>
+
+  <!-- Search + Filters -->
+  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="relative w-full sm:max-w-xs">
+      <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input
+        type="text"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="جستجوی نام، سمت یا شماره موبایل..."
+        class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pe-9 ps-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+      />
+    </div>
+
+    <div class="flex items-center gap-1.5 overflow-x-auto">
+      <button
+        *ngFor="let f of filters"
+        type="button"
+        (click)="setFilter(f.value)"
+        class="shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors"
+        [ngClass]="activeFilter() === f.value
+          ? 'bg-blue-600 text-white'
+          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+      >
+        {{ f.label }}
+      </button>
+    </div>
+  </div>
+
+  <p class="mb-3 text-xs text-slate-400">{{ filteredEmployees().length }} کارمند یافت شد</p>
+
+  <!-- Loading -->
+  <ng-container *ngIf="isLoading; else content">
+    <app-skeleton-loader variant="row" [count]="5" class="hidden md:block"></app-skeleton-loader>
+    <app-skeleton-loader variant="card" [count]="4" class="md:hidden"></app-skeleton-loader>
+  </ng-container>
+
+  <ng-template #content>
+    <!-- Empty -->
+    <app-empty-state
+      *ngIf="filteredEmployees().length === 0"
+      title="کارمندی یافت نشد"
+      description="عبارت جستجو یا فیلتر انتخابی را تغییر دهید."
+    ></app-empty-state>
+
+    <ng-container *ngIf="filteredEmployees().length > 0">
+      <!-- Desktop table -->
+      <div class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white md:block">
+        <table class="w-full text-start text-sm">
+          <thead>
+            <tr class="border-b border-slate-100 bg-slate-50/70 text-xs text-slate-500">
+              <th class="px-4 py-3 text-start font-medium">نام و نام خانوادگی</th>
+              <th class="px-4 py-3 text-start font-medium">سمت</th>
+              <th class="px-4 py-3 text-start font-medium">شماره موبایل</th>
+              <th class="px-4 py-3 text-start font-medium">وضعیت</th>
+              <th class="px-4 py-3 text-start font-medium">حضور امروز</th>
+              <th class="px-4 py-3 text-start font-medium"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let emp of filteredEmployees()"
+              class="border-b border-slate-50 last:border-0 hover:bg-slate-50/60"
+            >
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[11px] font-bold text-blue-700">
+                    {{ emp.avatarInitials }}
+                  </div>
+                  <span class="font-medium text-slate-700">{{ emp.fullName }}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-slate-600">{{ emp.role }}</td>
+              <td class="px-4 py-3 text-slate-600" dir="ltr">{{ emp.mobile }}</td>
+              <td class="px-4 py-3">
+                <app-status-badge
+                  [label]="emp.status === 'active' ? 'فعال' : 'غیرفعال'"
+                  [tone]="emp.status === 'active' ? 'success' : 'neutral'"
+                ></app-status-badge>
+              </td>
+              <td class="px-4 py-3">
+                <app-status-badge
+                  [label]="attendanceStatusMap[emp.todayAttendance].label"
+                  [tone]="attendanceStatusMap[emp.todayAttendance].tone"
+                ></app-status-badge>
+              </td>
+              <td class="px-4 py-3 text-end">
+                <button
+                  type="button"
+                  (click)="onViewDetails(emp)"
+                  class="rounded-lg px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                >
+                  جزئیات
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="grid grid-cols-1 gap-3 md:hidden">
+        <div
+          *ngFor="let emp of filteredEmployees()"
+          class="rounded-2xl border border-slate-200 bg-white p-4"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-700">
+                {{ emp.avatarInitials }}
+              </div>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-slate-800">{{ emp.fullName }}</p>
+                <p class="truncate text-xs text-slate-500">{{ emp.role }}</p>
+              </div>
+            </div>
+            <app-status-badge
+              [label]="emp.status === 'active' ? 'فعال' : 'غیرفعال'"
+              [tone]="emp.status === 'active' ? 'success' : 'neutral'"
+            ></app-status-badge>
+          </div>
+
+          <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+            <span class="text-xs text-slate-500" dir="ltr">{{ emp.mobile }}</span>
+            <app-status-badge
+              [label]="attendanceStatusMap[emp.todayAttendance].label"
+              [tone]="attendanceStatusMap[emp.todayAttendance].tone"
+            ></app-status-badge>
+          </div>
+
+          <button
+            type="button"
+            (click)="onViewDetails(emp)"
+            class="mt-3 w-full rounded-xl border border-slate-200 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+          >
+            مشاهده جزئیات کارمند
+          </button>
+        </div>
+      </div>
+    </ng-container>
+  </ng-template>
+</div>

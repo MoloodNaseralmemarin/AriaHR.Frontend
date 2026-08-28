@@ -42,4 +42,12 @@ export class AuthApiService {
       `${this.baseUrl}/api/auth/me`
     );
   }
+
+  /** Logs out the current session on the backend. */
+  logout(): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/api/auth/logout`,
+      {}
+    );
+  }
 }
