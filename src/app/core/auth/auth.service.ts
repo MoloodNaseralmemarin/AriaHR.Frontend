@@ -33,7 +33,9 @@ const CURRENT_USER_KEY = 'aria_hr_current_user';
  * Authentication service managing user state, tokens, role detection, and API communication.
  */
 @Injectable({ providedIn: 'root' })
-export class AuthService {
+export class 
+
+AuthService {
   private readonly authApiService = inject(AuthApiService);
   private readonly router = inject(Router);
 

@@ -27,6 +27,7 @@ export class SystemAdminDashboardComponent implements OnInit {
   // Fallback to local data service stats if API call fails, or map real API data handling case-insensitivity
   readonly stats = computed(() => {
     const summary = this.summaryData();
+    console.log(summary);
     if (summary) {
       return {
         totalCenters: summary.totalCenters ?? summary.TotalCenters ?? 0,
