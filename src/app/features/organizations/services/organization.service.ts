@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { CreateOrganizationDto } from '../models/create-organization.dto';
+import { OrganizationDashboardSummaryDto } from '../models/organization-dashboard-summary.dto';
 import { OrganizationResponseDto } from '../models/organization-response.dto';
 
 @Injectable({
@@ -19,5 +20,13 @@ export class OrganizationService {
    */
   createOrganization(request: CreateOrganizationDto): Observable<OrganizationResponseDto> {
     return this.http.post<OrganizationResponseDto>(this.apiUrl, request);
+  }
+
+  /**
+   * Fetches dashboard summary metrics for organizations.
+   * Endpoint: GET /api/organizations/dashboard-summary
+   */
+  getDashboardSummary(): Observable<OrganizationDashboardSummaryDto> {
+    return this.http.get<OrganizationDashboardSummaryDto>(`${this.apiUrl}/dashboard-summary`);
   }
 }

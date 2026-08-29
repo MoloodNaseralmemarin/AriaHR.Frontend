@@ -7,12 +7,41 @@
     </div>
   </div>
 
-  <section aria-label="آمار سامانه" class="grid grid-cols-2 gap-3">
-    <article class="stat-card"><span class="stat-icon blue">▣</span><span class="stat-label">کل مراکز</span><strong>{{ stats().totalCenters }}</strong><span class="stat-note">+{{ stats().newCentersThisMonth }} این ماه</span></article>
-    <article class="stat-card"><span class="stat-icon green">✓</span><span class="stat-label">مراکز فعال</span><strong>{{ stats().activeCenters }}</strong><span class="stat-note">از {{ stats().totalCenters }} مرکز</span></article>
-    <article class="stat-card"><span class="stat-icon amber">♙</span><span class="stat-label">مدیران مراکز</span><strong>{{ stats().totalManagers }}</strong><span class="stat-note">مدیر ثبت شده</span></article>
-    <article class="stat-card"><span class="stat-icon violet">♟</span><span class="stat-label">کل کارکنان</span><strong>{{ stats().totalEmployees }}</strong><span class="stat-note">در سراسر مراکز</span></article>
-  </section>
+  @if (isLoading()) {
+    <div class="grid grid-cols-2 gap-3" aria-label="در حال دریافت آمار">
+      <div class="stat-card animate-pulse"><div class="h-4 w-12 bg-slate-200 rounded"></div><div class="mt-2 h-7 w-16 bg-slate-200 rounded"></div></div>
+      <div class="stat-card animate-pulse"><div class="h-4 w-12 bg-slate-200 rounded"></div><div class="mt-2 h-7 w-16 bg-slate-200 rounded"></div></div>
+      <div class="stat-card animate-pulse"><div class="h-4 w-12 bg-slate-200 rounded"></div><div class="mt-2 h-7 w-16 bg-slate-200 rounded"></div></div>
+      <div class="stat-card animate-pulse"><div class="h-4 w-12 bg-slate-200 rounded"></div><div class="mt-2 h-7 w-16 bg-slate-200 rounded"></div></div>
+    </div>
+  } @else {
+    <section aria-label="آمار سامانه" class="grid grid-cols-2 gap-3">
+      <article class="stat-card">
+        <span class="stat-icon blue">▣</span>
+        <span class="stat-label">کل مراکز</span>
+        <strong>{{ stats().totalCenters }}</strong>
+        <span class="stat-note">+{{ stats().newCentersThisMonth }} این ماه</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon green">✓</span>
+        <span class="stat-label">مراکز فعال</span>
+        <strong>{{ stats().activeCenters }}</strong>
+        <span class="stat-note">از {{ stats().totalCenters }} مرکز</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon amber">♙</span>
+        <span class="stat-label">مدیران مراکز</span>
+        <strong>{{ stats().totalManagers }}</strong>
+        <span class="stat-note">مدیر ثبت شده</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon violet">♟</span>
+        <span class="stat-label">کل کارکنان</span>
+        <strong>{{ stats().totalEmployees }}</strong>
+        <span class="stat-note">در سراسر مراکز</span>
+      </article>
+    </section>
+  }
 
   <a routerLink="/system-admin/centers/create" class="primary-action"><span class="action-plus">+</span><span><strong>ثبت مرکز جدید</strong><small>مرکز و مدیر آن را در چند مرحله ثبت کنید</small></span><span class="action-arrow">←</span></a>
 

@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { OrganizationService } from '../../../organizations/services/organization.service';
+import { OrganizationDashboardSummaryDto } from '../../../organizations/models/organization-dashboard-summary.dto';
 import { SystemAdminDataService } from '../../services/system-admin-data.service';
 import { CenterStatus, SystemActivity } from '../../models/system-admin.models';
 
@@ -15,9 +17,29 @@ import { CenterStatus, SystemActivity } from '../../models/system-admin.models';
 })
 export class SystemAdminDashboardComponent implements OnInit {
   private readonly authService = inject(AuthService);
+  private readonly organizationService = inject(OrganizationService);
   private readonly data = inject(SystemAdminDataService);
 
-  readonly stats = this.data.stats;
+  readonly summaryData = signal<OrganizationDashboardSummaryDto | null>(null);
+  readonly isLoading = signal<boolean>(true);
+  readonly hasError = signal<boolean>(false);
+
+  // Fallback to local data service stats if API call fails, or map real API data
+  readonly stats = computed(() => {
+    const summary = this.summaryData();
+    if (summary) {
+      return {
+        totalCenters: summary.totalCenters,
+        activeCenters: summary.activeCenters,
+        pendingCenters: summary.pendingCenters,
+        totalManagers: summary.totalManagers,
+        totalEmployees: summary.totalEmployees,
+        newCentersThisMonth: summary.newCentersThisMonth,
+      };
+    }
+    return this.data.stats();
+  });
+
   readonly recentCenters = computed(() => this.data.getRecentCenters(3));
   readonly recentActivity = computed(() => this.data.getRecentActivity(3));
 
@@ -44,6 +66,24 @@ export class SystemAdminDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.authService.getCurrentUser().subscribe();
+    this.loadDashboardSummary();
+  }
+
+  loadDashboardSummary(): void {
+    this.isLoading.set(true);
+    this.hasError.set(false);
+
+    this.organizationService.getDashboardSummary().subscribe({
+      next: (data) => {
+        this.summaryData.set(data);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load organization dashboard summary:', err);
+        this.hasError.set(true);
+        this.isLoading.set(false);
+      },
+    });
   }
 
   getStatusLabel(status: CenterStatus): string {
