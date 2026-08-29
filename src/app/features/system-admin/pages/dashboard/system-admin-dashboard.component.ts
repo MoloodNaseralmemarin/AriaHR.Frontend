@@ -24,17 +24,17 @@ export class SystemAdminDashboardComponent implements OnInit {
   readonly isLoading = signal<boolean>(true);
   readonly hasError = signal<boolean>(false);
 
-  // Fallback to local data service stats if API call fails, or map real API data
+  // Fallback to local data service stats if API call fails, or map real API data handling case-insensitivity
   readonly stats = computed(() => {
     const summary = this.summaryData();
     if (summary) {
       return {
-        totalCenters: summary.totalCenters,
-        activeCenters: summary.activeCenters,
-        pendingCenters: summary.pendingCenters,
-        totalManagers: summary.totalManagers,
-        totalEmployees: summary.totalEmployees,
-        newCentersThisMonth: summary.newCentersThisMonth,
+        totalCenters: summary.totalCenters ?? summary.TotalCenters ?? 0,
+        activeCenters: summary.activeCenters ?? summary.ActiveCenters ?? 0,
+        pendingCenters: summary.pendingCenters ?? summary.PendingCenters ?? 0,
+        totalManagers: summary.totalManagers ?? summary.TotalManagers ?? 0,
+        totalEmployees: summary.totalEmployees ?? summary.TotalEmployees ?? 0,
+        newCentersThisMonth: summary.newCentersThisMonth ?? summary.NewCentersThisMonth ?? 0,
       };
     }
     return this.data.stats();

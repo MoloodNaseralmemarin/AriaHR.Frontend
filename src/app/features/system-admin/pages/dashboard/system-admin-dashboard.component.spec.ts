@@ -46,7 +46,7 @@ describe('SystemAdminDashboardComponent API Integration', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should call getDashboardSummary on init and populate stats signal', () => {
+  it('should call getDashboardSummary on init and populate stats signal with camelCase payload', () => {
     const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges(); // triggers ngOnInit
@@ -61,6 +61,31 @@ describe('SystemAdminDashboardComponent API Integration', () => {
       totalManagers: 12,
       totalEmployees: 150,
       newCentersThisMonth: 3,
+    });
+  });
+
+  it('should populate stats signal cleanly when API returns PascalCase payload', () => {
+    const pascalSummary: OrganizationDashboardSummaryDto = {
+      TotalCenters: 25,
+      ActiveCenters: 20,
+      PendingCenters: 5,
+      TotalManagers: 25,
+      TotalEmployees: 300,
+      NewCentersThisMonth: 4,
+    };
+    mockOrgService.getDashboardSummary.mockReturnValue(of(pascalSummary));
+
+    const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.stats()).toEqual({
+      totalCenters: 25,
+      activeCenters: 20,
+      pendingCenters: 5,
+      totalManagers: 25,
+      totalEmployees: 300,
+      newCentersThisMonth: 4,
     });
   });
 
