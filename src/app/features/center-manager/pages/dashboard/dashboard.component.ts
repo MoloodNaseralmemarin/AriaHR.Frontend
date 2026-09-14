@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
+import { AuthService } from '../../../../core/auth/auth.service';
 import { SummaryCardComponent } from '../../../../shared/components/summary-card/summary-card.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -20,7 +21,7 @@ import { attendanceStatusMap, shiftStatusMap } from '../../../../shared/utils/st
  * /center/dashboard
  * Center Manager landing screen: greeting, today's overview, attendance
  * snapshot, action-required queue, today's shifts and a quick employee /
- * notifications preview. All data is mock — no HTTP calls.
+ * notifications preview.
  */
 @Component({
   selector: 'app-center-dashboard',
@@ -29,8 +30,34 @@ import { attendanceStatusMap, shiftStatusMap } from '../../../../shared/utils/st
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
-export class DashboardComponent {
-  managerName = 'دکتر کاظمی';
+export class DashboardComponent implements OnInit {
+  private readonly authService = inject(AuthService);
+
+  readonly managerNameSignal = computed(() => {
+    const details = this.authService.userDetails();
+    if (details) {
+      const first = details.firstName ? details.firstName.trim() : '';
+      const last = details.lastName ? details.lastName.trim() : '';
+      const full = `${first} ${last}`.trim();
+      if (full) {
+        return full;
+      }
+    }
+
+    const user = this.authService.currentUser();
+    if (user) {
+      if (user.fullName && user.fullName.trim()) {
+        return user.fullName.trim();
+      }
+    }
+
+    return 'مدیر مرکز';
+  });
+
+  get managerName(): string {
+    return this.managerNameSignal();
+  }
+
   centerName = 'مرکز سلامت بهار';
   persianDate = 'دوشنبه، ۴ شهریور ۱۴۰۳';
 
@@ -43,6 +70,14 @@ export class DashboardComponent {
 
   attendanceStatusMap = attendanceStatusMap;
   shiftStatusMap = shiftStatusMap;
+
+  ngOnInit(): void {
+    this.authService.getCurrentUser().subscribe({
+      error: () => {
+        // Fallback handled gracefully in managerNameSignal
+      },
+    });
+  }
 
   get hasActionItems(): boolean {
     return this.actionItems.length > 0;
