@@ -7,7 +7,7 @@
     </div>
   </div>
 
-  @if (isLoading()) {
+  @if (isLoadingSummary()) {
     <div class="grid grid-cols-2 gap-3" aria-label="در حال دریافت آمار">
       <div class="stat-card animate-pulse"><div class="h-4 w-12 bg-slate-200 rounded"></div><div class="mt-2 h-7 w-16 bg-slate-200 rounded"></div></div>
       <div class="stat-card animate-pulse"><div class="h-4 w-12 bg-slate-200 rounded"></div><div class="mt-2 h-7 w-16 bg-slate-200 rounded"></div></div>
@@ -48,10 +48,16 @@
   <section class="section-block">
     <div class="section-heading"><div><h2>آخرین مراکز</h2><p>جدیدترین مراکز ثبت شده</p></div><a routerLink="/system-admin/centers" class="view-all">مشاهده همه <span>←</span></a></div>
     <div class="list-card">
-      @for (center of recentCenters(); track center.id) {
-        <a [routerLink]="['/system-admin/centers', center.id]" class="center-row">
-          <div class="center-avatar">{{ center.name.slice(0, 1) }}</div><div class="center-main"><strong>{{ center.name }}</strong><span>مدیر: {{ center.managerName }}</span></div><span class="status-pill" [class]="getStatusClass(center.status)">{{ getStatusLabel(center.status) }}</span><span class="row-arrow">‹</span>
-        </a>
+      @if (isLoadingRecentOrgs()) {
+        <div class="p-4 text-center text-sm text-slate-500 animate-pulse">در حال دریافت مراکز...</div>
+      } @else if (recentCenters().length === 0) {
+        <div class="p-4 text-center text-sm text-slate-500">مرکزی برای نمایش وجود ندارد</div>
+      } @else {
+        @for (center of recentCenters(); track center.id) {
+          <a [routerLink]="['/system-admin/centers', center.id]" class="center-row">
+            <div class="center-avatar">{{ center.name.slice(0, 1) }}</div><div class="center-main"><strong>{{ center.name }}</strong><span>مدیر: {{ center.managerName }}</span></div><span class="status-pill" [class]="getStatusClass(center.status)">{{ getStatusLabel(center.status) }}</span><span class="row-arrow">‹</span>
+          </a>
+        }
       }
     </div>
   </section>
@@ -59,8 +65,14 @@
   <section class="section-block">
     <div class="section-heading"><div><h2>فعالیت‌های اخیر</h2><p>آخرین تغییرات سامانه</p></div></div>
     <div class="list-card activity-card">
-      @for (item of recentActivity(); track item.id) {
-        <div class="activity-row"><span class="activity-dot" [class]="getActivityClass(item)"></span><div class="activity-main"><strong>{{ item.label }}</strong><span>{{ item.detail }}</span></div><time>{{ getRelativeTime(item.timestamp) }}</time></div>
+      @if (isLoadingRecentActivities()) {
+        <div class="p-4 text-center text-sm text-slate-500 animate-pulse">در حال دریافت فعالیت‌ها...</div>
+      } @else if (recentActivity().length === 0) {
+        <div class="p-4 text-center text-sm text-slate-500">فعالیتی برای نمایش وجود ندارد</div>
+      } @else {
+        @for (item of recentActivity(); track item.id) {
+          <div class="activity-row"><span class="activity-dot" [class]="getActivityClass(item)"></span><div class="activity-main"><strong>{{ item.label }}</strong><span>{{ item.detail }}</span></div><time>{{ getRelativeTime(item.timestamp) }}</time></div>
+        }
       }
     </div>
   </section>
