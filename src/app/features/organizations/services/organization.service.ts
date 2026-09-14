@@ -6,6 +6,14 @@ import { environment } from '../../../../environments/environment';
 import { CreateOrganizationDto } from '../models/create-organization.dto';
 import { OrganizationDashboardSummaryDto } from '../models/organization-dashboard-summary.dto';
 import { OrganizationResponseDto } from '../models/organization-response.dto';
+import { RecentOrganizationDto } from '../models/recent-organization.dto';
+
+export interface OrganizationCountDto {
+  count?: number;
+  totalCount?: number;
+  Count?: number;
+  TotalCount?: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -28,5 +36,21 @@ export class OrganizationService {
    */
   getDashboardSummary(): Observable<OrganizationDashboardSummaryDto> {
     return this.http.get<OrganizationDashboardSummaryDto>(`${this.apiUrl}/dashboard-summary`);
+  }
+
+  /**
+   * Fetches recent organizations.
+   * Endpoint: GET /api/organizations/recent
+   */
+  getRecentOrganizations(): Observable<RecentOrganizationDto[]> {
+    return this.http.get<RecentOrganizationDto[]>(`${this.apiUrl}/recent`);
+  }
+
+  /**
+   * Fetches total count of organizations.
+   * Endpoint: GET /api/organizations/count
+   */
+  getOrganizationCount(): Observable<number | OrganizationCountDto> {
+    return this.http.get<number | OrganizationCountDto>(`${this.apiUrl}/count`);
   }
 }
