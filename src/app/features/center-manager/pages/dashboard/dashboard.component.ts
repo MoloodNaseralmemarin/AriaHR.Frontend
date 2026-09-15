@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { SummaryCardComponent } from '../../../../shared/components/summary-card/summary-card.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -32,6 +33,7 @@ import { attendanceStatusMap, shiftStatusMap } from '../../../../shared/utils/st
 })
 export class DashboardComponent implements OnInit {
   private readonly authService = inject(AuthService);
+  private readonly persianDateService = inject(PersianDateService);
 
   readonly managerNameSignal = computed(() => {
     const details = this.authService.userDetails();
@@ -59,7 +61,7 @@ export class DashboardComponent implements OnInit {
   }
 
   centerName = 'مرکز سلامت بهار';
-  persianDate = 'دوشنبه، ۴ شهریور ۱۴۰۳';
+  readonly persianDate = this.persianDateService.getTodayFormatted();
 
   summary = mockDashboardSummary;
   todayAttendance = mockTodayAttendanceSummary;
