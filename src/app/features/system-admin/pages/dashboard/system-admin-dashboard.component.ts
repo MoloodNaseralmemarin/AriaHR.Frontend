@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { OrganizationService } from '../../../organizations/services/organization.service';
 import { OrganizationDashboardSummaryDto } from '../../../organizations/models/organization-dashboard-summary.dto';
 import { RecentOrganizationDto } from '../../../organizations/models/recent-organization.dto';
@@ -38,6 +39,9 @@ export class SystemAdminDashboardComponent implements OnInit {
   private readonly organizationService = inject(OrganizationService);
   private readonly dashboardService = inject(DashboardService);
   private readonly data = inject(SystemAdminDataService);
+  private readonly persianDateService = inject(PersianDateService);
+
+  readonly todayFormattedDate = this.persianDateService.getTodayFormatted();
 
   readonly summaryData = signal<OrganizationDashboardSummaryDto | null>(null);
   readonly isLoadingSummary = signal<boolean>(true);
