@@ -1,14 +1,13 @@
 <div>
   <app-page-header title="شیفت‌ها" subtitle="مدیریت و مشاهده برنامه شیفت‌های مرکز">
-    <button
+    <a
       actions
-      type="button"
-      (click)="onAddShift()"
+      routerLink="/center-manager/shifts/create"
       class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
       افزودن شیفت
-    </button>
+    </a>
   </app-page-header>
 
   <!-- Date selector -->

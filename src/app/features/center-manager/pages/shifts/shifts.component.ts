@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
@@ -16,7 +17,7 @@ import { shiftStatusMap } from '../../../../shared/utils/status-map';
 @Component({
   selector: 'app-center-shifts',
   standalone: true,
-  imports: [CommonModule, PageHeaderComponent, StatusBadgeComponent],
+  imports: [CommonModule, RouterLink, PageHeaderComponent, StatusBadgeComponent],
   templateUrl: './shifts.component.html',
   styleUrls: ['./shifts.component.css'],
 })
@@ -41,8 +42,4 @@ export class ShiftsComponent {
     this.selectedDayIndex.set(index);
   }
 
-  onAddShift(): void {
-    // Visual-only — no scheduling logic per requirements.
-    console.log('add shift clicked (UI only)');
-  }
 }

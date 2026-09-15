@@ -67,6 +67,18 @@ export const mockDashboardNotifications: { id: string; text: string }[] = [
   { id: 'n3', text: 'گزارش حضور ماه گذشته آماده است' },
 ];
 
+export interface EmployeeOption {
+  id: string;
+  fullName: string;
+}
+
+export const mockEmployeeOptions: EmployeeOption[] = [
+  { id: 'emp-1', fullName: 'زهرا احمدی' },
+  { id: 'emp-2', fullName: 'علی رضایی' },
+  { id: 'emp-3', fullName: 'مریم کاظمی' },
+  { id: 'emp-4', fullName: 'حسین موسوی' },
+];
+
 /** ---------- Employees ---------- */
 
 export const mockEmployees: Employee[] = [
