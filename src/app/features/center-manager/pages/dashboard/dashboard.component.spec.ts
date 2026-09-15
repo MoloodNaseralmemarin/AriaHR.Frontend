@@ -7,6 +7,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { DashboardComponent } from './dashboard.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AuthUserDto, CurrentUserDto } from '../../../../core/auth/auth.models';
+import { PersianDateService } from '../../../../core/services/persian-date.service';
 
 describe('Center Manager DashboardComponent', () => {
   let component: DashboardComponent;
@@ -94,5 +95,19 @@ describe('Center Manager DashboardComponent', () => {
     fixture.detectChanges();
 
     expect(component.managerName).toBe('مدیر مرکز');
+  });
+
+  it('should display today Persian date using PersianDateService', () => {
+    const persianDateService = TestBed.inject(PersianDateService);
+    const expectedDate = persianDateService.getTodayFormatted();
+
+    fixture = TestBed.createComponent(DashboardComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.persianDate).toBe(expectedDate);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain(expectedDate);
   });
 });
