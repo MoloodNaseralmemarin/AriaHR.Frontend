@@ -1,0 +1,170 @@
+<div class="max-w-3xl mx-auto px-4 py-6" dir="rtl">
+  <!-- Header / breadcrumb -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <a
+        routerLink="/center/dashboard"
+        class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
+      >
+        <span>→</span>
+        <span>بازگشت به داشبورد</span>
+      </a>
+      <h1 class="text-xl font-bold text-gray-900">درج شیفت جدید</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        اطلاعات شیفت کارمند را وارد کنید تا در برنامه‌ی زمانی مرکز ثبت شود.
+      </p>
+    </div>
+  </div>
+
+  <!-- Success state -->
+  @if (isSuccess()) {
+    <div class="rounded-2xl border border-green-200 bg-green-50 p-6 text-center">
+      <div class="text-2xl mb-2">✅</div>
+      <p class="text-green-800 font-semibold mb-1">شیفت با موفقیت ثبت شد</p>
+      <p class="text-sm text-green-700 mb-4">می‌توانید شیفت دیگری اضافه کنید یا به داشبورد بازگردید.</p>
+      <div class="flex items-center justify-center gap-3">
+        <button
+          type="button"
+          (click)="onCreateAnother()"
+          class="px-4 py-2 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
+        >
+          ثبت شیفت جدید
+        </button>
+        <a
+          routerLink="/center/dashboard"
+          class="px-4 py-2 rounded-xl border border-green-300 text-green-700 text-sm font-medium hover:bg-green-100 transition"
+        >
+          بازگشت به داشبورد
+        </a>
+      </div>
+    </div>
+  } @else {
+    <!-- Form card -->
+    <form
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      class="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 space-y-5"
+    >
+      @if (errorMessage()) {
+        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <!-- Employee -->
+      <div>
+        <label for="employeeId" class="block text-sm font-medium text-gray-700 mb-1.5">
+          کارمند
+        </label>
+        <select
+          id="employeeId"
+          formControlName="employeeId"
+          class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="" disabled>انتخاب کنید</option>
+          @for (emp of employeeOptions; track emp.id) {
+            <option [value]="emp.id">{{ emp.fullName }}</option>
+          }
+        </select>
+        @if (f.employeeId.invalid && f.employeeId.touched) {
+          <p class="mt-1 text-xs text-red-600">انتخاب کارمند الزامی است.</p>
+        }
+      </div>
+
+      <!-- Shift date -->
+      <div>
+        <label for="shiftDate" class="block text-sm font-medium text-gray-700 mb-1.5">
+          تاریخ شیفت
+        </label>
+        <input
+          id="shiftDate"
+          type="date"
+          formControlName="shiftDate"
+          class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        @if (f.shiftDate.invalid && f.shiftDate.touched) {
+          <p class="mt-1 text-xs text-red-600">تاریخ شیفت الزامی است.</p>
+        }
+      </div>
+
+      <!-- Start / end time -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="startTime" class="block text-sm font-medium text-gray-700 mb-1.5">
+            ساعت شروع
+          </label>
+          <input
+            id="startTime"
+            type="time"
+            formControlName="startTime"
+            class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          @if (f.startTime.invalid && f.startTime.touched) {
+            <p class="mt-1 text-xs text-red-600">ساعت شروع الزامی است.</p>
+          }
+        </div>
+
+        <div>
+          <label for="endTime" class="block text-sm font-medium text-gray-700 mb-1.5">
+            ساعت پایان
+          </label>
+          <input
+            id="endTime"
+            type="time"
+            formControlName="endTime"
+            class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          @if (f.endTime.invalid && f.endTime.touched) {
+            <p class="mt-1 text-xs text-red-600">ساعت پایان الزامی است.</p>
+          }
+        </div>
+      </div>
+
+      @if (timeRangeInvalid()) {
+        <p class="text-xs text-red-600 -mt-2">ساعت پایان باید بعد از ساعت شروع باشد.</p>
+      }
+
+      <!-- Notes -->
+      <div>
+        <label for="notes" class="block text-sm font-medium text-gray-700 mb-1.5">
+          توضیحات <span class="text-gray-400 font-normal">(اختیاری)</span>
+        </label>
+        <textarea
+          id="notes"
+          formControlName="notes"
+          rows="3"
+          class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+          placeholder="توضیح تکمیلی درباره‌ی این شیفت..."
+        ></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <a
+          routerLink="/center/dashboard"
+          class="px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 text-sm font-medium
+                 hover:bg-gray-50 transition"
+        >
+          انصراف
+        </a>
+        <button
+          type="submit"
+          [disabled]="isSubmitting()"
+          class="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium
+                 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
+        >
+          @if (isSubmitting()) {
+            <span>در حال ثبت...</span>
+          } @else {
+            <span>ثبت شیفت</span>
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>
