@@ -42,11 +42,20 @@ export class CreateShiftComponent {
     return this.form.controls;
   }
 
+  /** Converts Persian digits to standard ASCII digits and normalizes HH:mm time format */
+  private formatTimeValue(rawTime?: string): string {
+    if (!rawTime) return '';
+    const latinDigits = rawTime.replace(/[۰-۹]/g, (d) =>
+      String.fromCharCode(d.charCodeAt(0) - 1776)
+    );
+    return latinDigits.trim();
+  }
+
   /** true when endTime is not strictly after startTime, once both are set */
   readonly timeRangeInvalid = computed(() => {
     const values = this.formValues();
-    const start = values.startTime;
-    const end = values.endTime;
+    const start = this.formatTimeValue(values.startTime ?? '');
+    const end = this.formatTimeValue(values.endTime ?? '');
     if (!start || !end) return false;
     return end <= start;
   });
@@ -61,11 +70,11 @@ export class CreateShiftComponent {
 
     const value = this.form.getRawValue();
     const request: CreateShiftDto = {
-      employeeId: value.employeeId,
-      shiftName: value.shiftName,
-      startTime: value.startTime,
-      endTime: value.endTime,
-      notes: value.notes || undefined,
+      employeeId: value.employeeId.trim(),
+      shiftName: value.shiftName.trim(),
+      startTime: this.formatTimeValue(value.startTime),
+      endTime: this.formatTimeValue(value.endTime),
+      notes: value.notes ? value.notes.trim() : undefined,
     };
 
     this.submitState.set('submitting');
