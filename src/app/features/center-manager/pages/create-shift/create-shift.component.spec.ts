@@ -3,6 +3,7 @@ import { CreateShiftComponent } from './create-shift.component';
 import { ShiftService } from '../../services/shift.service';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { describe, beforeEach, it, expect, vi } from 'vitest';
 
 describe('CreateShiftComponent', () => {
   let component: CreateShiftComponent;
@@ -40,7 +41,7 @@ describe('CreateShiftComponent', () => {
   it('should detect timeRangeInvalid when startTime is after endTime', () => {
     component.form.patchValue({
       employeeId: 'emp-1',
-      shiftDate: '2026-09-15',
+      shiftName: 'شیفت صبح',
       startTime: '16:00',
       endTime: '08:00',
     });
@@ -56,7 +57,7 @@ describe('CreateShiftComponent', () => {
         id: 'shift-1',
         employeeId: 'emp-1',
         employeeName: 'زهرا احمدی',
-        shiftDate: '2026-09-15',
+        shiftName: 'شیفت صبح',
         startTime: '08:00',
         endTime: '16:00',
         status: 'scheduled',
@@ -65,7 +66,7 @@ describe('CreateShiftComponent', () => {
 
     component.form.patchValue({
       employeeId: 'emp-1',
-      shiftDate: '2026-09-15',
+      shiftName: 'شیفت صبح',
       startTime: '08:00',
       endTime: '16:00',
       notes: 'تست شیفت',
@@ -75,7 +76,7 @@ describe('CreateShiftComponent', () => {
 
     expect(mockShiftService.createShift).toHaveBeenCalledWith({
       employeeId: 'emp-1',
-      shiftDate: '2026-09-15',
+      shiftName: 'شیفت صبح',
       startTime: '08:00',
       endTime: '16:00',
       notes: 'تست شیفت',
@@ -91,7 +92,7 @@ describe('CreateShiftComponent', () => {
 
     component.form.patchValue({
       employeeId: 'emp-1',
-      shiftDate: '2026-09-15',
+      shiftName: 'شیفت صبح',
       startTime: '08:00',
       endTime: '16:00',
     });

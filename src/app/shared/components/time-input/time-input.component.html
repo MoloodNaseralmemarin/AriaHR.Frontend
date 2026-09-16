@@ -1,0 +1,15 @@
+<div class="relative w-full">
+  <input
+    [id]="id"
+    type="text"
+    dir="ltr"
+    [value]="displayValue()"
+    [placeholder]="placeholder"
+    [disabled]="disabled()"
+    (input)="onInput($event)"
+    (blur)="onBlur()"
+    class="w-full text-right rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900
+           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+           disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition"
+  />
+</div>
