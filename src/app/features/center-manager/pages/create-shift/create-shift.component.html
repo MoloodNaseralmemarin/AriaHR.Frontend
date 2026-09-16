@@ -89,32 +89,26 @@
       <!-- Start / end time -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label for="startTime" class="block text-sm font-medium text-slate-700 mb-1.5">
-            ساعت شروع
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">
+            ساعت شروع <span class="text-rose-500">*</span>
           </label>
-          <input
-            id="startTime"
-            type="time"
+          <app-time-input
             formControlName="startTime"
-            class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+            [isInvalid]="f.startTime.invalid && f.startTime.touched"
+          ></app-time-input>
           @if (f.startTime.invalid && f.startTime.touched) {
             <p class="mt-1 text-xs text-rose-600">ساعت شروع الزامی است.</p>
           }
         </div>
 
         <div>
-          <label for="endTime" class="block text-sm font-medium text-slate-700 mb-1.5">
-            ساعت پایان
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">
+            ساعت پایان <span class="text-rose-500">*</span>
           </label>
-          <input
-            id="endTime"
-            type="time"
+          <app-time-input
             formControlName="endTime"
-            class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+            [isInvalid]="f.endTime.invalid && f.endTime.touched"
+          ></app-time-input>
           @if (f.endTime.invalid && f.endTime.touched) {
             <p class="mt-1 text-xs text-rose-600">ساعت پایان الزامی است.</p>
           }

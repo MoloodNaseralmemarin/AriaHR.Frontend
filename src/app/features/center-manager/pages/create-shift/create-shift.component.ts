@@ -6,13 +6,14 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import { ShiftService } from '../../services/shift.service';
 import { CreateShiftDto } from '../../models/create-shift.dto';
+import { TimeInputComponent } from '../../../../shared/components/time-input/time-input.component';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
 @Component({
   selector: 'app-create-shift',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, TimeInputComponent],
   templateUrl: './create-shift.component.html',
   styleUrls: ['./create-shift.component.css'],
 })

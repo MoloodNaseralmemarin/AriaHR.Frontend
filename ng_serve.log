@@ -12,3 +12,73 @@ Watch mode enabled. Watching for file changes...
 NOTE: Raw file sizes do not reflect development server per-request transformations.
   ➜  Local:   http://localhost:4200/
 2:45:28 PM [vite] (client) [optimizer] bundling dependencies...
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          | 594.12 kB |
+styles.css          | styles        |  53.10 kB |
+
+                    | Initial total | 647.21 kB
+
+Application bundle generation complete. [6.956 seconds] - 2026-09-16T15:25:44.346Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: TimeInputComponent is not used within the template of CreateShiftComponent[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/center-manager/pages/create-shift/create-shift.component.ts:16:59:
+[37m      16 │ ...ommonModule, RouterLink, ReactiveFormsModule, [32mTimeInputComponent[37m],
+         ╵                                                  [32m~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8109: NG8109: disabled is a function and should be invoked: disabled()}. Find more at https://v22.angular.dev/extended-diagnostics/NG8109[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/shared/components/time-input/time-input.component.ts:65:22:
+[37m      65 │           [disabled]="[32mdisabled[37m"
+         ╵                       [32m~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8109: NG8109: disabled is a function and should be invoked: disabled()}. Find more at https://v22.angular.dev/extended-diagnostics/NG8109[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/shared/components/time-input/time-input.component.ts:86:22:
+[37m      86 │           [disabled]="[32mdisabled[37m"
+         ╵                       [32m~~~~~~~~[0m
+
+
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names |  Raw size
+main.js             | main  | 593.73 kB |
+
+Application bundle generation complete. [0.787 seconds] - 2026-09-16T15:25:47.093Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8109: NG8109: disabled is a function and should be invoked: disabled()}. Find more at https://v22.angular.dev/extended-diagnostics/NG8109[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/shared/components/time-input/time-input.component.ts:65:22:
+[37m      65 │           [disabled]="[32mdisabled[37m"
+         ╵                       [32m~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8109: NG8109: disabled is a function and should be invoked: disabled()}. Find more at https://v22.angular.dev/extended-diagnostics/NG8109[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/shared/components/time-input/time-input.component.ts:86:22:
+[37m      86 │           [disabled]="[32mdisabled[37m"
+         ╵                       [32m~~~~~~~~[0m
+
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names |  Raw size
+main.js             | main  | 593.74 kB |
+
+Application bundle generation complete. [1.152 seconds] - 2026-09-16T15:28:31.100Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names |  Raw size
+main.js             | main  | 593.67 kB |
+
+Application bundle generation complete. [0.688 seconds] - 2026-09-16T15:30:14.826Z
+
+Component update sent to client(s).
