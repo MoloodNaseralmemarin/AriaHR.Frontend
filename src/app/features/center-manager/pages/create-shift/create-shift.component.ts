@@ -6,7 +6,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import { ShiftService } from '../../services/shift.service';
 import { CreateShiftDto } from '../../models/create-shift.dto';
-import { mockEmployeeOptions } from '../../mock-data/mock-data';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -20,8 +19,6 @@ type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 export class CreateShiftComponent {
   private readonly fb = inject(FormBuilder);
   private readonly shiftService = inject(ShiftService);
-
-  readonly employeeOptions = mockEmployeeOptions;
 
   readonly submitState = signal<SubmitState>('idle');
   readonly errorMessage = signal<string | null>(null);

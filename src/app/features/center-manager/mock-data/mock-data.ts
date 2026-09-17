@@ -72,13 +72,6 @@ export interface EmployeeOption {
   fullName: string;
 }
 
-export const mockEmployeeOptions: EmployeeOption[] = [
-  { id: 'emp-1', fullName: 'زهرا احمدی' },
-  { id: 'emp-2', fullName: 'علی رضایی' },
-  { id: 'emp-3', fullName: 'مریم کاظمی' },
-  { id: 'emp-4', fullName: 'حسین موسوی' },
-];
-
 /** ---------- Employees ---------- */
 
 export const mockEmployees: Employee[] = [
