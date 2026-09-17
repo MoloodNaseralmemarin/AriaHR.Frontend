@@ -28,7 +28,7 @@ export class CreateShiftComponent {
 
   readonly form = this.fb.nonNullable.group({
     employeeId: ['', Validators.required],
-    shiftDate: ['', Validators.required],
+    shiftName: ['', Validators.required],
     startTime: ['', Validators.required],
     endTime: ['', Validators.required],
     notes: [''],
@@ -62,7 +62,7 @@ export class CreateShiftComponent {
     const value = this.form.getRawValue();
     const request: CreateShiftDto = {
       employeeId: value.employeeId,
-      shiftDate: value.shiftDate,
+      shiftName: value.shiftName,
       startTime: value.startTime,
       endTime: value.endTime,
       notes: value.notes || undefined,

@@ -53,18 +53,15 @@
       <!-- Shift date -->
       <div>
         <label for="shiftDate" class="block text-sm font-medium text-slate-700 mb-1.5">
-          تاریخ شیفت
+          عنوان شیفت
         </label>
         <input
-          id="shiftDate"
+          id="shiftName"
           type="date"
-          formControlName="shiftDate"
+          formControlName="shiftName"
           class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900
                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
-        @if (f.shiftDate.invalid && f.shiftDate.touched) {
-          <p class="mt-1 text-xs text-rose-600">تاریخ شیفت الزامی است.</p>
-        }
       </div>
 
       <!-- Start / end time -->
