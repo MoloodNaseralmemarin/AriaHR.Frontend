@@ -9,18 +9,18 @@ describe('CreateShiftComponent', () => {
   let fixture: ComponentFixture<CreateShiftComponent>;
   let mockShiftService: { createShift: ReturnType<typeof vi.fn> };
 
-  beforeEach(async () => {
+  beforeEach(() => {
     mockShiftService = {
       createShift: vi.fn(),
     };
 
-    await TestBed.configureTestingModule({
+    TestBed.configureTestingModule({
       imports: [CreateShiftComponent],
       providers: [
         provideRouter([]),
         { provide: ShiftService, useValue: mockShiftService },
       ],
-    }).compileComponents();
+    });
 
     fixture = TestBed.createComponent(CreateShiftComponent);
     component = fixture.componentInstance;
@@ -40,7 +40,7 @@ describe('CreateShiftComponent', () => {
   it('should detect timeRangeInvalid when startTime is after endTime', () => {
     component.form.patchValue({
       employeeId: 'emp-1',
-      shiftDate: '2026-09-15',
+      shiftName: 'شیفت صبح',
       startTime: '16:00',
       endTime: '08:00',
     });
@@ -65,7 +65,7 @@ describe('CreateShiftComponent', () => {
 
     component.form.patchValue({
       employeeId: 'emp-1',
-      shiftDate: '2026-09-15',
+      shiftName: 'شیفت صبح',
       startTime: '08:00',
       endTime: '16:00',
       notes: 'تست شیفت',
@@ -75,7 +75,7 @@ describe('CreateShiftComponent', () => {
 
     expect(mockShiftService.createShift).toHaveBeenCalledWith({
       employeeId: 'emp-1',
-      shiftDate: '2026-09-15',
+      shiftName: 'شیفت صبح',
       startTime: '08:00',
       endTime: '16:00',
       notes: 'تست شیفت',
@@ -91,7 +91,7 @@ describe('CreateShiftComponent', () => {
 
     component.form.patchValue({
       employeeId: 'emp-1',
-      shiftDate: '2026-09-15',
+      shiftName: 'شیفت صبح',
       startTime: '08:00',
       endTime: '16:00',
     });
