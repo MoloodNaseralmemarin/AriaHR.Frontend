@@ -1,4 +1,11 @@
 <div class="max-w-3xl mx-auto px-4 py-6" dir="rtl">
+  <!-- Success Toast -->
+  @if (showSuccessToast()) {
+    <div class="fixed top-5 left-1/2 -translate-x-1/2 z-50">
+      <app-toast message="شیفت با موفقیت ثبت شد." tone="success"></app-toast>
+    </div>
+  }
+
   <!-- Header / breadcrumb -->
   <div class="flex items-center justify-between mb-6">
     <div>
@@ -9,159 +16,144 @@
         <span>→</span>
         <span>بازگشت به شیفت‌ها</span>
       </a>
-      <h1 class="text-xl font-bold text-slate-900">درج شیفت جدید</h1>
+      <h1 class="text-xl font-bold text-slate-900">تعریف شیفت جدید</h1>
       <p class="text-sm text-slate-500 mt-1">
-        اطلاعات شیفت کارمند را وارد کنید تا در برنامه‌ی زمانی مرکز ثبت شود.
+        اطلاعات شیفت کاری جدید مرکز را وارد کنید تا در سیستم برنامه‌ریزی ثبت شود.
       </p>
     </div>
   </div>
 
-  <!-- Success state -->
-  @if (isSuccess()) {
-    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-      <div class="text-2xl mb-2">✅</div>
-      <p class="text-emerald-800 font-semibold mb-1">شیفت با موفقیت ثبت شد</p>
-      <p class="text-sm text-emerald-700 mb-4">می‌توانید شیفت دیگری اضافه کنید یا به فهرست شیفت‌ها بازگردید.</p>
-      <div class="flex items-center justify-center gap-3">
-        <button
-          type="button"
-          (click)="onCreateAnother()"
-          class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition"
-        >
-          ثبت شیفت جدید
-        </button>
-        <a
-          routerLink="/center-manager/shifts"
-          class="px-4 py-2 rounded-xl border border-emerald-300 text-emerald-700 text-sm font-medium hover:bg-emerald-100 transition"
-        >
-          بازگشت به شیفت‌ها
-        </a>
+  <!-- Form card -->
+  <form
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
+    class="rounded-2xl border border-slate-200 bg-white shadow-sm p-6 space-y-5"
+  >
+    @if (errorMessage()) {
+      <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <!-- Shift Name -->
+    <div>
+      <label for="name" class="block text-sm font-medium text-slate-700 mb-1.5">
+        نام شیفت <span class="text-rose-500">*</span>
+      </label>
+      <input
+        id="name"
+        type="text"
+        formControlName="name"
+        placeholder="عنوان شیفت (مثلاً شیفت صبح)"
+        class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900
+               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+      @if (isControlInvalid('name')) {
+        @if (f.name.errors?.['required']) {
+          <p class="mt-1 text-xs text-rose-600">نام شیفت الزامی است.</p>
+        } @else if (f.name.errors?.['minlength']) {
+          <p class="mt-1 text-xs text-rose-600">نام شیفت باید حداقل ۲ کاراکتر باشد.</p>
+        }
+      }
+    </div>
+
+    <!-- Start / end time -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Start Time -->
+      <div>
+        <label for="startTime" class="block text-sm font-medium text-slate-700 mb-1.5">
+          ساعت شروع <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="startTime"
+          type="text"
+          formControlName="startTime"
+          placeholder="08:00"
+          dir="ltr"
+          class="w-full text-center rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono text-slate-900
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        <p class="mt-1 text-xs text-slate-400">فرمت ۲۴ ساعته (مثلاً ۰۸:۰۰)</p>
+        @if (isControlInvalid('startTime')) {
+          @if (f.startTime.errors?.['required']) {
+            <p class="mt-1 text-xs text-rose-600">ساعت شروع الزامی است.</p>
+          } @else if (f.startTime.errors?.['pattern']) {
+            <p class="mt-1 text-xs text-rose-600">فرمت ساعت معتبر نیست (مثلاً ۰۸:۰۰).</p>
+          }
+        }
+      </div>
+
+      <!-- End Time -->
+      <div>
+        <label for="endTime" class="block text-sm font-medium text-slate-700 mb-1.5">
+          ساعت پایان <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="endTime"
+          type="text"
+          formControlName="endTime"
+          placeholder="16:00"
+          dir="ltr"
+          class="w-full text-center rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono text-slate-900
+                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        <p class="mt-1 text-xs text-slate-400">فرمت ۲۴ ساعته (مثلاً ۱۶:۰۰)</p>
+        @if (isControlInvalid('endTime')) {
+          @if (f.endTime.errors?.['required']) {
+            <p class="mt-1 text-xs text-rose-600">ساعت پایان الزامی است.</p>
+          } @else if (f.endTime.errors?.['pattern']) {
+            <p class="mt-1 text-xs text-rose-600">فرمت ساعت معتبر نیست (مثلاً ۱۶:۰۰).</p>
+          }
+        }
       </div>
     </div>
-  } @else {
-    <!-- Form card -->
-    <form
-      [formGroup]="form"
-      (ngSubmit)="onSubmit()"
-      class="rounded-2xl border border-slate-200 bg-white shadow-sm p-6 space-y-5"
-    >
-      @if (errorMessage()) {
-        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {{ errorMessage() }}
-        </div>
-      }
-      <!-- Employee ID -->
+
+    @if (timeRangeInvalid()) {
+      <p class="text-xs text-rose-600 -mt-2">ساعت پایان باید بعد از ساعت شروع باشد.</p>
+    }
+
+    <!-- Active toggle -->
+    <div class="flex items-center justify-between pt-2 border-t border-slate-100">
       <div>
-        <label for="employeeId" class="block text-sm font-medium text-slate-700 mb-1.5">
-          شناسه کارمند <span class="text-rose-500">*</span>
+        <label for="isActive" class="text-sm font-medium text-slate-800 cursor-pointer">
+          فعال بودن شیفت
         </label>
+        <p class="text-xs text-slate-500 mt-0.5">
+          شیفت‌های فعال در برنامه‌ریزی نوبت‌کاری قابل استفاده خواهند بود.
+        </p>
+      </div>
+      <label class="relative inline-flex items-center cursor-pointer">
         <input
-          id="employeeId"
-          type="text"
-          formControlName="employeeId"
-          placeholder="شناسه یا کد کارمند (مثلاً e1)"
-          class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          id="isActive"
+          type="checkbox"
+          formControlName="isActive"
+          class="sr-only peer"
         />
-        @if (f.employeeId.invalid && f.employeeId.touched) {
-          <p class="mt-1 text-xs text-rose-600">شناسه کارمند الزامی است.</p>
+        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+      </label>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+      <a
+        routerLink="/center-manager/shifts"
+        class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm font-medium
+               hover:bg-slate-50 transition"
+      >
+        انصراف
+      </a>
+      <button
+        type="submit"
+        [disabled]="isSubmitting()"
+        class="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium
+               hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
+      >
+        @if (isSubmitting()) {
+          <span>در حال ثبت...</span>
+        } @else {
+          <span>ثبت شیفت</span>
         }
-      </div>
-
-      <!-- Shift Name -->
-      <div>
-        <label for="shiftName" class="block text-sm font-medium text-slate-700 mb-1.5">
-          عنوان شیفت <span class="text-rose-500">*</span>
-        </label>
-        <input
-          id="shiftName"
-          type="text"
-          formControlName="shiftName"
-          placeholder="عنوان شیفت (مثلاً شیفت صبح)"
-          class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-        @if (f.shiftName.invalid && f.shiftName.touched) {
-          <p class="mt-1 text-xs text-rose-600">عنوان شیفت الزامی است.</p>
-        }
-      </div>
-
-      <!-- Start / end time -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label for="startTime" class="block text-sm font-medium text-slate-700 mb-1.5">
-            ساعت شروع
-          </label>
-          <input
-            id="startTime"
-            type="time"
-            formControlName="startTime"
-            class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          @if (f.startTime.invalid && f.startTime.touched) {
-            <p class="mt-1 text-xs text-rose-600">ساعت شروع الزامی است.</p>
-          }
-        </div>
-
-        <div>
-          <label for="endTime" class="block text-sm font-medium text-slate-700 mb-1.5">
-            ساعت پایان
-          </label>
-          <input
-            id="endTime"
-            type="time"
-            formControlName="endTime"
-            class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          @if (f.endTime.invalid && f.endTime.touched) {
-            <p class="mt-1 text-xs text-rose-600">ساعت پایان الزامی است.</p>
-          }
-        </div>
-      </div>
-
-      @if (timeRangeInvalid()) {
-        <p class="text-xs text-rose-600 -mt-2">ساعت پایان باید بعد از ساعت شروع باشد.</p>
-      }
-
-      <!-- Notes -->
-      <div>
-        <label for="notes" class="block text-sm font-medium text-slate-700 mb-1.5">
-          توضیحات <span class="text-slate-400 font-normal">(اختیاری)</span>
-        </label>
-        <textarea
-          id="notes"
-          formControlName="notes"
-          rows="3"
-          class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-          placeholder="توضیح تکمیلی درباره‌ی این شیفت..."
-        ></textarea>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex items-center justify-end gap-3 pt-2">
-        <a
-          routerLink="/center-manager/shifts"
-          class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm font-medium
-                 hover:bg-slate-50 transition"
-        >
-          انصراف
-        </a>
-        <button
-          type="submit"
-          [disabled]="isSubmitting()"
-          class="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium
-                 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
-        >
-          @if (isSubmitting()) {
-            <span>در حال ثبت...</span>
-          } @else {
-            <span>ثبت شیفت</span>
-          }
-        </button>
-      </div>
-    </form>
-  }
+      </button>
+    </div>
+  </form>
 </div>
