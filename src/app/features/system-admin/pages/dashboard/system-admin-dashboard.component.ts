@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -34,14 +34,19 @@ export interface UIRecentActivity {
   styleUrl: './system-admin-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SystemAdminDashboardComponent implements OnInit {
+export class SystemAdminDashboardComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly organizationService = inject(OrganizationService);
   private readonly dashboardService = inject(DashboardService);
   private readonly data = inject(SystemAdminDataService);
   private readonly persianDateService = inject(PersianDateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly todayFormattedDate = this.persianDateService.getTodayFormatted();
+
+  /** Signal updated every 30 seconds to trigger relative time recalculation without API requests */
+  readonly now = signal<Date>(new Date());
+  private timerId: ReturnType<typeof setInterval> | null = null;
 
   readonly summaryData = signal<OrganizationDashboardSummaryDto | null>(null);
   readonly isLoadingSummary = signal<boolean>(true);
@@ -153,6 +158,25 @@ export class SystemAdminDashboardComponent implements OnInit {
     this.loadDashboardSummary();
     this.loadRecentOrganizations();
     this.loadRecentActivities();
+
+    this.timerId = setInterval(() => {
+      this.now.set(new Date());
+    }, 30000);
+
+    this.destroyRef.onDestroy(() => {
+      this.clearTimer();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.clearTimer();
+  }
+
+  private clearTimer(): void {
+    if (this.timerId !== null) {
+      clearInterval(this.timerId);
+      this.timerId = null;
+    }
   }
 
   loadDashboardSummary(): void {
@@ -219,10 +243,6 @@ export class SystemAdminDashboardComponent implements OnInit {
   }
 
   getRelativeTime(timestamp: string): string {
-    const minutes = Math.max(1, Math.floor((Date.now() - new Date(timestamp).getTime()) / 60000));
-    if (isNaN(minutes)) return 'لحظاتی پیش';
-    if (minutes < 60) return `${minutes} دقیقه پیش`;
-    const hours = Math.floor(minutes / 60);
-    return `${hours} ساعت پیش`;
+    return this.persianDateService.getRelativeTime(timestamp, this.now());
   }
 }

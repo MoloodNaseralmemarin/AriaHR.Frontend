@@ -75,4 +75,55 @@ export class PersianDateService {
       yearFormatted: toPersianDigits(yearNum),
     };
   }
+
+  /**
+   * Calculates Persian relative time string for a given UTC timestamp or Date object.
+   * Example outputs: "همین الان", "۱ دقیقه پیش", "۲ ساعت پیش", "۱ روز پیش", "۲ هفته پیش", "۱ ماه پیش", "۱ سال پیش".
+   *
+   * @param timestamp The creation timestamp (ISO string or Date).
+   * @param now Optional reference date for deterministic testing (defaults to current date).
+   */
+  getRelativeTime(timestamp: string | Date, now: Date = new Date()): string {
+    const targetDate = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+    const targetTime = targetDate ? targetDate.getTime() : NaN;
+    const nowTime = now.getTime();
+
+    if (isNaN(targetTime)) {
+      return 'همین الان';
+    }
+
+    const diffInSeconds = Math.floor((nowTime - targetTime) / 1000);
+
+    if (diffInSeconds < 60) {
+      return 'همین الان';
+    }
+
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${toPersianDigits(diffInMinutes)} دقیقه پیش`;
+    }
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${toPersianDigits(diffInHours)} ساعت پیش`;
+    }
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) {
+      return `${toPersianDigits(diffInDays)} روز پیش`;
+    }
+
+    if (diffInDays < 30) {
+      const diffInWeeks = Math.floor(diffInDays / 7);
+      return `${toPersianDigits(diffInWeeks)} هفته پیش`;
+    }
+
+    if (diffInDays < 365) {
+      const diffInMonths = Math.floor(diffInDays / 30);
+      return `${toPersianDigits(diffInMonths)} ماه پیش`;
+    }
+
+    const diffInYears = Math.floor(diffInDays / 365);
+    return `${toPersianDigits(diffInYears)} سال پیش`;
+  }
 }
