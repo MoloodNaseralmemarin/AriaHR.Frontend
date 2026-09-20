@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CreateShiftComponent } from './create-shift.component';
 import { ShiftService } from '../../services/shift.service';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 describe('CreateShiftComponent', () => {
   let component: CreateShiftComponent;
   let fixture: ComponentFixture<CreateShiftComponent>;
   let mockShiftService: { createShift: ReturnType<typeof vi.fn> };
+  let router: Router;
 
   beforeEach(() => {
     mockShiftService = {
@@ -22,12 +23,15 @@ describe('CreateShiftComponent', () => {
       ],
     });
 
+    router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+
     fixture = TestBed.createComponent(CreateShiftComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('should create component', () => {
     expect(component).toBeTruthy();
   });
 
@@ -39,10 +43,10 @@ describe('CreateShiftComponent', () => {
 
   it('should detect timeRangeInvalid when startTime is after endTime', () => {
     component.form.patchValue({
-      employeeId: 'emp-1',
-      shiftName: 'شیفت صبح',
+      name: 'شیفت صبح',
       startTime: '16:00',
       endTime: '08:00',
+      isActive: true,
     });
     expect(component.timeRangeInvalid()).toBe(true);
 
@@ -50,55 +54,55 @@ describe('CreateShiftComponent', () => {
     expect(mockShiftService.createShift).not.toHaveBeenCalled();
   });
 
-  it('should call shiftService.createShift on valid form submission and handle success', () => {
+  it('should normalize Persian digits and call shiftService.createShift on valid submission', () => {
     mockShiftService.createShift.mockReturnValue(
       of({
         id: 'shift-1',
         employeeId: 'emp-1',
-        employeeName: 'زهرا احمدی',
-        shiftDate: '2026-09-15',
+        employeeName: 'علی رضایی',
+        shiftDate: '2026-09-20',
         startTime: '08:00',
         endTime: '16:00',
         status: 'scheduled',
       })
     );
 
+    // Using Persian digits for 08:00 and 16:00: \u06F0\u06F8:\u06F0\u06F0 and \u06F1\u06F6:\u06F0\u06F0
     component.form.patchValue({
-      employeeId: 'emp-1',
-      shiftName: 'شیفت صبح',
-      startTime: '08:00',
-      endTime: '16:00',
-      notes: 'تست شیفت',
+      name: 'شیفت صبح',
+      startTime: '\u06F0\u06F8:\u06F0\u06F0',
+      endTime: '\u06F1\u06F6:\u06F0\u06F0',
+      isActive: true,
     });
 
     component.onSubmit();
 
     expect(mockShiftService.createShift).toHaveBeenCalledWith({
-      employeeId: 'emp-1',
-      shiftName: 'شیفت صبح',
+      name: 'شیفت صبح',
       startTime: '08:00',
       endTime: '16:00',
-      notes: 'تست شیفت',
+      isActive: true,
     });
 
-    expect(component.isSuccess()).toBe(true);
+    expect(component.showSuccessToast()).toBe(true);
+    expect(router.navigate).toHaveBeenCalledWith(['/center-manager/shifts']);
   });
 
   it('should handle error when shift creation fails', () => {
     mockShiftService.createShift.mockReturnValue(
-      throwError(() => new Error('Server error'))
+      throwError(() => ({ error: { message: 'خطای سرور' } }))
     );
 
     component.form.patchValue({
-      employeeId: 'emp-1',
-      shiftName: 'شیفت صبح',
-      startTime: '08:00',
-      endTime: '16:00',
+      name: 'شیفت عصر',
+      startTime: '16:00',
+      endTime: '23:00',
+      isActive: true,
     });
 
     component.onSubmit();
 
     expect(component.submitState()).toBe('error');
-    expect(component.errorMessage()).toBe('ثبت شیفت با خطا مواجه شد. لطفاً دوباره تلاش کنید.');
+    expect(component.errorMessage()).toBe('خطای سرور');
   });
 });
