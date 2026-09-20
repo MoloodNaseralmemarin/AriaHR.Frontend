@@ -120,4 +120,47 @@ describe('SystemAdminDashboardComponent API Integration', () => {
     expect(component.stats().totalCenters).toBe(10);
     expect(component.recentCenters().length).toBe(1);
   });
+
+  it('should calculate Persian relative time using PersianDateService', () => {
+    const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
+    const component = fixture.componentInstance;
+
+    component.now.set(new Date('2025-01-15T12:00:00Z'));
+
+    // 5 minutes ago
+    expect(component.getRelativeTime('2025-01-15T11:55:00Z')).toBe('۵ دقیقه پیش');
+    // 2 hours ago
+    expect(component.getRelativeTime('2025-01-15T10:00:00Z')).toBe('۲ ساعت پیش');
+  });
+
+  it('should update relative time when now signal is updated without calling API again', () => {
+    const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const initialApiCallCount = mockDashboardService.getRecentActivities.mock.calls.length;
+
+    component.now.set(new Date('2025-01-15T12:00:00Z'));
+    const time1 = component.getRelativeTime('2025-01-15T11:58:00Z'); // 2 mins ago
+    expect(time1).toBe('۲ دقیقه پیش');
+
+    // Advance component's now signal by 1 minute
+    component.now.set(new Date('2025-01-15T12:01:00Z'));
+    const time2 = component.getRelativeTime('2025-01-15T11:58:00Z'); // now 3 mins ago
+    expect(time2).toBe('۳ دقیقه پیش');
+
+    // Ensure API was NOT called again
+    expect(mockDashboardService.getRecentActivities.mock.calls.length).toBe(initialApiCallCount);
+  });
+
+  it('should clean up the auto-refresh timer on component destroy', () => {
+    const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
+    fixture.destroy();
+
+    expect(clearIntervalSpy).toHaveBeenCalled();
+  });
 });
