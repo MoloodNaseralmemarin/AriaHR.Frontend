@@ -83,17 +83,45 @@ export class PersianDateService {
    * @param timestamp The creation timestamp (ISO string or Date).
    * @param now Optional reference date for deterministic testing (defaults to current date).
    */
-  getRelativeTime(timestamp: string | Date, now: Date = new Date()): string {
-    const targetDate = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
-    const targetTime = targetDate ? targetDate.getTime() : NaN;
+  getRelativeTime(timestamp: string | Date | null | undefined, now: Date = new Date()): string {
+    if (!timestamp) {
+      return 'تاریخ نامعتبر';
+    }
+
+    let targetDate: Date;
+
+    if (timestamp instanceof Date) {
+      targetDate = timestamp;
+    } else if (typeof timestamp === 'string') {
+      const trimmed = timestamp.trim();
+      if (!trimmed) {
+        return 'تاریخ نامعتبر';
+      }
+
+      // Check if string already contains timezone offset (+hh:mm / -hh:mm) or 'Z'
+      const hasTimezone = /[Zz]|\+[0-9]{2}:?[0-9]{2}$|-[0-9]{2}:?[0-9]{2}$/.test(trimmed);
+
+      if (hasTimezone) {
+        targetDate = new Date(trimmed);
+      } else {
+        // Timestamps without explicit timezone indicator in UTC fields (e.g. "2026-08-25T20:21:44.3713409")
+        // append 'Z' to guarantee UTC parsing rather than local browser time parsing.
+        targetDate = new Date(`${trimmed}Z`);
+      }
+    } else {
+      return 'تاریخ نامعتبر';
+    }
+
+    const targetTime = targetDate.getTime();
     const nowTime = now.getTime();
 
     if (isNaN(targetTime)) {
-      return 'همین الان';
+      return 'تاریخ نامعتبر';
     }
 
     const diffInSeconds = Math.floor((nowTime - targetTime) / 1000);
 
+    // If future timestamp (negative diff) or less than 60 seconds ago
     if (diffInSeconds < 60) {
       return 'همین الان';
     }

@@ -132,8 +132,34 @@ describe('PersianDateService', () => {
       expect(service.getRelativeTime(isoString, now)).toBe('۱۵ دقیقه پیش');
     });
 
-    it('should handle invalid date string gracefully', () => {
-      expect(service.getRelativeTime('invalid-date', now)).toBe('همین الان');
+    it('should calculate "2026-08-25T20:21:44.3713409Z" correctly', () => {
+      const refNow = new Date('2026-09-20T20:21:44Z'); // 26 days later (3 weeks)
+      const isoWithZ = '2026-08-25T20:21:44.3713409Z';
+      expect(service.getRelativeTime(isoWithZ, refNow)).toBe('۳ هفته پیش');
+    });
+
+    it('should calculate "2026-08-25T20:21:44.3713409+00:00" correctly', () => {
+      const refNow = new Date('2026-09-20T20:21:44Z'); // 26 days later (3 weeks)
+      const isoWithOffset = '2026-08-25T20:21:44.3713409+00:00';
+      expect(service.getRelativeTime(isoWithOffset, refNow)).toBe('۳ هفته پیش');
+    });
+
+    it('should calculate timestamp without timezone suffix "2026-08-25T20:21:44.3713409" as UTC', () => {
+      const refNow = new Date('2026-09-20T20:21:44Z'); // 26 days later (3 weeks)
+      const rawIso = '2026-08-25T20:21:44.3713409';
+      expect(service.getRelativeTime(rawIso, refNow)).toBe('۳ هفته پیش');
+    });
+
+    it('should NOT return false "همین الان" for old activity', () => {
+      const refNow = new Date('2026-09-20T20:21:44Z');
+      const rawIso = '2026-08-25T20:21:44.3713409';
+      expect(service.getRelativeTime(rawIso, refNow)).not.toBe('همین الان');
+    });
+
+    it('should return "تاریخ نامعتبر" for invalid date strings', () => {
+      expect(service.getRelativeTime('invalid-date', now)).toBe('تاریخ نامعتبر');
+      expect(service.getRelativeTime('', now)).toBe('تاریخ نامعتبر');
+      expect(service.getRelativeTime(null as any, now)).toBe('تاریخ نامعتبر');
     });
   });
 });

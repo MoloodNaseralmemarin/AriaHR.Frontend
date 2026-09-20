@@ -163,4 +163,29 @@ describe('SystemAdminDashboardComponent API Integration', () => {
 
     expect(clearIntervalSpy).toHaveBeenCalled();
   });
+
+  it('should map createdAtUtc property correctly from RecentActivityDto and render Persian relative time', () => {
+    mockDashboardService.getRecentActivities.mockReturnValue(
+      of([
+        {
+          id: 'a99',
+          type: 'OrganizationCreated',
+          title: 'مرکز جدید ثبت شد',
+          description: 'مرکز تصویر برداری دکتر فاطمه سالمی',
+          createdAtUtc: '2026-08-25T20:21:44.3713409',
+        },
+      ])
+    );
+
+    const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.now.set(new Date('2026-09-20T20:21:44Z'));
+
+    expect(component.recentActivity().length).toBe(1);
+    const activity = component.recentActivity()[0];
+    expect(activity.timestamp).toBe('2026-08-25T20:21:44.3713409');
+    expect(component.getRelativeTime(activity.timestamp)).toBe('۳ هفته پیش');
+  });
 });

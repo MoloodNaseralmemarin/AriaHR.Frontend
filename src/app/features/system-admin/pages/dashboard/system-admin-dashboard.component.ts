@@ -112,7 +112,14 @@ export class SystemAdminDashboardComponent implements OnInit, OnDestroy {
         const label = item.label ?? item.Label ?? item.title ?? item.Title ?? 'فعالیت جدید';
         const detail = item.detail ?? item.Detail ?? item.description ?? item.Description ?? '';
         const type = item.type ?? item.Type ?? 'center_created';
-        const timestamp = item.timestamp ?? item.Timestamp ?? item.createdAt ?? item.CreatedAt ?? new Date().toISOString();
+        const timestamp =
+          item.timestamp ??
+          item.Timestamp ??
+          item.createdAtUtc ??
+          item.CreatedAtUtc ??
+          item.createdAt ??
+          item.CreatedAt ??
+          new Date().toISOString();
 
         return { id, label, detail, type, timestamp };
       });

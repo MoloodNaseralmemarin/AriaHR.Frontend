@@ -7,6 +7,7 @@ export interface RecentActivityDto {
   title?: string;
   description?: string;
   createdAt?: string;
+  createdAtUtc?: string;
 
   // Casing variations from backend JSON deserialization
   Id?: string | number;
@@ -17,4 +18,5 @@ export interface RecentActivityDto {
   Title?: string;
   Description?: string;
   CreatedAt?: string;
+  CreatedAtUtc?: string;
 }
