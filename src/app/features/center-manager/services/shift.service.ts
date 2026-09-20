@@ -18,7 +18,7 @@ import { ShiftResponseDto } from '../models/shift-response.dto';
 export class ShiftService {
   private readonly http = inject(HttpClient);
 
-  private readonly apiUrl = `${environment.apiUrl}/scheduling/shifts`;
+  private readonly apiUrl = `${environment.apiUrl}/api/scheduling/shifts`;
 
   createShift(request: CreateShiftDto): Observable<ShiftResponseDto> {
     return this.http.post<ShiftResponseDto>(this.apiUrl, request);
