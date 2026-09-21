@@ -3,4 +3,5 @@ export interface CreateShiftDto {
   startTime: string; // 'HH:mm'
   endTime: string; // 'HH:mm'
   isActive: boolean;
+  organizationId: string;
 }
