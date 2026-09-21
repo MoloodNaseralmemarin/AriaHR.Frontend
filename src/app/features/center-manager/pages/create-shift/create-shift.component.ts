@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 
 import { ShiftService } from '../../services/shift.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { CreateShiftDto } from '../../models/create-shift.dto';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 
@@ -45,9 +46,10 @@ export function time24hValidator(control: AbstractControl): ValidationErrors | n
   styleUrls: ['./create-shift.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateShiftComponent {
+export class CreateShiftComponent implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly shiftService = inject(ShiftService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   readonly submitState = signal<SubmitState>('idle');
@@ -63,6 +65,16 @@ export class CreateShiftComponent {
     isActive: [true],
   });
 
+  ngOnInit(): void {
+    if (!this.authService.userDetails()) {
+      this.authService.getCurrentUser().subscribe({
+        error: () => {
+          // Failure handled gracefully during submission
+        },
+      });
+    }
+  }
+
   get f() {
     return this.form.controls;
   }
@@ -71,13 +83,13 @@ export class CreateShiftComponent {
     return normalizeTimeString(rawTime);
   }
 
-  /** true when endTime is not strictly after startTime, once both are valid */
+  /** true when startTime and endTime are identical, once both are valid */
   timeRangeInvalid(): boolean {
     const start = normalizeTimeString(this.form.controls.startTime.value);
     const end = normalizeTimeString(this.form.controls.endTime.value);
     if (!start || !end) return false;
     if (!TIME_24H_REGEX.test(start) || !TIME_24H_REGEX.test(end)) return false;
-    return end <= start;
+    return start === end;
   }
 
   isControlInvalid(name: 'name' | 'startTime' | 'endTime'): boolean {
@@ -106,12 +118,21 @@ export class CreateShiftComponent {
       return;
     }
 
+    const userDetails = this.authService.userDetails();
+    const orgId = userDetails?.organizationId;
+
+    if (!orgId) {
+      this.errorMessage.set('شما به هیچ مرکزی متصل نیستید و امکان ثبت شیفت را ندارید.');
+      return;
+    }
+
     const value = this.form.getRawValue();
     const request: CreateShiftDto = {
       name: value.name.trim(),
       startTime: normalizedStart,
       endTime: normalizedEnd,
       isActive: value.isActive,
+      organizationId: orgId,
     };
 
     this.submitState.set('submitting');
