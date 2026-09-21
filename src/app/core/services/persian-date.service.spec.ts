@@ -132,8 +132,40 @@ describe('PersianDateService', () => {
       expect(service.getRelativeTime(isoString, now)).toBe('۱۵ دقیقه پیش');
     });
 
-    it('should handle invalid date string gracefully', () => {
-      expect(service.getRelativeTime('invalid-date', now)).toBe('همین الان');
+    it('should parse ISO strings without timezone as UTC without returning "همین الان" for past dates', () => {
+      const nowRef = new Date('2026-09-20T20:21:44.3713409Z');
+      const testTimestamp = '2026-08-25T20:21:44.3713409'; // 26 days ago (3 weeks)
+
+      const result = service.getRelativeTime(testTimestamp, nowRef);
+      expect(result).not.toBe('همین الان');
+      expect(result).toBe('۳ هفته پیش');
+    });
+
+    it('should treat ISO strings without Z, with Z, and with explicit offset +00:00 as equivalent UTC instants', () => {
+      const nowRef = new Date('2026-09-20T20:21:44.3713409Z');
+      const noZ = '2026-08-25T20:21:44.3713409';
+      const withZ = '2026-08-25T20:21:44.3713409Z';
+      const withOffset = '2026-08-25T20:21:44.3713409+00:00';
+
+      const resNoZ = service.getRelativeTime(noZ, nowRef);
+      const resWithZ = service.getRelativeTime(withZ, nowRef);
+      const resWithOffset = service.getRelativeTime(withOffset, nowRef);
+
+      expect(resNoZ).toBe('۳ هفته پیش');
+      expect(resNoZ).toBe(resWithZ);
+      expect(resWithZ).toBe(resWithOffset);
+    });
+
+    it('should preserve explicit non-UTC timezone offsets', () => {
+      const nowRef = new Date('2026-08-25T20:21:44.3713409Z');
+      // 2026-08-25T20:21:44.3713409+04:00 is 16:21:44 UTC, which is 4 hours before nowRef
+      const withOffsetFourHoursAgo = '2026-08-25T20:21:44.3713409+04:00';
+
+      expect(service.getRelativeTime(withOffsetFourHoursAgo, nowRef)).toBe('۴ ساعت پیش');
+    });
+
+    it('should handle invalid date string gracefully by returning "تاریخ نامعتبر"', () => {
+      expect(service.getRelativeTime('invalid-date', now)).toBe('تاریخ نامعتبر');
     });
   });
 });

@@ -84,12 +84,12 @@ export class PersianDateService {
    * @param now Optional reference date for deterministic testing (defaults to current date).
    */
   getRelativeTime(timestamp: string | Date, now: Date = new Date()): string {
-    const targetDate = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+    const targetDate = this.parseTimestamp(timestamp);
     const targetTime = targetDate ? targetDate.getTime() : NaN;
     const nowTime = now.getTime();
 
     if (isNaN(targetTime)) {
-      return 'همین الان';
+      return 'تاریخ نامعتبر';
     }
 
     const diffInSeconds = Math.floor((nowTime - targetTime) / 1000);
@@ -125,5 +125,25 @@ export class PersianDateService {
 
     const diffInYears = Math.floor(diffInDays / 365);
     return `${toPersianDigits(diffInYears)} سال پیش`;
+  }
+
+  private parseTimestamp(timestamp: string | Date): Date {
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+
+    if (typeof timestamp !== 'string') {
+      return new Date(NaN);
+    }
+
+    const trimmed = timestamp.trim();
+    if (!trimmed) {
+      return new Date(NaN);
+    }
+
+    const hasTimezone = /[Zz]|[+-]\d{2}(?::?\d{2})?$/.test(trimmed);
+    const normalizedStr = hasTimezone ? trimmed : `${trimmed}Z`;
+
+    return new Date(normalizedStr);
   }
 }
