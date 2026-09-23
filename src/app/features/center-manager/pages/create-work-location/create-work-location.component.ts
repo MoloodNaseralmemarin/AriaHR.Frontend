@@ -89,10 +89,10 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
     this.isMapLoading.set(true);
     this.mapError.set(null);
 
-    const apiKey = environment.neshanApiKey;
+    const apiKey = environment.neshanMapApiKey || environment.neshanApiKey;
     if (!apiKey) {
       this.mapError.set(
-        'کلید API نقشه نشان تنظیم نشده است. لطفاً کلید neshanApiKey را در فایل تنظیمات پروژه وارد کنید.'
+        'کلید API نقشه نشان تنظیم نشده است. لطفاً کلید neshanMapApiKey را در فایل تنظیمات پروژه وارد کنید.'
       );
       this.isMapLoading.set(false);
     }
