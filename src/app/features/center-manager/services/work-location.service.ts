@@ -28,7 +28,7 @@ export class WorkLocationService {
    * Fetches reverse geocoded address for coordinates using Neshan API.
    */
   reverseGeocode(lat: number, lng: number): Observable<string | null> {
-    const apiKey = environment.neshanServiceApiKey || environment.neshanApiKey;
+    const apiKey = environment.neshanApiKey || environment.neshanApiKey;
     if (!apiKey) {
       return of(null);
     }
