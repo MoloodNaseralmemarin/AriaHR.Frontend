@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
   apiUrl: '',
-  neshanMapApiKey: 'web.ab84520bfd15454fa8505e93acae3e86',
+  neshanMapApiKey: 'web.641fa875d8194477ba857bdef50779af',
   neshanServiceApiKey: '',
 };
