@@ -1,7 +1,0 @@
-/*
- * Intentionally minimal: all layout/spacing/color is handled via Tailwind
- * utility classes in the template, matching the pattern used by
- * dashboard.component.ts (styleUrls present but Tailwind-first).
- * Add component-specific overrides here only if Tailwind utilities can't
- * express them.
- */
