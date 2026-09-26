@@ -227,11 +227,11 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
           if (addr) {
             this.resolvedAddress.set(addr);
           } else {
-            this.resolvedAddress.set('آدرس یافت نشد یا کلید API نشان معتبر نیست.');
+            this.resolvedAddress.set('تبدیل موقعیت به آدرس انجام نشد');
           }
         },
         error: () => {
-          this.resolvedAddress.set('خطا در دریافت آدرس.');
+          this.resolvedAddress.set('تبدیل موقعیت به آدرس انجام نشد');
         },
       });
   }
