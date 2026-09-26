@@ -89,12 +89,13 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
     this.isMapLoading.set(true);
     this.mapError.set(null);
 
-    const apiKey = environment.neshanMapApiKey || environment.neshanApiKey;
+    const apiKey = environment.neshanMapApiKey;
     if (!apiKey) {
       this.mapError.set(
         'کلید API نقشه نشان تنظیم نشده است. لطفاً کلید neshanMapApiKey را در فایل تنظیمات پروژه وارد کنید.'
       );
       this.isMapLoading.set(false);
+      return;
     }
 
     this.loadNeshanLeafletAssets()
@@ -105,7 +106,7 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
         const tehranCenter = [35.6997, 51.338];
 
         this.mapInstance = L.map(this.mapContainer.nativeElement, {
-          key: apiKey || 'web.leaflet.sdk',
+          key: apiKey,
           maptype: 'neshan',
           poi: true,
           traffic: false,
@@ -113,8 +114,8 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
           zoom: 14,
         });
 
-        // Add standard tile layer fallback if L.map neshan plugin style is standard leaflet
-        L.tileLayer('https://raster.neshan.org/v2/Standard/current/{z}/{x}/{y}.png', {
+        // Add standard tile layer with Web Map API key query parameter
+        L.tileLayer(`https://raster.neshan.org/v2/Standard/current/{z}/{x}/{y}.png?apiKey=${apiKey}`, {
           maxZoom: 19,
           attribution: '&copy; <a href="https://neshan.org">Neshan</a>',
         }).addTo(this.mapInstance);
