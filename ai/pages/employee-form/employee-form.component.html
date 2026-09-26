@@ -1,0 +1,150 @@
+<!-- GUESS — ظاهر تأیید نشده، طراحی عمومی Tailwind + RTL است. -->
+<div dir="rtl" class="p-6 max-w-2xl mx-auto font-sans">
+  <h1 class="text-2xl font-bold text-slate-800 mb-6">
+    {{ isEditMode() ? 'ویرایش کارمند' : 'کارمند جدید' }}
+  </h1>
+
+  @if (errorMessage()) {
+    <div class="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <p class="text-slate-500">در حال بارگذاری...</p>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+          شناسه کاربر (UserId)
+        </label>
+        <input
+          type="text"
+          formControlName="userId"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
+        />
+        @if (form.controls.userId.touched && form.controls.userId.invalid) {
+          <p class="text-xs text-red-600 mt-1">این فیلد الزامی است.</p>
+        }
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+          شناسه سازمان (OrganizationId)
+        </label>
+        <input
+          type="text"
+          formControlName="organizationId"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+        @if (form.controls.organizationId.touched && form.controls.organizationId.invalid) {
+          <p class="text-xs text-red-600 mt-1">این فیلد الزامی است.</p>
+        }
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">کد پرسنلی</label>
+          <input
+            type="text"
+            formControlName="personnelCode"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          @if (form.controls.personnelCode.touched && form.controls.personnelCode.invalid) {
+            <p class="text-xs text-red-600 mt-1">این فیلد الزامی است.</p>
+          }
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">کد ملی</label>
+          <input
+            type="text"
+            formControlName="nationalCode"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          @if (form.controls.nationalCode.touched && form.controls.nationalCode.invalid) {
+            <p class="text-xs text-red-600 mt-1">کد ملی باید ۱۰ رقم باشد.</p>
+          }
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">تاریخ تولد</label>
+          <input
+            type="date"
+            formControlName="birthDate"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          @if (form.controls.birthDate.touched && form.controls.birthDate.invalid) {
+            <p class="text-xs text-red-600 mt-1">این فیلد الزامی است.</p>
+          }
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">تاریخ استخدام</label>
+          <input
+            type="date"
+            formControlName="hireDate"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          @if (form.controls.hireDate.touched && form.controls.hireDate.invalid) {
+            <p class="text-xs text-red-600 mt-1">این فیلد الزامی است.</p>
+          }
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">جنسیت</label>
+        <select
+          formControlName="gender"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        >
+          <option value="">— انتخاب کنید —</option>
+          @for (option of genderOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">مسیر تصویر پروفایل</label>
+        <input
+          type="text"
+          formControlName="profileImagePath"
+          placeholder="اختیاری"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
+
+      @if (isEditMode()) {
+        <div class="flex items-center gap-2">
+          <input
+            id="isActive"
+            type="checkbox"
+            formControlName="isActive"
+            class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+          />
+          <label for="isActive" class="text-sm text-slate-700">کارمند فعال است</label>
+        </div>
+      }
+
+      <div class="flex items-center gap-3 pt-2">
+        <button
+          type="submit"
+          [disabled]="isSubmitting()"
+          class="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+        >
+          {{ isSubmitting() ? 'در حال ذخیره...' : 'ذخیره' }}
+        </button>
+        <button
+          type="button"
+          (click)="cancel()"
+          class="rounded-lg border border-slate-300 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+        >
+          انصراف
+        </button>
+      </div>
+    </form>
+  }
+</div>

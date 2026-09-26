@@ -1,0 +1,134 @@
+<!--
+  GUESS — این ظاهر (رنگ‌ها، فاصله‌ها، کلاس‌های دقیق Tailwind) تأیید نشده،
+  چون هیچ صفحه‌ی مشابه‌ای از پروژه در دسترس نبود. صرفاً یک طراحی اداری ساده
+  و RTL با Tailwind است؛ باید با استایل واقعی پروژه (رنگ برند، فونت، کامپوننت‌های
+  مشترک shared/components) هماهنگ شود.
+-->
+<div dir="rtl" class="p-6 max-w-7xl mx-auto font-sans">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-slate-800">مدیریت کارمندان</h1>
+    <a
+      routerLink="/employees/new"
+      class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition"
+    >
+      + کارمند جدید
+    </a>
+  </div>
+
+  <div class="mb-4">
+    <input
+      type="text"
+      placeholder="جستجو بر اساس کد پرسنلی یا کد ملی..."
+      class="w-full sm:w-80 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      [value]="searchTerm()"
+      (input)="onSearchInput($any($event.target).value)"
+    />
+  </div>
+
+  @if (errorMessage()) {
+    <div class="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <div class="overflow-x-auto rounded-lg border border-slate-200">
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="px-4 py-3 text-right font-semibold text-slate-600">کد پرسنلی</th>
+          <th class="px-4 py-3 text-right font-semibold text-slate-600">نام کارمند</th>
+          <th class="px-4 py-3 text-right font-semibold text-slate-600">کد ملی</th>
+          <th class="px-4 py-3 text-right font-semibold text-slate-600">تاریخ استخدام</th>
+          <th class="px-4 py-3 text-right font-semibold text-slate-600">وضعیت</th>
+          <th class="px-4 py-3 text-right font-semibold text-slate-600">عملیات</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 bg-white">
+        @if (isLoading()) {
+          <tr>
+            <td colspan="6" class="px-4 py-6 text-center text-slate-500">در حال بارگذاری...</td>
+          </tr>
+        } @else if (employees().length === 0) {
+          <tr>
+            <td colspan="6" class="px-4 py-6 text-center text-slate-500">کارمندی یافت نشد.</td>
+          </tr>
+        } @else {
+          @for (employee of employees(); track employee.id) {
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-3 text-slate-700">{{ employee.personnelCode }}</td>
+              <!-- GUESS: userFullName روی Entity تأیید نشده، به یادداشت DTO مراجعه کنید -->
+              <td class="px-4 py-3 text-slate-700">{{ employee.userFullName || '—' }}</td>
+              <td class="px-4 py-3 text-slate-700">{{ employee.nationalCode }}</td>
+              <td class="px-4 py-3 text-slate-700">{{ employee.hireDate }}</td>
+              <td class="px-4 py-3">
+                <span
+                  class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                  [class.bg-emerald-100]="employee.isActive"
+                  [class.text-emerald-700]="employee.isActive"
+                  [class.bg-slate-100]="!employee.isActive"
+                  [class.text-slate-600]="!employee.isActive"
+                >
+                  {{ employee.isActive ? 'فعال' : 'غیرفعال' }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <a
+                    [routerLink]="['/employees', employee.id]"
+                    class="text-sky-600 hover:underline"
+                  >
+                    مشاهده
+                  </a>
+                  <a
+                    [routerLink]="['/employees', employee.id, 'edit']"
+                    class="text-amber-600 hover:underline"
+                  >
+                    ویرایش
+                  </a>
+                  <button
+                    type="button"
+                    class="text-slate-500 hover:underline"
+                    (click)="toggleActive(employee)"
+                  >
+                    {{ employee.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="text-red-600 hover:underline"
+                    (click)="deleteEmployee(employee)"
+                  >
+                    حذف
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (totalPages() > 1) {
+    <div class="mt-4 flex items-center justify-center gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm disabled:opacity-40"
+        [disabled]="pageNumber() === 1"
+        (click)="goToPage(pageNumber() - 1)"
+      >
+        قبلی
+      </button>
+      <span class="text-sm text-slate-600">
+        صفحه {{ pageNumber() }} از {{ totalPages() }}
+      </span>
+      <button
+        type="button"
+        class="rounded-md border border-slate-300 px-3 py-1.5 text-sm disabled:opacity-40"
+        [disabled]="pageNumber() === totalPages()"
+        (click)="goToPage(pageNumber() + 1)"
+      >
+        بعدی
+      </button>
+    </div>
+  }
+</div>

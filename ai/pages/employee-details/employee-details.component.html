@@ -1,0 +1,70 @@
+<!-- GUESS — ظاهر تأیید نشده، طراحی عمومی Tailwind + RTL است. -->
+<div dir="rtl" class="p-6 max-w-2xl mx-auto font-sans">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-slate-800">جزئیات کارمند</h1>
+    <a routerLink="/employees" class="text-sm text-sky-600 hover:underline">
+      بازگشت به لیست
+    </a>
+  </div>
+
+  @if (isLoading()) {
+    <p class="text-slate-500">در حال بارگذاری...</p>
+  } @else if (errorMessage()) {
+    <div class="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+      {{ errorMessage() }}
+    </div>
+  } @else if (employee(); as emp) {
+    <div class="rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="text-sm text-slate-500">کد پرسنلی</span>
+        <span class="text-sm font-medium text-slate-800">{{ emp.personnelCode }}</span>
+      </div>
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="text-sm text-slate-500">نام کارمند</span>
+        <!-- GUESS: userFullName تأیید نشده -->
+        <span class="text-sm font-medium text-slate-800">{{ emp.userFullName || '—' }}</span>
+      </div>
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="text-sm text-slate-500">کد ملی</span>
+        <span class="text-sm font-medium text-slate-800">{{ emp.nationalCode }}</span>
+      </div>
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="text-sm text-slate-500">تاریخ تولد</span>
+        <span class="text-sm font-medium text-slate-800">{{ emp.birthDate }}</span>
+      </div>
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="text-sm text-slate-500">تاریخ استخدام</span>
+        <span class="text-sm font-medium text-slate-800">{{ emp.hireDate }}</span>
+      </div>
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="text-sm text-slate-500">جنسیت</span>
+        <span class="text-sm font-medium text-slate-800">{{ emp.gender || '—' }}</span>
+      </div>
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="text-sm text-slate-500">شناسه سازمان</span>
+        <span class="text-sm font-medium text-slate-800 font-mono">{{ emp.organizationId }}</span>
+      </div>
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="text-sm text-slate-500">وضعیت</span>
+        <span
+          class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+          [class.bg-emerald-100]="emp.isActive"
+          [class.text-emerald-700]="emp.isActive"
+          [class.bg-slate-100]="!emp.isActive"
+          [class.text-slate-600]="!emp.isActive"
+        >
+          {{ emp.isActive ? 'فعال' : 'غیرفعال' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <a
+        [routerLink]="['/employees', emp.id, 'edit']"
+        class="inline-flex items-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 transition"
+      >
+        ویرایش این کارمند
+      </a>
+    </div>
+  }
+</div>
