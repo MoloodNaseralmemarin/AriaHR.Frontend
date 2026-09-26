@@ -1,0 +1,172 @@
+<div dir="rtl" class="max-w-3xl mx-auto space-y-6">
+  <!-- Toast Notification -->
+  <div *ngIf="toastMessage()" class="fixed bottom-6 left-6 z-50">
+    <app-toast [message]="toastMessage()!" [tone]="toastTone()"></app-toast>
+  </div>
+
+  <!-- Page Header -->
+  <app-page-header
+    [title]="isEditMode() ? 'ویرایش کارمند' : 'افزودن کارمند جدید'"
+    [subtitle]="isEditMode() ? 'تغییر و بروزرسانی مشخصات پرسنل' : 'ثبت کارمند جدید در سیستم'"
+  >
+    <a
+      actions
+      routerLink="/center-manager/employees"
+      class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
+    >
+      بازگشت به لیست
+    </a>
+  </app-page-header>
+
+  <!-- Error Message Banner -->
+  <div *ngIf="errorMessage()" class="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-rose-700 text-sm">
+    {{ errorMessage() }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <p class="text-slate-500 text-sm">در حال بارگذاری اطلاعات کارمند...</p>
+  </div>
+
+  <!-- Form -->
+  <div *ngIf="!isLoading()" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
+      <!-- UserId Field -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+          شناسه کاربر (UserId) <span class="text-rose-500">*</span>
+        </label>
+        <input
+          type="text"
+          formControlName="userId"
+          placeholder="شناسه کاربر مرتبط (مثلا GUID یا شماره کاربر)"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500 transition"
+        />
+        <p *ngIf="isControlInvalid('userId')" class="mt-1 text-xs text-rose-600">
+          شناسه کاربر الزامی است.
+        </p>
+      </div>
+
+      <!-- Personnel Code & National Code -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+            کد پرسنلی <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="text"
+            formControlName="personnelCode"
+            placeholder="مثال: 1004"
+            class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+          />
+          <p *ngIf="isControlInvalid('personnelCode')" class="mt-1 text-xs text-rose-600">
+            کد پرسنلی الزامی است.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+            کد ملی <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="text"
+            formControlName="nationalCode"
+            placeholder="کد ملی ۱۰ رقمی"
+            maxlength="10"
+            class="w-full font-mono rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+          />
+          <p *ngIf="isControlInvalid('nationalCode')" class="mt-1 text-xs text-rose-600">
+            کد ملی معتبر ۱۰ رقمی وارد کنید.
+          </p>
+        </div>
+      </div>
+
+      <!-- Birth Date & Hire Date -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+            تاریخ تولد <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="date"
+            formControlName="birthDate"
+            class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+          />
+          <p *ngIf="isControlInvalid('birthDate')" class="mt-1 text-xs text-rose-600">
+            تاریخ تولد الزامی است.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+            تاریخ استخدام <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="date"
+            formControlName="hireDate"
+            class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+          />
+          <p *ngIf="isControlInvalid('hireDate')" class="mt-1 text-xs text-rose-600">
+            تاریخ استخدام الزامی است.
+          </p>
+        </div>
+      </div>
+
+      <!-- Gender & Profile Image Path -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">جنسیت</label>
+          <select
+            formControlName="gender"
+            class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+          >
+            <option value="">— انتخاب کنید —</option>
+            <option *ngFor="let opt of genderOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">مسیر تصویر پروفایل</label>
+          <input
+            type="text"
+            formControlName="profileImagePath"
+            placeholder="اختیاری"
+            class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+          />
+        </div>
+      </div>
+
+      <!-- Is Active Toggle (Edit Mode) -->
+      <div *ngIf="isEditMode()" class="flex items-center gap-2 pt-1">
+        <input
+          id="isActiveCheckbox"
+          type="checkbox"
+          formControlName="isActive"
+          class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+        />
+        <label for="isActiveCheckbox" class="text-xs font-medium text-slate-700 cursor-pointer">
+          کارمند فعال است
+        </label>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+        <button
+          type="button"
+          (click)="cancel()"
+          class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
+        >
+          انصراف
+        </button>
+        <button
+          type="submit"
+          [disabled]="isSubmitting()"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 transition"
+        >
+          <span *ngIf="isSubmitting()">در حال ذخیره...</span>
+          <span *ngIf="!isSubmitting()">{{ isEditMode() ? 'بروزرسانی کارمند' : 'ثبت کارمند' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

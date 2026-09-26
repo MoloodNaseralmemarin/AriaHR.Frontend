@@ -19,7 +19,6 @@ import { SystemAdminSettingsComponent } from './features/system-admin/pages/sett
 // Center Manager Components
 import { CenterLayoutComponent } from './features/center-manager/layout/center-layout.component';
 import { DashboardComponent as CenterManagerDashboardComponent } from './features/center-manager/pages/dashboard/dashboard.component';
-import { EmployeesComponent as CenterManagerEmployeesComponent } from './features/center-manager/pages/employees/employees.component';
 import { AttendanceComponent as CenterManagerAttendanceComponent } from './features/center-manager/pages/attendance/attendance.component';
 import { ShiftsComponent as CenterManagerShiftsComponent } from './features/center-manager/pages/shifts/shifts.component';
 import { CreateShiftComponent as CenterManagerCreateShiftComponent } from './features/center-manager/pages/create-shift/create-shift.component';
@@ -65,7 +64,11 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: CenterManagerDashboardComponent },
-      { path: 'employees', component: CenterManagerEmployeesComponent },
+      {
+        path: 'employees',
+        loadChildren: () =>
+          import('./features/employees/employees.routes').then((m) => m.EMPLOYEE_ROUTES),
+      },
       { path: 'attendance', component: CenterManagerAttendanceComponent },
       { path: 'shifts', component: CenterManagerShiftsComponent },
       { path: 'shifts/create', component: CenterManagerCreateShiftComponent },
