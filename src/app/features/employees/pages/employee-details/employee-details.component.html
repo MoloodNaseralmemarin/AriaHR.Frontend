@@ -1,0 +1,97 @@
+<div dir="rtl" class="max-w-3xl mx-auto space-y-6">
+  <!-- Page Header -->
+  <app-page-header title="جزئیات کارمند" subtitle="مشاهده اطلاعات کامل پرونده پرسنلی">
+    <div actions class="flex items-center gap-2">
+      <a
+        routerLink="/center-manager/employees"
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
+      >
+        بازگشت به لیست
+      </a>
+      <a
+        *ngIf="employee(); let emp"
+        [routerLink]="['/center-manager/employees', emp.id, 'edit']"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-amber-600 transition"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        ویرایش کارمند
+      </a>
+    </div>
+  </app-page-header>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()">
+    <app-skeleton-loader variant="card" [count]="1"></app-skeleton-loader>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!isLoading() && errorMessage()">
+    <app-empty-state
+      title="خطا در بارگذاری"
+      [description]="errorMessage()!"
+      [isError]="true"
+      actionLabel="تلاش مجدد"
+      (action)="employee() ? loadEmployee(employee()!.id) : null"
+    ></app-empty-state>
+  </div>
+
+  <!-- Details Card -->
+  <div *ngIf="!isLoading() && employee(); let emp = ngIf" class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <!-- Header Section -->
+    <div class="border-b border-slate-100 bg-slate-50/60 px-6 py-5 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 font-bold text-base">
+          {{ emp.userFullName ? emp.userFullName.charAt(0) : 'ک' }}
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-slate-800">{{ emp.userFullName || 'کارمند' }}</h2>
+          <p class="text-xs text-slate-500 mt-0.5">کد پرسنلی: {{ emp.personnelCode }}</p>
+        </div>
+      </div>
+      <app-status-badge
+        [tone]="emp.isActive ? 'success' : 'neutral'"
+        [label]="emp.isActive ? 'فعال' : 'غیرفعال'"
+      ></app-status-badge>
+    </div>
+
+    <!-- Info Grid -->
+    <div class="divide-y divide-slate-100 text-xs sm:text-sm">
+      <div class="flex items-center justify-between px-6 py-4">
+        <span class="text-slate-500 font-medium">کد پرسنلی</span>
+        <span class="font-mono font-semibold text-slate-800">{{ emp.personnelCode }}</span>
+      </div>
+      <div class="flex items-center justify-between px-6 py-4">
+        <span class="text-slate-500 font-medium">نام و نام خانوادگی</span>
+        <span class="font-semibold text-slate-800">{{ emp.userFullName || '—' }}</span>
+      </div>
+      <div *ngIf="emp.userEmail" class="flex items-center justify-between px-6 py-4">
+        <span class="text-slate-500 font-medium">ایمیل کاربر</span>
+        <span class="font-mono text-slate-800">{{ emp.userEmail }}</span>
+      </div>
+      <div class="flex items-center justify-between px-6 py-4">
+        <span class="text-slate-500 font-medium">کد ملی</span>
+        <span class="font-mono font-semibold text-slate-800">{{ emp.nationalCode }}</span>
+      </div>
+      <div class="flex items-center justify-between px-6 py-4">
+        <span class="text-slate-500 font-medium">تاریخ تولد</span>
+        <span class="text-slate-800">{{ emp.birthDate }}</span>
+      </div>
+      <div class="flex items-center justify-between px-6 py-4">
+        <span class="text-slate-500 font-medium">تاریخ استخدام</span>
+        <span class="text-slate-800">{{ emp.hireDate }}</span>
+      </div>
+      <div class="flex items-center justify-between px-6 py-4">
+        <span class="text-slate-500 font-medium">جنسیت</span>
+        <span class="text-slate-800">{{ getGenderLabel(emp.gender) }}</span>
+      </div>
+      <div class="flex items-center justify-between px-6 py-4">
+        <span class="text-slate-500 font-medium">شناسه کاربر (UserId)</span>
+        <span class="font-mono text-xs text-slate-600">{{ emp.userId }}</span>
+      </div>
+      <div class="flex items-center justify-between px-6 py-4">
+        <span class="text-slate-500 font-medium">شناسه سازمان</span>
+        <span class="font-mono text-xs text-slate-600">{{ emp.organizationId }}</span>
+      </div>
+    </div>
+  </div>
+</div>

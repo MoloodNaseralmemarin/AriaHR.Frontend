@@ -1,14 +1,29 @@
+
+> aria-hr.frontend@0.0.0 start
+> ng serve
+
 ❯ Building...
 ✔ Building...
-Initial chunk files | Names         |  Raw size
-main.js             | main          | 629.13 kB |
-styles.css          | styles        |  57.27 kB |
+Initial chunk files | Names                      |  Raw size
+main.js             | main                       | 554.73 kB |
+styles.css          | styles                     |  59.16 kB |
+chunk-FBG7XNJU.js   | -                          |  20.95 kB |
+chunk-CP6J25XH.js   | -                          |  16.42 kB |
+chunk-IBHFWU3Z.js   | -                          |   4.54 kB |
+chunk-VUJOFXKG.js   | -                          | 987 bytes |
 
-                    | Initial total | 686.40 kB
+                    | Initial total              | 656.78 kB
 
-Application bundle generation complete. [4.707 seconds] - 2026-09-26T07:13:30.476Z
+Lazy chunk files    | Names                      |  Raw size
+chunk-ZFZP2JZX.js   | employee-list-component    |  47.90 kB |
+chunk-PUTAW6LE.js   | employee-form-component    |  35.54 kB |
+chunk-QZXETQOR.js   | employee-details-component |  21.40 kB |
+chunk-DRLK5XJH.js   | -                          |   1.89 kB |
+chunk-JGU5FH5Q.js   | employees-routes           | 754 bytes |
+
+Application bundle generation complete. [5.836 seconds] - 2026-09-26T13:23:09.417Z
 
 Watch mode enabled. Watching for file changes...
 NOTE: Raw file sizes do not reflect development server per-request transformations.
   ➜  Local:   http://localhost:4200/
-7:13:31 AM [vite] (client) [optimizer] bundling dependencies...
+1:23:10 PM [vite] (client) [optimizer] bundling dependencies...
