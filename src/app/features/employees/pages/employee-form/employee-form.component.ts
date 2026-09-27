@@ -133,11 +133,15 @@ export class EmployeeFormComponent implements OnInit {
 
       this.employeeService.updateEmployee(this.employeeId, request).subscribe({
         next: () => {
-          this.router.navigate(['/center-manager/employees']);
+          this.toastTone.set('success');
+          this.toastMessage.set('اطلاعات کارمند با موفقیت بروزرسانی شد.');
+          setTimeout(() => {
+            this.router.navigate(['/center-manager/employees']);
+          }, 1000);
         },
         error: (err) => {
           this.errorMessage.set(
-            err?.error?.message || 'خطا در ذخیره تغییرات.'
+            err?.error?.message || err?.message || 'خطا در ذخیره تغییرات.'
           );
           this.isSubmitting.set(false);
         },
@@ -156,11 +160,15 @@ export class EmployeeFormComponent implements OnInit {
 
       this.employeeService.createEmployee(request).subscribe({
         next: () => {
-          this.router.navigate(['/center-manager/employees']);
+          this.toastTone.set('success');
+          this.toastMessage.set('کارمند جدید با موفقیت ثبت شد.');
+          setTimeout(() => {
+            this.router.navigate(['/center-manager/employees']);
+          }, 1000);
         },
         error: (err) => {
           this.errorMessage.set(
-            err?.error?.message || 'خطا در ثبت کارمند جدید. لطفاً ورودی‌ها را بررسی کنید.'
+            err?.error?.message || err?.message || 'خطا در ثبت کارمند جدید. لطفاً ورودی‌ها را بررسی کنید.'
           );
           this.isSubmitting.set(false);
         },

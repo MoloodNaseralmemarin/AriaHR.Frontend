@@ -36,7 +36,10 @@ export class EmployeeService {
   }
 
   createEmployee(request: CreateEmployeeDto): Observable<EmployeeResponseDto> {
-    return this.http.post<EmployeeResponseDto>(this.apiUrl, request);
+    return this.http.post<EmployeeResponseDto>(
+      `${environment.apiUrl}/api/organizations/employees`,
+      request
+    );
   }
 
   updateEmployee(id: string, request: UpdateEmployeeDto): Observable<EmployeeResponseDto> {
