@@ -82,6 +82,7 @@ describe('EmployeeFormComponent', () => {
   });
 
   it('should submit valid form in create mode', () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
     const navigateSpy = vi.spyOn(router, 'navigate');
 
@@ -95,8 +96,21 @@ describe('EmployeeFormComponent', () => {
 
     component.submit();
 
-    expect(mockEmployeeService.createEmployee).toHaveBeenCalled();
+    expect(mockEmployeeService.createEmployee).toHaveBeenCalledWith({
+      userId: 'user-123',
+      organizationId: 'org-1',
+      personnelCode: '1002',
+      nationalCode: '0012345678',
+      birthDate: '1995-05-05',
+      gender: undefined,
+      hireDate: '2023-01-01',
+      profileImagePath: undefined,
+    });
+    expect(component.toastMessage()).toBe('کارمند جدید با موفقیت ثبت شد.');
+
+    vi.advanceTimersByTime(1000);
     expect(navigateSpy).toHaveBeenCalledWith(['/center-manager/employees']);
+    vi.useRealTimers();
   });
 
   it('should display error message on submit failure', () => {

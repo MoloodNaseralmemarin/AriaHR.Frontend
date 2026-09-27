@@ -86,7 +86,7 @@ describe('EmployeeService', () => {
       expect(res.id).toBe('emp-1');
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/api/employees`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/organizations/employees`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(createDto);
     req.flush(mockEmployee);
