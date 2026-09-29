@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { describe, beforeEach, it, expect, vi } from 'vitest';
@@ -87,7 +87,9 @@ describe('EmployeeFormComponent', () => {
     const navigateSpy = vi.spyOn(router, 'navigate');
 
     component.form.patchValue({
-      userId: 'user-123',
+      firstName: 'رضا',
+      lastName: 'رضایی',
+      phoneNumber: '09123456789',
       personnelCode: '1002',
       nationalCode: '0012345678',
       birthDate: '1995-05-05',
@@ -97,14 +99,17 @@ describe('EmployeeFormComponent', () => {
     component.submit();
 
     expect(mockEmployeeService.createEmployee).toHaveBeenCalledWith({
-      userId: 'user-123',
+      firstName: 'رضا',
+      lastName: 'رضایی',
+      phoneNumber: '09123456789',
+      email: null,
       organizationId: 'org-1',
       personnelCode: '1002',
       nationalCode: '0012345678',
       birthDate: '1995-05-05',
-      gender: undefined,
+      gender: null,
       hireDate: '2023-01-01',
-      profileImagePath: undefined,
+      profileImagePath: null,
     });
     expect(component.toastMessage()).toBe('کارمند جدید با موفقیت ثبت شد.');
 
@@ -120,7 +125,9 @@ describe('EmployeeFormComponent', () => {
     fixture.detectChanges();
 
     component.form.patchValue({
-      userId: 'user-123',
+      firstName: 'رضا',
+      lastName: 'رضایی',
+      phoneNumber: '09123456789',
       personnelCode: '1002',
       nationalCode: '0012345678',
       birthDate: '1995-05-05',

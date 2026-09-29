@@ -1,10 +1,13 @@
 export interface CreateEmployeeDto {
-  userId: string;
-  organizationId: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email?: string | null;
   personnelCode: string;
   nationalCode: string;
   birthDate: string;
-  gender?: string;
   hireDate: string;
-  profileImagePath?: string;
+  gender?: string | null;
+  profileImagePath?: string | null;
+  organizationId: string;
 }
