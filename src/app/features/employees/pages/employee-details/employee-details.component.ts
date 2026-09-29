@@ -9,6 +9,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
 
 @Component({
   selector: 'app-employee-details',
@@ -20,6 +21,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
     StatusBadgeComponent,
     SkeletonLoaderComponent,
     EmptyStateComponent,
+    JalaliPipe,
   ],
   templateUrl: './employee-details.component.html',
   styleUrls: ['./employee-details.component.css'],
