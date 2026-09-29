@@ -31,20 +31,72 @@
   <!-- Form -->
   <div *ngIf="!isLoading()" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
     <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
-      <!-- UserId Field -->
-      <div>
-        <label class="block text-xs font-semibold text-slate-700 mb-1.5">
-          شناسه کاربر (UserId) <span class="text-rose-500">*</span>
-        </label>
-        <input
-          type="text"
-          formControlName="userId"
-          placeholder="شناسه کاربر مرتبط (مثلا GUID یا شماره کاربر)"
-          class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500 transition"
-        />
-        <p *ngIf="isControlInvalid('userId')" class="mt-1 text-xs text-rose-600">
-          شناسه کاربر الزامی است.
-        </p>
+      <!-- First Name & Last Name (Create Mode or Edit Mode) -->
+      <div *ngIf="!isEditMode()" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+            نام <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="text"
+            formControlName="firstName"
+            placeholder="مثال: علی"
+            class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+          />
+          <p *ngIf="isControlInvalid('firstName')" class="mt-1 text-xs text-rose-600">
+            نام الزامی است.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+            نام خانوادگی <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="text"
+            formControlName="lastName"
+            placeholder="مثال: محمدی"
+            class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+          />
+          <p *ngIf="isControlInvalid('lastName')" class="mt-1 text-xs text-rose-600">
+            نام خانوادگی الزامی است.
+          </p>
+        </div>
+      </div>
+
+      <!-- Phone Number & Email -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div *ngIf="!isEditMode()">
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+            شماره موبایل <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="text"
+            formControlName="phoneNumber"
+            placeholder="09123456789"
+            dir="ltr"
+            class="w-full font-mono rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+          />
+          <p *ngIf="isControlInvalid('phoneNumber')" class="mt-1 text-xs text-rose-600">
+            شماره موبایل معتبر ۱۱ رقمی (شروع با ۰۹) وارد کنید.
+          </p>
+        </div>
+
+        <div [class.sm:col-span-2]="isEditMode()">
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+            ایمیل
+          </label>
+          <input
+            type="email"
+            formControlName="email"
+            placeholder="example@domain.com"
+            dir="ltr"
+            class="w-full font-mono rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+          />
+          <p *ngIf="isControlInvalid('email')" class="mt-1 text-xs text-rose-600">
+            فرمت ایمیل نامعتبر است.
+          </p>
+        </div>
       </div>
 
       <!-- Personnel Code & National Code -->
@@ -73,6 +125,7 @@
             formControlName="nationalCode"
             placeholder="کد ملی ۱۰ رقمی"
             maxlength="10"
+            dir="ltr"
             class="w-full font-mono rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
           />
           <p *ngIf="isControlInvalid('nationalCode')" class="mt-1 text-xs text-rose-600">

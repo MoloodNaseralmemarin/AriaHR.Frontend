@@ -1,15 +1,34 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { EmployeeService } from '../../services/employee.service';
 import { CreateEmployeeDto } from '../../models/create-employee.dto';
 import { UpdateEmployeeDto } from '../../models/update-employee.dto';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { isValidIranianMobile, normalizeMobileNumber } from '../../../../shared/utils/mobile-number.util';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
+
+export function iranianMobileValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  const normalized = normalizeMobileNumber(control.value);
+  if (isValidIranianMobile(normalized)) {
+    return null;
+  }
+  return { iranianMobile: true };
+}
+
+export function nationalCodeValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  const normalized = normalizeMobileNumber(control.value);
+  if (/^\d{10}$/.test(normalized)) {
+    return null;
+  }
+  return { nationalCode: true };
+}
 
 @Component({
   selector: 'app-employee-form',
@@ -47,9 +66,12 @@ export class EmployeeFormComponent implements OnInit {
   ];
 
   readonly form = this.fb.group({
-    userId: ['', Validators.required],
+    firstName: ['', Validators.required],
+    lastName: ['', Validators.required],
+    phoneNumber: ['', [Validators.required, iranianMobileValidator]],
+    email: ['', [Validators.email]],
     personnelCode: ['', Validators.required],
-    nationalCode: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
+    nationalCode: ['', [Validators.required, nationalCodeValidator]],
     birthDate: ['', Validators.required],
     gender: [''],
     hireDate: ['', Validators.required],
@@ -74,8 +96,20 @@ export class EmployeeFormComponent implements OnInit {
     this.isLoading.set(true);
     this.employeeService.getEmployeeById(id).subscribe({
       next: (employee) => {
+        // Extract names if user object or userFullName present, or fallback
+        let firstName = '';
+        let lastName = '';
+        if (employee.userFullName) {
+          const parts = employee.userFullName.trim().split(' ');
+          firstName = parts[0] || '';
+          lastName = parts.slice(1).join(' ') || '';
+        }
+
         this.form.patchValue({
-          userId: employee.userId || '',
+          firstName: firstName,
+          lastName: lastName,
+          phoneNumber: '', // EmployeeResponseDto might not carry phone, optional update
+          email: employee.userEmail || '',
           personnelCode: employee.personnelCode || '',
           nationalCode: employee.nationalCode || '',
           birthDate: employee.birthDate ? employee.birthDate.substring(0, 10) : '',
@@ -84,7 +118,6 @@ export class EmployeeFormComponent implements OnInit {
           isActive: employee.isActive ?? true,
           profileImagePath: employee.profileImagePath ?? '',
         });
-        this.form.controls.userId.disable();
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -119,16 +152,22 @@ export class EmployeeFormComponent implements OnInit {
     this.errorMessage.set(null);
     const raw = this.form.getRawValue();
 
+    const normalizedPhone = normalizeMobileNumber(raw.phoneNumber);
+    const normalizedNationalCode = normalizeMobileNumber(raw.nationalCode);
+    const emailVal = raw.email.trim() ? raw.email.trim() : null;
+    const genderVal = raw.gender ? raw.gender : null;
+    const profileImagePathVal = raw.profileImagePath.trim() ? raw.profileImagePath.trim() : null;
+
     if (this.isEditMode() && this.employeeId) {
       const request: UpdateEmployeeDto = {
         organizationId: orgId,
         personnelCode: raw.personnelCode.trim(),
-        nationalCode: raw.nationalCode.trim(),
+        nationalCode: normalizedNationalCode,
         birthDate: raw.birthDate,
-        gender: raw.gender || undefined,
+        gender: genderVal || undefined,
         hireDate: raw.hireDate,
         isActive: raw.isActive,
-        profileImagePath: raw.profileImagePath ? raw.profileImagePath.trim() : undefined,
+        profileImagePath: profileImagePathVal || undefined,
       };
 
       this.employeeService.updateEmployee(this.employeeId, request).subscribe({
@@ -148,14 +187,17 @@ export class EmployeeFormComponent implements OnInit {
       });
     } else {
       const request: CreateEmployeeDto = {
-        userId: raw.userId.trim(),
-        organizationId: orgId,
+        firstName: raw.firstName.trim(),
+        lastName: raw.lastName.trim(),
+        phoneNumber: normalizedPhone,
+        email: emailVal,
         personnelCode: raw.personnelCode.trim(),
-        nationalCode: raw.nationalCode.trim(),
+        nationalCode: normalizedNationalCode,
         birthDate: raw.birthDate,
-        gender: raw.gender || undefined,
         hireDate: raw.hireDate,
-        profileImagePath: raw.profileImagePath ? raw.profileImagePath.trim() : undefined,
+        gender: genderVal,
+        profileImagePath: profileImagePathVal,
+        organizationId: orgId,
       };
 
       this.employeeService.createEmployee(request).subscribe({
