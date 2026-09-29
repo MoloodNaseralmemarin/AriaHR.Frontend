@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { EmployeeService } from '../../services/employee.service';
 import { EmployeeResponseDto } from '../../models/employee-response.dto';
@@ -102,10 +103,24 @@ export class EmployeeListComponent implements OnInit {
         this.employees.set(data || []);
         this.isLoading.set(false);
       },
-      error: (err) => {
-        this.errorMessage.set(
-          err?.error?.message || 'خطا در دریافت لیست کارمندان. لطفاً دوباره تلاش کنید.'
-        );
+      error: (err: unknown) => {
+        if (err instanceof HttpErrorResponse) {
+          console.error('[EmployeeListComponent] Error loading employees:', {
+            status: err.status,
+            statusText: err.statusText,
+            url: err.url,
+            error: err.error,
+            message: err.message,
+          });
+        } else {
+          console.error('[EmployeeListComponent] Unexpected error loading employees:', err);
+        }
+
+        const fallbackMsg = err instanceof HttpErrorResponse && err.error?.message
+          ? err.error.message
+          : 'خطا در دریافت لیست کارمندان. لطفاً دوباره تلاش کنید.';
+
+        this.errorMessage.set(fallbackMsg);
         this.isLoading.set(false);
       },
     });

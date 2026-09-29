@@ -96,20 +96,11 @@ export class EmployeeFormComponent implements OnInit {
     this.isLoading.set(true);
     this.employeeService.getEmployeeById(id).subscribe({
       next: (employee) => {
-        // Extract names if user object or userFullName present, or fallback
-        let firstName = '';
-        let lastName = '';
-        if (employee.userFullName) {
-          const parts = employee.userFullName.trim().split(' ');
-          firstName = parts[0] || '';
-          lastName = parts.slice(1).join(' ') || '';
-        }
-
         this.form.patchValue({
-          firstName: firstName,
-          lastName: lastName,
-          phoneNumber: '', // EmployeeResponseDto might not carry phone, optional update
-          email: employee.userEmail || '',
+          firstName: employee.firstName || '',
+          lastName: employee.lastName || '',
+          phoneNumber: employee.phoneNumber || '',
+          email: employee.email || '',
           personnelCode: employee.personnelCode || '',
           nationalCode: employee.nationalCode || '',
           birthDate: employee.birthDate ? employee.birthDate.substring(0, 10) : '',
