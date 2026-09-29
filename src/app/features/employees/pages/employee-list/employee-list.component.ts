@@ -41,13 +41,6 @@ export class EmployeeListComponent implements OnInit {
   readonly searchTerm = signal('');
   readonly activeFilter = signal<EmployeeFilter>('all');
 
-  readonly pageNumber = signal(1);
-  readonly pageSize = signal(10);
-  readonly totalCount = signal(0);
-  readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.totalCount() / this.pageSize()))
-  );
-
   readonly toastMessage = signal<string | null>(null);
   readonly toastTone = signal<ToastTone>('success');
 
@@ -58,10 +51,35 @@ export class EmployeeListComponent implements OnInit {
   ];
 
   filteredEmployees = computed<EmployeeResponseDto[]>(() => {
-    const list = this.employees();
+    let list = this.employees();
     const filter = this.activeFilter();
-    if (filter === 'all') return list;
-    return list.filter((e) => (filter === 'active' ? e.isActive : !e.isActive));
+    const query = this.searchTerm().trim().toLowerCase();
+
+    if (filter === 'active') {
+      list = list.filter((e) => e.isActive);
+    } else if (filter === 'inactive') {
+      list = list.filter((e) => !e.isActive);
+    }
+
+    if (query) {
+      list = list.filter((e) => {
+        const fullName = `${e.firstName ?? ''} ${e.lastName ?? ''}`.toLowerCase();
+        const personnelCode = (e.personnelCode ?? '').toLowerCase();
+        const nationalCode = (e.nationalCode ?? '').toLowerCase();
+        const phoneNumber = (e.phoneNumber ?? '').toLowerCase();
+        const email = (e.email ?? '').toLowerCase();
+
+        return (
+          fullName.includes(query) ||
+          personnelCode.includes(query) ||
+          nationalCode.includes(query) ||
+          phoneNumber.includes(query) ||
+          email.includes(query)
+        );
+      });
+    }
+
+    return list;
   });
 
   ngOnInit(): void {
@@ -79,44 +97,38 @@ export class EmployeeListComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    const orgId = this.authService.userDetails()?.organizationId || undefined;
-
-    this.employeeService
-      .getEmployees(
-        this.pageNumber(),
-        this.pageSize(),
-        this.searchTerm().trim() || undefined,
-        orgId
-      )
-      .subscribe({
-        next: (response) => {
-          this.employees.set(response.items || []);
-          this.totalCount.set(response.totalCount || 0);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          this.errorMessage.set(
-            err?.error?.message || 'خطا در دریافت لیست کارمندان. لطفاً دوباره تلاش کنید.'
-          );
-          this.isLoading.set(false);
-        },
-      });
+    this.employeeService.getEmployees().subscribe({
+      next: (data) => {
+        this.employees.set(data || []);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        this.errorMessage.set(
+          err?.error?.message || 'خطا در دریافت لیست کارمندان. لطفاً دوباره تلاش کنید.'
+        );
+        this.isLoading.set(false);
+      },
+    });
   }
 
   onSearchInput(value: string): void {
     this.searchTerm.set(value);
-    this.pageNumber.set(1);
-    this.loadEmployees();
   }
 
   setFilter(filter: EmployeeFilter): void {
     this.activeFilter.set(filter);
   }
 
-  goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages()) return;
-    this.pageNumber.set(page);
-    this.loadEmployees();
+  getFullName(emp: EmployeeResponseDto): string {
+    const name = `${emp.firstName ?? ''} ${emp.lastName ?? ''}`.trim();
+    return name || '—';
+  }
+
+  getGenderLabel(gender?: string | null): string {
+    if (!gender) return '—';
+    if (gender === 'Male' || gender === 'مرد') return 'مرد';
+    if (gender === 'Female' || gender === 'زن') return 'زن';
+    return gender;
   }
 
   toggleActive(employee: EmployeeResponseDto): void {
@@ -136,16 +148,15 @@ export class EmployeeListComponent implements OnInit {
         );
       },
       error: () => {
-        // Fallback update call if dedicated endpoint is not found
         const fallbackDto = {
           organizationId: employee.organizationId,
           personnelCode: employee.personnelCode,
           nationalCode: employee.nationalCode,
           birthDate: employee.birthDate,
-          gender: employee.gender,
+          gender: employee.gender || undefined,
           hireDate: employee.hireDate,
           isActive: !employee.isActive,
-          profileImagePath: employee.profileImagePath,
+          profileImagePath: employee.profileImagePath || undefined,
         };
         this.employeeService.updateEmployee(employee.id, fallbackDto).subscribe({
           next: () => {
@@ -163,15 +174,15 @@ export class EmployeeListComponent implements OnInit {
   }
 
   deleteEmployee(employee: EmployeeResponseDto): void {
+    const fullName = this.getFullName(employee);
     const confirmed = confirm(
-      `آیا از حذف کارمند با کد پرسنلی «${employee.personnelCode}» مطمئن هستید؟`
+      `آیا از حذف کارمند «${fullName}» با کد پرسنلی «${employee.personnelCode}» مطمئن هستید؟`
     );
     if (!confirmed) return;
 
     this.employeeService.deleteEmployee(employee.id).subscribe({
       next: () => {
         this.employees.update((list) => list.filter((e) => e.id !== employee.id));
-        this.totalCount.update((count) => Math.max(0, count - 1));
         this.showToast('کارمند با موفقیت حذف شد.', 'success');
       },
       error: () => {

@@ -61,7 +61,12 @@ export class EmployeeDetailsComponent implements OnInit {
     });
   }
 
-  getGenderLabel(gender?: string): string {
+  getFullName(emp: EmployeeResponseDto): string {
+    const name = `${emp.firstName ?? ''} ${emp.lastName ?? ''}`.trim();
+    return name || 'کارمند';
+  }
+
+  getGenderLabel(gender?: string | null): string {
     if (!gender) return '—';
     if (gender === 'Male' || gender === 'مرد') return 'مرد';
     if (gender === 'Female' || gender === 'زن') return 'زن';

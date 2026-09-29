@@ -24,7 +24,7 @@
     <div class="relative w-full sm:w-80">
       <input
         type="text"
-        placeholder="جستجو بر اساس کد پرسنلی، کد ملی یا نام..."
+        placeholder="جستجو بر اساس نام، کد پرسنلی، کد ملی..."
         class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-10 pl-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         [value]="searchTerm()"
         (input)="onSearchInput($any($event.target).value)"
@@ -90,7 +90,9 @@
             <tr>
               <th class="px-5 py-3.5">کد پرسنلی</th>
               <th class="px-5 py-3.5">نام و نام خانوادگی</th>
+              <th class="px-5 py-3.5">شماره موبایل</th>
               <th class="px-5 py-3.5">کد ملی</th>
+              <th class="px-5 py-3.5">جنسیت</th>
               <th class="px-5 py-3.5">تاریخ استخدام</th>
               <th class="px-5 py-3.5">وضعیت</th>
               <th class="px-5 py-3.5 text-left">عملیات</th>
@@ -102,10 +104,16 @@
                 {{ emp.personnelCode }}
               </td>
               <td class="px-5 py-4 font-medium text-slate-800">
-                {{ emp.userFullName || '—' }}
+                {{ getFullName(emp) }}
+              </td>
+              <td class="px-5 py-4 font-mono text-xs text-slate-600">
+                {{ emp.phoneNumber }}
               </td>
               <td class="px-5 py-4 font-mono text-xs text-slate-600">
                 {{ emp.nationalCode }}
+              </td>
+              <td class="px-5 py-4 text-xs text-slate-600">
+                {{ getGenderLabel(emp.gender) }}
               </td>
               <td class="px-5 py-4 text-xs text-slate-600">
                 {{ emp.hireDate }}
@@ -169,12 +177,20 @@
             ></app-status-badge>
           </div>
 
-          <p class="mt-2 text-sm font-bold text-slate-800">{{ emp.userFullName || '—' }}</p>
+          <p class="mt-2 text-sm font-bold text-slate-800">{{ getFullName(emp) }}</p>
 
           <div class="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
             <div>
+              <span class="text-slate-400">موبایل:</span>
+              <span class="font-mono mr-1">{{ emp.phoneNumber }}</span>
+            </div>
+            <div>
               <span class="text-slate-400">کد ملی:</span>
               <span class="font-mono mr-1">{{ emp.nationalCode }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400">جنسیت:</span>
+              <span class="mr-1">{{ getGenderLabel(emp.gender) }}</span>
             </div>
             <div>
               <span class="text-slate-400">استخدام:</span>
@@ -210,34 +226,6 @@
               حذف
             </button>
           </div>
-        </div>
-      </div>
-
-      <!-- Pagination -->
-      <div *ngIf="totalPages() > 1" class="flex items-center justify-between pt-2">
-        <p class="text-xs text-slate-500">
-          مجموع: {{ totalCount() }} کارمند
-        </p>
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition"
-            [disabled]="pageNumber() === 1"
-            (click)="goToPage(pageNumber() - 1)"
-          >
-            قبلی
-          </button>
-          <span class="text-xs font-medium text-slate-600">
-            {{ pageNumber() }} / {{ totalPages() }}
-          </span>
-          <button
-            type="button"
-            class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition"
-            [disabled]="pageNumber() === totalPages()"
-            (click)="goToPage(pageNumber() + 1)"
-          >
-            بعدی
-          </button>
         </div>
       </div>
     </div>
