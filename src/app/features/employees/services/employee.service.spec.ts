@@ -8,7 +8,6 @@ import { environment } from '../../../../environments/environment';
 import { CreateEmployeeDto } from '../models/create-employee.dto';
 import { UpdateEmployeeDto } from '../models/update-employee.dto';
 import { EmployeeResponseDto } from '../models/employee-response.dto';
-import { PagedResponseDto } from '../../../shared/models/paged-response.dto';
 
 describe('EmployeeService', () => {
   let service: EmployeeService;
@@ -18,12 +17,16 @@ describe('EmployeeService', () => {
     id: 'emp-1',
     userId: 'user-1',
     organizationId: 'org-1',
+    firstName: 'علی',
+    lastName: 'علوی',
+    phoneNumber: '09121234567',
+    email: 'ali@example.com',
     personnelCode: '1001',
     nationalCode: '1234567890',
     birthDate: '1990-01-01',
     hireDate: '2022-01-01',
+    gender: 'Male',
     isActive: true,
-    userFullName: 'علی علوی',
   };
 
   beforeEach(() => {
@@ -40,25 +43,17 @@ describe('EmployeeService', () => {
     httpMock.verify();
   });
 
-  it('should get employees list with query parameters', () => {
-    const mockPagedResponse: PagedResponseDto<EmployeeResponseDto> = {
-      items: [mockEmployee],
-      pageNumber: 1,
-      pageSize: 10,
-      totalCount: 1,
-      totalPages: 1,
-    };
-
-    service.getEmployees(1, 10, '1001', 'org-1').subscribe((res) => {
-      expect(res.items.length).toBe(1);
-      expect(res.items[0].personnelCode).toBe('1001');
+  it('should get employees list from /api/organizations/employees without query params', () => {
+    service.getEmployees().subscribe((res) => {
+      expect(res.length).toBe(1);
+      expect(res[0].personnelCode).toBe('1001');
+      expect(res[0].firstName).toBe('علی');
+      expect(res[0].lastName).toBe('علوی');
     });
 
-    const req = httpMock.expectOne(
-      `${environment.apiUrl}/api/employees?pageNumber=1&pageSize=10&search=1001&organizationId=org-1`
-    );
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/organizations/employees`);
     expect(req.request.method).toBe('GET');
-    req.flush(mockPagedResponse);
+    req.flush([mockEmployee]);
   });
 
   it('should get employee by id', () => {

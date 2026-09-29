@@ -6,7 +6,6 @@ import { environment } from '../../../../environments/environment';
 import { EmployeeResponseDto } from '../models/employee-response.dto';
 import { CreateEmployeeDto } from '../models/create-employee.dto';
 import { UpdateEmployeeDto } from '../models/update-employee.dto';
-import { PagedResponseDto } from '../../../shared/models/paged-response.dto';
 
 @Injectable({
   providedIn: 'root',
@@ -14,21 +13,10 @@ import { PagedResponseDto } from '../../../shared/models/paged-response.dto';
 export class EmployeeService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/api/employees`;
+  private readonly orgEmployeesUrl = `${environment.apiUrl}/api/organizations/employees`;
 
-  getEmployees(
-    pageNumber = 1,
-    pageSize = 10,
-    search?: string,
-    organizationId?: string
-  ): Observable<PagedResponseDto<EmployeeResponseDto>> {
-    let url = `${this.apiUrl}?pageNumber=${pageNumber}&pageSize=${pageSize}`;
-    if (search) {
-      url += `&search=${encodeURIComponent(search)}`;
-    }
-    if (organizationId) {
-      url += `&organizationId=${encodeURIComponent(organizationId)}`;
-    }
-    return this.http.get<PagedResponseDto<EmployeeResponseDto>>(url);
+  getEmployees(): Observable<EmployeeResponseDto[]> {
+    return this.http.get<EmployeeResponseDto[]>(this.orgEmployeesUrl);
   }
 
   getEmployeeById(id: string): Observable<EmployeeResponseDto> {
@@ -37,7 +25,7 @@ export class EmployeeService {
 
   createEmployee(request: CreateEmployeeDto): Observable<EmployeeResponseDto> {
     return this.http.post<EmployeeResponseDto>(
-      `${environment.apiUrl}/api/organizations/employees`,
+      this.orgEmployeesUrl,
       request
     );
   }

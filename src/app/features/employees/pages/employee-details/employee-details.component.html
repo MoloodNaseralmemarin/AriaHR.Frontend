@@ -41,10 +41,10 @@
     <div class="border-b border-slate-100 bg-slate-50/60 px-6 py-5 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 font-bold text-base">
-          {{ emp.userFullName ? emp.userFullName.charAt(0) : 'ک' }}
+          {{ getFullName(emp).charAt(0) }}
         </div>
         <div>
-          <h2 class="text-base font-bold text-slate-800">{{ emp.userFullName || 'کارمند' }}</h2>
+          <h2 class="text-base font-bold text-slate-800">{{ getFullName(emp) }}</h2>
           <p class="text-xs text-slate-500 mt-0.5">کد پرسنلی: {{ emp.personnelCode }}</p>
         </div>
       </div>
@@ -62,11 +62,15 @@
       </div>
       <div class="flex items-center justify-between px-6 py-4">
         <span class="text-slate-500 font-medium">نام و نام خانوادگی</span>
-        <span class="font-semibold text-slate-800">{{ emp.userFullName || '—' }}</span>
+        <span class="font-semibold text-slate-800">{{ getFullName(emp) }}</span>
       </div>
-      <div *ngIf="emp.userEmail" class="flex items-center justify-between px-6 py-4">
+      <div class="flex items-center justify-between px-6 py-4">
+        <span class="text-slate-500 font-medium">شماره موبایل</span>
+        <span class="font-mono text-slate-800">{{ emp.phoneNumber }}</span>
+      </div>
+      <div *ngIf="emp.email" class="flex items-center justify-between px-6 py-4">
         <span class="text-slate-500 font-medium">ایمیل کاربر</span>
-        <span class="font-mono text-slate-800">{{ emp.userEmail }}</span>
+        <span class="font-mono text-slate-800">{{ emp.email }}</span>
       </div>
       <div class="flex items-center justify-between px-6 py-4">
         <span class="text-slate-500 font-medium">کد ملی</span>

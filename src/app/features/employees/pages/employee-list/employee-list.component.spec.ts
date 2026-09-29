@@ -7,7 +7,6 @@ import { EmployeeListComponent } from './employee-list.component';
 import { EmployeeService } from '../../services/employee.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { EmployeeResponseDto } from '../../models/employee-response.dto';
-import { PagedResponseDto } from '../../../../shared/models/paged-response.dto';
 
 describe('EmployeeListComponent', () => {
   let component: EmployeeListComponent;
@@ -17,24 +16,20 @@ describe('EmployeeListComponent', () => {
     id: 'emp-1',
     userId: 'user-1',
     organizationId: 'org-1',
+    firstName: 'علی',
+    lastName: 'علوی',
+    phoneNumber: '09121234567',
+    email: 'ali@example.com',
     personnelCode: '1001',
     nationalCode: '1234567890',
     birthDate: '1990-01-01',
     hireDate: '2022-01-01',
+    gender: 'Male',
     isActive: true,
-    userFullName: 'علی علوی',
-  };
-
-  const mockPagedResponse: PagedResponseDto<EmployeeResponseDto> = {
-    items: [mockEmployee],
-    pageNumber: 1,
-    pageSize: 10,
-    totalCount: 1,
-    totalPages: 1,
   };
 
   const mockEmployeeService = {
-    getEmployees: vi.fn().mockReturnValue(of(mockPagedResponse)),
+    getEmployees: vi.fn().mockReturnValue(of([mockEmployee])),
     activateEmployee: vi.fn().mockReturnValue(of({ ...mockEmployee, isActive: true })),
     deactivateEmployee: vi.fn().mockReturnValue(of({ ...mockEmployee, isActive: false })),
     updateEmployee: vi.fn().mockReturnValue(of(mockEmployee)),
@@ -73,13 +68,17 @@ describe('EmployeeListComponent', () => {
     expect(component).toBeTruthy();
     expect(mockEmployeeService.getEmployees).toHaveBeenCalled();
     expect(component.employees().length).toBe(1);
+    expect(component.getFullName(mockEmployee)).toBe('علی علوی');
   });
 
-  it('should handle search input change', () => {
+  it('should handle search input change and filter locally', () => {
     fixture.detectChanges();
     component.onSearchInput('1001');
     expect(component.searchTerm()).toBe('1001');
-    expect(mockEmployeeService.getEmployees).toHaveBeenCalled();
+    expect(component.filteredEmployees().length).toBe(1);
+
+    component.onSearchInput('99999');
+    expect(component.filteredEmployees().length).toBe(0);
   });
 
   it('should toggle active status of employee', () => {
