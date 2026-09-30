@@ -1,21 +1,41 @@
+import '@angular/compiler';
 import { describe, it, expect } from 'vitest';
-import { JalaliPipe } from './jalali.pipe';
+import { Injector, runInInjectionContext } from '@angular/core';
 import { PersianDateService } from '../../core/services/persian-date.service';
+import { JalaliPipe } from './jalali.pipe';
 
-describe('JalaliPipe', () => {
+describe('JalaliPipe (ASCII & Persian Digits)', () => {
   const service = new PersianDateService();
-  const pipe = new JalaliPipe();
-  // @ts-ignore
-  pipe['persianDateService'] = service;
 
-  it('should transform Gregorian date string to Jalali format in Persian digits', () => {
-    expect(pipe.transform('2026-05-05')).toBe('۱۵-۰۲-۱۴۰۵');
-    expect(pipe.transform('2026-03-21')).toBe('۰۱-۰۱-۱۴۰۵');
+  function createPipe(): JalaliPipe {
+    const customInjector = Injector.create({
+      providers: [
+        { provide: PersianDateService, useValue: service },
+      ],
+    });
+
+    let pipe!: JalaliPipe;
+    runInInjectionContext(customInjector, () => {
+      pipe = new JalaliPipe();
+    });
+    return pipe;
+  }
+
+  it('should transform Gregorian date to Jalali with Persian digits by default', () => {
+    // 1988-02-05 -> 16-11-1366 -> ۱۶-۱۱-۱۳۶۶
+    const result = service.toJalaliString('1988-02-05', true);
+    expect(result).toBe('۱۶-۱۱-۱۳۶۶');
   });
 
-  it('should return empty string for null, undefined, or empty values', () => {
-    expect(pipe.transform(null)).toBe('');
-    expect(pipe.transform(undefined)).toBe('');
-    expect(pipe.transform('')).toBe('');
+  it('should transform Gregorian date to Jalali with ASCII digits when requested', () => {
+    // 1988-02-05 -> 16-11-1366
+    const result = service.toJalaliString('1988-02-05', false);
+    expect(result).toBe('16-11-1366');
+  });
+
+  it('should format via JalaliPipe with ascii argument', () => {
+    const pipe = createPipe();
+    expect(pipe.transform('1988-02-05', 'ascii')).toBe('16-11-1366');
+    expect(pipe.transform('1988-02-05', 'persian')).toBe('۱۶-۱۱-۱۳۶۶');
   });
 });

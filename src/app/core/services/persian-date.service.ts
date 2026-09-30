@@ -290,7 +290,7 @@ export class PersianDateService {
    *
    * Avoids timezone shifting by extracting calendar date components strictly.
    */
-  toJalaliString(gregorianStr: string | null | undefined): string {
+  toJalaliString(gregorianStr: string | null | undefined, usePersianDigits = true): string {
     if (!gregorianStr) return '';
 
     const str = String(gregorianStr).trim();
@@ -321,7 +321,7 @@ export class PersianDateService {
     const yearStr = String(j.year);
 
     const asciiJalali = `${dayStr}-${monthStr}-${yearStr}`;
-    return toPersianDigits(asciiJalali);
+    return usePersianDigits ? toPersianDigits(asciiJalali) : asciiJalali;
   }
 
   /**

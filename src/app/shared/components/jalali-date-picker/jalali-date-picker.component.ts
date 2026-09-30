@@ -63,6 +63,7 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
 
   @Input() id = '';
   @Input() placeholder = ' روز-ماه-سال (مثال: ۱۵-۰۲-۱۴۰۵)';
+  @Input() digitsFormat: 'persian' | 'ascii' = 'persian';
 
   disabled = false;
 
@@ -78,7 +79,8 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
   writeValue(val: string | null): void {
     this.gregorianValue = val;
     if (val) {
-      const jalaliStr = this.persianDateService.toJalaliString(val);
+      const usePersianDigits = this.digitsFormat === 'persian';
+      const jalaliStr = this.persianDateService.toJalaliString(val, usePersianDigits);
       this.displayValue.set(jalaliStr);
     } else {
       this.displayValue.set('');
@@ -100,22 +102,23 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
   onInputChange(event: Event): void {
     const rawInput = (event.target as HTMLInputElement).value;
     const asciiInput = normalizeMobileNumber(rawInput);
+    const formatFn = (str: string) => (this.digitsFormat === 'ascii' ? str : toPersianDigits(str));
 
     // Auto-format digits into DD-MM-YYYY format if user types continuously
     let formattedDisplay = '';
     if (asciiInput.length <= 2) {
-      formattedDisplay = toPersianDigits(asciiInput);
+      formattedDisplay = formatFn(asciiInput);
     } else if (asciiInput.length <= 4) {
-      formattedDisplay = `${toPersianDigits(asciiInput.slice(0, 2))}-${toPersianDigits(asciiInput.slice(2))}`;
+      formattedDisplay = `${formatFn(asciiInput.slice(0, 2))}-${formatFn(asciiInput.slice(2))}`;
     } else {
-      formattedDisplay = `${toPersianDigits(asciiInput.slice(0, 2))}-${toPersianDigits(asciiInput.slice(2, 4))}-${toPersianDigits(asciiInput.slice(4, 8))}`;
+      formattedDisplay = `${formatFn(asciiInput.slice(0, 2))}-${formatFn(asciiInput.slice(2, 4))}-${formatFn(asciiInput.slice(4, 8))}`;
     }
 
     // Preserve dash if user typed dashes or slashes explicitly
     if (rawInput.includes('-') || rawInput.includes('/')) {
       // Clean digit parts separated by dash/slash
       const parts = rawInput.split(/[-/]/).map((p) => normalizeMobileNumber(p));
-      formattedDisplay = parts.map((p) => toPersianDigits(p)).join('-');
+      formattedDisplay = parts.map((p) => formatFn(p)).join('-');
     }
 
     this.displayValue.set(formattedDisplay);

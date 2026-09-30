@@ -116,7 +116,7 @@
                 {{ getGenderLabel(emp.gender) }}
               </td>
               <td class="px-5 py-4 text-xs text-slate-600">
-                {{ emp.hireDate | jalali }}
+                {{ emp.hireDate | jalali:'ascii' }}
               </td>
               <td class="px-5 py-4">
                 <app-status-badge
@@ -194,7 +194,7 @@
             </div>
             <div>
               <span class="text-slate-400">استخدام:</span>
-              <span class="mr-1">{{ emp.hireDate | jalali }}</span>
+              <span class="mr-1">{{ emp.hireDate | jalali:'ascii' }}</span>
             </div>
           </div>
 
