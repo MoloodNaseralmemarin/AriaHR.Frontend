@@ -286,11 +286,15 @@ export class PersianDateService {
 
   /**
    * Converts a Gregorian date string (e.g. "2026-05-05" or "2026-05-05T00:00:00Z")
-   * to a Jalali date string in `DD-MM-YYYY` format with Persian digits (e.g. "۱۵-۰۲-۱۴۰۵").
+   * to a Jalali date string in `DD-MM-YYYY` or `YYYY-MM-DD` format with Persian or ASCII digits.
    *
    * Avoids timezone shifting by extracting calendar date components strictly.
    */
-  toJalaliString(gregorianStr: string | null | undefined): string {
+  toJalaliString(
+    gregorianStr: string | null | undefined,
+    usePersianDigits: boolean | 'persian' | 'ascii' = true,
+    dateFormat: 'DD-MM-YYYY' | 'YYYY-MM-DD' = 'DD-MM-YYYY'
+  ): string {
     if (!gregorianStr) return '';
 
     const str = String(gregorianStr).trim();
@@ -320,8 +324,15 @@ export class PersianDateService {
     const monthStr = String(j.month).padStart(2, '0');
     const yearStr = String(j.year);
 
-    const asciiJalali = `${dayStr}-${monthStr}-${yearStr}`;
-    return toPersianDigits(asciiJalali);
+    const asciiJalali =
+      dateFormat === 'YYYY-MM-DD'
+        ? `${yearStr}-${monthStr}-${dayStr}`
+        : `${dayStr}-${monthStr}-${yearStr}`;
+
+    const isPersian =
+      usePersianDigits === true || usePersianDigits === 'persian';
+
+    return isPersian ? toPersianDigits(asciiJalali) : asciiJalali;
   }
 
   /**
