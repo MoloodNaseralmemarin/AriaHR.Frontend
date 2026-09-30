@@ -12,6 +12,7 @@ import { StatusBadgeComponent } from '../../../../shared/components/status-badge
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
+import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
 
 type EmployeeFilter = 'all' | 'active' | 'inactive';
 
@@ -27,6 +28,7 @@ type EmployeeFilter = 'all' | 'active' | 'inactive';
     EmptyStateComponent,
     SkeletonLoaderComponent,
     ToastComponent,
+    JalaliPipe,
   ],
   templateUrl: './employee-list.component.html',
   styleUrls: ['./employee-list.component.css'],

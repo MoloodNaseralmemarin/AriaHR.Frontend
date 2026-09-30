@@ -11,6 +11,7 @@ import { isValidIranianMobile, normalizeMobileNumber } from '../../../../shared/
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
+import { JalaliDatePickerComponent } from '../../../../shared/components/jalali-date-picker/jalali-date-picker.component';
 
 export function iranianMobileValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return null;
@@ -39,6 +40,7 @@ export function nationalCodeValidator(control: AbstractControl): ValidationError
     RouterLink,
     PageHeaderComponent,
     ToastComponent,
+    JalaliDatePickerComponent,
   ],
   templateUrl: './employee-form.component.html',
   styleUrls: ['./employee-form.component.css'],

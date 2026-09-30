@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core';
 import { describe, beforeEach, it, expect } from 'vitest';
 import { PersianDateService } from './persian-date.service';
 
@@ -166,6 +166,64 @@ describe('PersianDateService', () => {
 
     it('should handle invalid date string gracefully by returning "تاریخ نامعتبر"', () => {
       expect(service.getRelativeTime('invalid-date', now)).toBe('تاریخ نامعتبر');
+    });
+  });
+
+  describe('Jalali Conversion Methods', () => {
+    it('should convert 2026-05-05 to ۱۵-۰۲-۱۴۰۵', () => {
+      const result = service.toJalaliString('2026-05-05');
+      expect(result).toBe('۱۵-۰۲-۱۴۰۵');
+    });
+
+    it('should convert 2026-03-21 to ۰۱-۰۱-۱۴۰۵', () => {
+      const result = service.toJalaliString('2026-03-21');
+      expect(result).toBe('۰۱-۰۱-۱۴۰۵');
+    });
+
+    it('should ensure single digit months and days are padded with zero', () => {
+      const result = service.toJalaliString('2026-03-22');
+      expect(result).toBe('۰۲-۰۱-۱۴۰۵');
+    });
+
+    it('should convert 15-02-1405 to 2026-05-05', () => {
+      const result = service.toGregorianString('15-02-1405');
+      expect(result).toBe('2026-05-05');
+    });
+
+    it('should convert Persian digits ۱۵-۰۲-۱۴۰۵ to 2026-05-05', () => {
+      const result = service.toGregorianString('۱۵-۰۲-۱۴۰۵');
+      expect(result).toBe('2026-05-05');
+    });
+
+    it('should convert 01-01-1405 to 2026-03-21', () => {
+      const result = service.toGregorianString('01-01-1405');
+      expect(result).toBe('2026-03-21');
+    });
+
+    it('should convert Persian digits ۰۱-۰۱-۱۴۰۵ to 2026-03-21', () => {
+      const result = service.toGregorianString('۰۱-۰۱-۱۴۰۵');
+      expect(result).toBe('2026-03-21');
+    });
+
+    it('should return null for invalid dates like 31-07-1403', () => {
+      const result = service.toGregorianString('31-07-1403');
+      expect(result).toBeNull();
+    });
+
+    it('should handle leap year Esfand 30th (1403-12-30) correctly', () => {
+      const result = service.toGregorianString('30-12-1403');
+      expect(result).toBe('2025-03-20');
+    });
+
+    it('should reject Esfand 30th on a non-leap year (1404-12-30)', () => {
+      const result = service.toGregorianString('30-12-1404');
+      expect(result).toBeNull();
+    });
+
+    it('should extract calendar date without shifting days regardless of timezone ISO format', () => {
+      expect(service.toJalaliString('2026-05-05T00:00:00Z')).toBe('۱۵-۰۲-۱۴۰۵');
+      expect(service.toJalaliString('2026-05-05T23:59:59Z')).toBe('۱۵-۰۲-۱۴۰۵');
+      expect(service.toJalaliString('2026-05-05')).toBe('۱۵-۰۲-۱۴۰۵');
     });
   });
 });

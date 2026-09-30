@@ -1,5 +1,5 @@
 /**
- * Utilities for normalizing and validating Iranian mobile numbers.
+ * Utilities for normalizing and validating Iranian mobile numbers and Persian digits.
  *
  * Accepts input typed with Persian (۰-۹) or Arabic-Indic (٠-٩) digits and
  * normalizes it to standard ASCII digits before validation, since users on
@@ -35,6 +35,31 @@ export function normalizeMobileNumber(raw: string): string {
     result = '0' + result.slice(4);
   } else if (result.startsWith('98') && result.length === 12) {
     result = '0' + result.slice(2);
+  }
+
+  return result;
+}
+
+/**
+ * Converts Persian/Arabic-Indic digits to ASCII while preserving separators like `-` and `/`.
+ */
+export function normalizePersianDigits(raw: string): string {
+  if (!raw) {
+    return '';
+  }
+
+  let result = '';
+  for (const char of raw) {
+    const persianIndex = PERSIAN_DIGITS.indexOf(char);
+    const arabicIndex = ARABIC_DIGITS.indexOf(char);
+
+    if (persianIndex !== -1) {
+      result += String(persianIndex);
+    } else if (arabicIndex !== -1) {
+      result += String(arabicIndex);
+    } else if ((char >= '0' && char <= '9') || char === '-' || char === '/') {
+      result += char;
+    }
   }
 
   return result;
