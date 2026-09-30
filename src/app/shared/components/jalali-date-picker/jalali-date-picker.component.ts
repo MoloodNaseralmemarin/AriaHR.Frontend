@@ -63,10 +63,12 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
 
   @Input() id = '';
   @Input() placeholder = ' روز-ماه-سال (مثال: ۱۵-۰۲-۱۴۰۵)';
+  @Input() digitsFormat: 'persian' | 'ascii' = 'persian';
+  @Input() dateFormat: 'DD-MM-YYYY' | 'YYYY-MM-DD' = 'DD-MM-YYYY';
 
   disabled = false;
 
-  // Holds the formatted Jalali string in Persian digits for UI display
+  // Holds the formatted Jalali string for UI display
   readonly displayValue = signal<string>('');
 
   // Internal storage for the model value in Gregorian format (e.g. "2026-05-05")
@@ -78,7 +80,11 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
   writeValue(val: string | null): void {
     this.gregorianValue = val;
     if (val) {
-      const jalaliStr = this.persianDateService.toJalaliString(val);
+      const jalaliStr = this.persianDateService.toJalaliString(
+        val,
+        this.digitsFormat,
+        this.dateFormat
+      );
       this.displayValue.set(jalaliStr);
     } else {
       this.displayValue.set('');
@@ -101,21 +107,35 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
     const rawInput = (event.target as HTMLInputElement).value;
     const asciiInput = normalizeMobileNumber(rawInput);
 
-    // Auto-format digits into DD-MM-YYYY format if user types continuously
+    const formatDigits = (str: string) =>
+      this.digitsFormat === 'persian' ? toPersianDigits(str) : str;
+
     let formattedDisplay = '';
-    if (asciiInput.length <= 2) {
-      formattedDisplay = toPersianDigits(asciiInput);
-    } else if (asciiInput.length <= 4) {
-      formattedDisplay = `${toPersianDigits(asciiInput.slice(0, 2))}-${toPersianDigits(asciiInput.slice(2))}`;
+
+    if (this.dateFormat === 'YYYY-MM-DD') {
+      // Auto-format continuous digits YYYYMMDD
+      if (asciiInput.length <= 4) {
+        formattedDisplay = formatDigits(asciiInput);
+      } else if (asciiInput.length <= 6) {
+        formattedDisplay = `${formatDigits(asciiInput.slice(0, 4))}-${formatDigits(asciiInput.slice(4))}`;
+      } else {
+        formattedDisplay = `${formatDigits(asciiInput.slice(0, 4))}-${formatDigits(asciiInput.slice(4, 6))}-${formatDigits(asciiInput.slice(6, 8))}`;
+      }
     } else {
-      formattedDisplay = `${toPersianDigits(asciiInput.slice(0, 2))}-${toPersianDigits(asciiInput.slice(2, 4))}-${toPersianDigits(asciiInput.slice(4, 8))}`;
+      // Auto-format continuous digits DDMMYYYY
+      if (asciiInput.length <= 2) {
+        formattedDisplay = formatDigits(asciiInput);
+      } else if (asciiInput.length <= 4) {
+        formattedDisplay = `${formatDigits(asciiInput.slice(0, 2))}-${formatDigits(asciiInput.slice(2))}`;
+      } else {
+        formattedDisplay = `${formatDigits(asciiInput.slice(0, 2))}-${formatDigits(asciiInput.slice(2, 4))}-${formatDigits(asciiInput.slice(4, 8))}`;
+      }
     }
 
-    // Preserve dash if user typed dashes or slashes explicitly
+    // Preserve explicit dash or slash separators typed by user
     if (rawInput.includes('-') || rawInput.includes('/')) {
-      // Clean digit parts separated by dash/slash
       const parts = rawInput.split(/[-/]/).map((p) => normalizeMobileNumber(p));
-      formattedDisplay = parts.map((p) => toPersianDigits(p)).join('-');
+      formattedDisplay = parts.map((p) => formatDigits(p)).join('-');
     }
 
     this.displayValue.set(formattedDisplay);
