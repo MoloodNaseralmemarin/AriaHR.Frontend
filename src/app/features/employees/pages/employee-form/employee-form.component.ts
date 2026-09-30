@@ -7,7 +7,7 @@ import { EmployeeService } from '../../services/employee.service';
 import { CreateEmployeeDto } from '../../models/create-employee.dto';
 import { UpdateEmployeeDto } from '../../models/update-employee.dto';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { isValidIranianMobile, normalizeMobileNumber } from '../../../../shared/utils/mobile-number.util';
+import { isValidIranianMobile, normalizeMobileNumber, normalizePersianDigits, toPersianDigits } from '../../../../shared/utils/mobile-number.util';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
@@ -110,10 +110,10 @@ export class EmployeeFormComponent implements OnInit {
         this.form.patchValue({
           firstName: firstName,
           lastName: lastName,
-          phoneNumber: '', // EmployeeResponseDto might not carry phone, optional update
+          phoneNumber: employee.phoneNumber ? toPersianDigits(employee.phoneNumber) : '',
           email: employee.email || '',
-          personnelCode: employee.personnelCode || '',
-          nationalCode: employee.nationalCode || '',
+          personnelCode: employee.personnelCode ? toPersianDigits(employee.personnelCode) : '',
+          nationalCode: employee.nationalCode ? toPersianDigits(employee.nationalCode) : '',
           birthDate: employee.birthDate ? employee.birthDate.substring(0, 10) : '',
           gender: employee.gender ?? '',
           hireDate: employee.hireDate ? employee.hireDate.substring(0, 10) : '',
@@ -136,6 +136,15 @@ export class EmployeeFormComponent implements OnInit {
     return control.invalid && (control.touched || control.dirty);
   }
 
+  onDigitInput(controlName: 'phoneNumber' | 'personnelCode' | 'nationalCode', event: Event): void {
+    const inputEl = event.target as HTMLInputElement;
+    const rawVal = inputEl.value;
+    const formatted = toPersianDigits(rawVal);
+    if (rawVal !== formatted) {
+      this.form.controls[controlName].setValue(formatted, { emitEvent: false });
+    }
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -156,6 +165,7 @@ export class EmployeeFormComponent implements OnInit {
 
     const normalizedPhone = normalizeMobileNumber(raw.phoneNumber);
     const normalizedNationalCode = normalizeMobileNumber(raw.nationalCode);
+    const normalizedPersonnelCode = normalizePersianDigits(raw.personnelCode).trim();
     const emailVal = raw.email.trim() ? raw.email.trim() : null;
     const genderVal = raw.gender ? raw.gender : null;
     const profileImagePathVal = raw.profileImagePath.trim() ? raw.profileImagePath.trim() : null;
@@ -163,7 +173,7 @@ export class EmployeeFormComponent implements OnInit {
     if (this.isEditMode() && this.employeeId) {
       const request: UpdateEmployeeDto = {
         organizationId: orgId,
-        personnelCode: raw.personnelCode.trim(),
+        personnelCode: normalizedPersonnelCode,
         nationalCode: normalizedNationalCode,
         birthDate: raw.birthDate,
         gender: genderVal || undefined,
@@ -193,7 +203,7 @@ export class EmployeeFormComponent implements OnInit {
         lastName: raw.lastName.trim(),
         phoneNumber: normalizedPhone,
         email: emailVal,
-        personnelCode: raw.personnelCode.trim(),
+        personnelCode: normalizedPersonnelCode,
         nationalCode: normalizedNationalCode,
         birthDate: raw.birthDate,
         hireDate: raw.hireDate,
