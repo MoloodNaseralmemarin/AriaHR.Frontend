@@ -13,6 +13,8 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
 import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
+import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { normalizePersianDigits } from '../../../../shared/utils/mobile-number.util';
 
 type EmployeeFilter = 'all' | 'active' | 'inactive';
 
@@ -29,6 +31,7 @@ type EmployeeFilter = 'all' | 'active' | 'inactive';
     SkeletonLoaderComponent,
     ToastComponent,
     JalaliPipe,
+    PersianDigitsPipe,
   ],
   templateUrl: './employee-list.component.html',
   styleUrls: ['./employee-list.component.css'],
@@ -64,6 +67,7 @@ export class EmployeeListComponent implements OnInit {
     }
 
     if (query) {
+      const asciiQuery = normalizePersianDigits(query).toLowerCase();
       list = list.filter((e) => {
         const fullName = `${e.firstName ?? ''} ${e.lastName ?? ''}`.toLowerCase();
         const personnelCode = (e.personnelCode ?? '').toLowerCase();
@@ -73,9 +77,9 @@ export class EmployeeListComponent implements OnInit {
 
         return (
           fullName.includes(query) ||
-          personnelCode.includes(query) ||
-          nationalCode.includes(query) ||
-          phoneNumber.includes(query) ||
+          personnelCode.includes(asciiQuery) ||
+          nationalCode.includes(asciiQuery) ||
+          phoneNumber.includes(asciiQuery) ||
           email.includes(query)
         );
       });

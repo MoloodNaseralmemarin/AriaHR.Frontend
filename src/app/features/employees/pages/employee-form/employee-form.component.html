@@ -73,9 +73,9 @@
           <input
             type="text"
             formControlName="phoneNumber"
-            placeholder="09123456789"
-            dir="ltr"
-            class="w-full font-mono rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+            placeholder="۰۹۱۲۱۲۳۴۵۶۷"
+            (input)="onDigitInput('phoneNumber', $event)"
+            class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
           />
           <p *ngIf="isControlInvalid('phoneNumber')" class="mt-1 text-xs text-rose-600">
             شماره موبایل معتبر ۱۱ رقمی (شروع با ۰۹) وارد کنید.
@@ -108,7 +108,8 @@
           <input
             type="text"
             formControlName="personnelCode"
-            placeholder="مثال: 1004"
+            placeholder="مثال: ۱۰۰۴"
+            (input)="onDigitInput('personnelCode', $event)"
             class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
           />
           <p *ngIf="isControlInvalid('personnelCode')" class="mt-1 text-xs text-rose-600">
@@ -125,8 +126,8 @@
             formControlName="nationalCode"
             placeholder="کد ملی ۱۰ رقمی"
             maxlength="10"
-            dir="ltr"
-            class="w-full font-mono rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+            (input)="onDigitInput('nationalCode', $event)"
+            class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
           />
           <p *ngIf="isControlInvalid('nationalCode')" class="mt-1 text-xs text-rose-600">
             کد ملی معتبر ۱۰ رقمی وارد کنید.

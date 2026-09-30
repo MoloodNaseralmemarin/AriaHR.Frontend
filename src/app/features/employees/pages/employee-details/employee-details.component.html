@@ -45,7 +45,7 @@
         </div>
         <div>
           <h2 class="text-base font-bold text-slate-800">{{ getFullName(emp) }}</h2>
-          <p class="text-xs text-slate-500 mt-0.5">کد پرسنلی: {{ emp.personnelCode }}</p>
+          <p class="text-xs text-slate-500 mt-0.5">کد پرسنلی: {{ emp.personnelCode | persianDigits }}</p>
         </div>
       </div>
       <app-status-badge
@@ -58,7 +58,7 @@
     <div class="divide-y divide-slate-100 text-xs sm:text-sm">
       <div class="flex items-center justify-between px-6 py-4">
         <span class="text-slate-500 font-medium">کد پرسنلی</span>
-        <span class="font-mono font-semibold text-slate-800">{{ emp.personnelCode }}</span>
+        <span class="font-semibold text-slate-800">{{ emp.personnelCode | persianDigits }}</span>
       </div>
       <div class="flex items-center justify-between px-6 py-4">
         <span class="text-slate-500 font-medium">نام و نام خانوادگی</span>
@@ -66,7 +66,7 @@
       </div>
       <div class="flex items-center justify-between px-6 py-4">
         <span class="text-slate-500 font-medium">شماره موبایل</span>
-        <span class="font-mono text-slate-800">{{ emp.phoneNumber }}</span>
+        <span class="text-slate-800">{{ emp.phoneNumber | persianDigits }}</span>
       </div>
       <div *ngIf="emp.email" class="flex items-center justify-between px-6 py-4">
         <span class="text-slate-500 font-medium">ایمیل کاربر</span>
@@ -74,7 +74,7 @@
       </div>
       <div class="flex items-center justify-between px-6 py-4">
         <span class="text-slate-500 font-medium">کد ملی</span>
-        <span class="font-mono font-semibold text-slate-800">{{ emp.nationalCode }}</span>
+        <span class="font-semibold text-slate-800">{{ emp.nationalCode | persianDigits }}</span>
       </div>
       <div class="flex items-center justify-between px-6 py-4">
         <span class="text-slate-500 font-medium">تاریخ تولد</span>
