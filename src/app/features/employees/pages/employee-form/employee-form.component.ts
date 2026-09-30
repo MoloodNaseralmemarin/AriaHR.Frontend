@@ -99,8 +99,8 @@ export class EmployeeFormComponent implements OnInit {
         // Extract names if user object or userFullName present, or fallback
         let firstName = '';
         let lastName = '';
-        if (employee.userFullName) {
-          const parts = employee.userFullName.trim().split(' ');
+        if (employee.firstName) {
+          const parts = employee.firstName.trim().split(' ');
           firstName = parts[0] || '';
           lastName = parts.slice(1).join(' ') || '';
         }
@@ -109,7 +109,7 @@ export class EmployeeFormComponent implements OnInit {
           firstName: firstName,
           lastName: lastName,
           phoneNumber: '', // EmployeeResponseDto might not carry phone, optional update
-          email: employee.userEmail || '',
+          email: employee.email || '',
           personnelCode: employee.personnelCode || '',
           nationalCode: employee.nationalCode || '',
           birthDate: employee.birthDate ? employee.birthDate.substring(0, 10) : '',
