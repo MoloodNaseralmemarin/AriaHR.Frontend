@@ -17,6 +17,7 @@ import { finalize } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
+import { QrCodeModalComponent } from '../../../../shared/components/qr-code-modal/qr-code-modal.component';
 import { environment } from '../../../../../environments/environment';
 import { CreateWorkLocationDto } from '../../models/create-work-location.dto';
 import { WorkLocationService } from '../../services/work-location.service';
@@ -28,7 +29,7 @@ declare const L: any;
 @Component({
   selector: 'app-create-work-location',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, ToastComponent],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, ToastComponent, QrCodeModalComponent],
   templateUrl: './create-work-location.component.html',
   styleUrls: ['./create-work-location.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +53,11 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
   readonly selectedLocation = signal<{ lat: number; lng: number } | null>(null);
 
   readonly isSubmitting = computed(() => this.submitState() === 'submitting');
+
+  readonly createdWorkLocationId = signal<string | null>(null);
+  readonly isGeneratingQr = signal(false);
+  readonly qrData = signal<{ code: string; expiresAtUtc: string } | null>(null);
+  readonly showQrModal = signal(false);
 
   readonly form = this.fb.group({
     radiusInMeters: [200, [Validators.required, Validators.min(1)]],
@@ -284,15 +290,54 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
         })
       )
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.submitState.set('success');
           this.showSuccessToast.set(true);
+          if (res?.id) {
+            this.createdWorkLocationId.set(res.id);
+          }
         },
         error: (err) => {
           this.submitState.set('error');
           this.errorMessage.set(
             err?.error?.message || 'ثبت محل کار با خطا مواجه شد. لطفاً دوباره تلاش کنید.'
           );
+        },
+      });
+  }
+
+  onGenerateQrCode(): void {
+    const workLocationId = this.createdWorkLocationId();
+    if (!workLocationId || this.isGeneratingQr()) return;
+
+    this.isGeneratingQr.set(true);
+    this.errorMessage.set(null);
+
+    this.workLocationService
+      .generateQrCode(workLocationId)
+      .pipe(finalize(() => this.isGeneratingQr.set(false)))
+      .subscribe({
+        next: (res) => {
+          this.qrData.set({
+            code: res.code,
+            expiresAtUtc: res.expiresAtUtc,
+          });
+          this.showQrModal.set(true);
+        },
+        error: (err) => {
+          let msg = 'خطا در دریافت QR کد محل کار.';
+          if (err?.status === 400) {
+            msg = err?.error?.message || 'ورودی نامعتبر / خطای کسب و کار';
+          } else if (err?.status === 401) {
+            msg = 'احراز هویت مورد نیاز است.';
+          } else if (err?.status === 403) {
+            msg = 'دسترسی به این محل کار مجاز نیست.';
+          } else if (err?.status === 404) {
+            msg = 'محل کار یافت نشد.';
+          } else if (err?.error?.message) {
+            msg = err.error.message;
+          }
+          this.errorMessage.set(msg);
         },
       });
   }

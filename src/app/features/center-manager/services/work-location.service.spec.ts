@@ -45,4 +45,20 @@ describe('WorkLocationService', () => {
 
     httpMock.expectNone('https://api.neshan.org/v2/reverse?lat=35.7&lng=51.3');
   });
+
+  it('should call generateQrCode with POST and no request body', () => {
+    const mockResponse = {
+      code: 'test-code-123',
+      expiresAtUtc: '2026-10-03T10:00:00Z',
+    };
+
+    service.generateQrCode('wl-999').subscribe((res) => {
+      expect(res).toEqual(mockResponse);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/organizations/work-locations/wl-999/qr`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toBeNull();
+    req.flush(mockResponse);
+  });
 });
