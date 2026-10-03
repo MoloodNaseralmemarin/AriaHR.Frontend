@@ -39,6 +39,12 @@ describe('CreateWorkLocationComponent', () => {
           isActive: true,
         })
       ),
+      generateQrCode: vi.fn().mockReturnValue(
+        of({
+          code: 'sample-qr-token',
+          expiresAtUtc: '2026-10-03T12:00:00Z',
+        })
+      ),
       reverseGeocode: vi.fn().mockReturnValue(of('تهران، خیابان ولیعصر')),
     };
 
@@ -124,6 +130,31 @@ describe('CreateWorkLocationComponent', () => {
     });
     expect(component.showSuccessToast()).toBe(true);
     expect(component.submitState()).toBe('success');
+    expect(component.createdWorkLocationId()).toBe('wl-1');
+  });
+
+  it('should call generateQrCode and open modal on onGenerateQrCode', () => {
+    component.createdWorkLocationId.set('wl-1');
+    component.onGenerateQrCode();
+
+    expect(mockWorkLocationService.generateQrCode).toHaveBeenCalledWith('wl-1');
+    expect(component.showQrModal()).toBe(true);
+    expect(component.qrData()).toEqual({
+      code: 'sample-qr-token',
+      expiresAtUtc: '2026-10-03T12:00:00Z',
+    });
+  });
+
+  it('should handle generateQrCode API errors gracefully', () => {
+    vi.mocked(mockWorkLocationService.generateQrCode!).mockReturnValue(
+      throwError(() => ({ status: 404, error: { message: 'محل کار یافت نشد.' } }))
+    );
+
+    component.createdWorkLocationId.set('wl-999');
+    component.onGenerateQrCode();
+
+    expect(component.showQrModal()).toBe(false);
+    expect(component.errorMessage()).toBe('محل کار یافت نشد.');
   });
 
   it('should handle API errors during submission gracefully', () => {

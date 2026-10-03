@@ -4,6 +4,7 @@ import { Observable, catchError, map, of } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { CreateWorkLocationDto } from '../models/create-work-location.dto';
+import { QrCodeResponse } from '../models/qr-code-response.dto';
 import {
   NeshanReverseGeocodeResponse,
   WorkLocationResponseDto,
@@ -22,6 +23,14 @@ export class WorkLocationService {
    */
   createWorkLocation(request: CreateWorkLocationDto): Observable<WorkLocationResponseDto> {
     return this.http.post<WorkLocationResponseDto>(this.apiUrl, request);
+  }
+
+  /**
+   * Generates a QR Code for an existing work location.
+   * Endpoint: POST /api/organizations/work-locations/{workLocationId}/qr
+   */
+  generateQrCode(workLocationId: string): Observable<QrCodeResponse> {
+    return this.http.post<QrCodeResponse>(`${this.apiUrl}/${workLocationId}/qr`, null);
   }
 
   /**
