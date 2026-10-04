@@ -1,0 +1,228 @@
+<div class="space-y-5 pb-8">
+  <!-- Header Title & Date -->
+  <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm text-center">
+    <h1 class="text-xl font-bold text-slate-800">ثبت حضور و غیاب</h1>
+    <p class="text-xs text-slate-500 mt-1 font-medium">{{ todayJalaliDate() }}</p>
+  </div>
+
+  <!-- Loading State -->
+  @if (viewState() === 'loading') {
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
+      <svg class="animate-spin h-8 w-8 text-blue-600 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <p class="text-sm font-medium text-slate-600">در حال دریافت وضعیت حضور و غیاب...</p>
+    </div>
+  }
+
+  <!-- QR Scanner View State -->
+  @if (viewState() === 'scanner') {
+    <app-qr-scanner
+      (scanSuccess)="onQrScanned($event)"
+      (scanError)="onScannerError($event)"
+      (cancel)="onScannerCancel()"
+    ></app-qr-scanner>
+  }
+
+  <!-- Getting Location State -->
+  @if (viewState() === 'gettingLocation') {
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center space-y-3">
+      <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center animate-pulse">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-slate-800">در حال بررسی موقعیت شما...</h3>
+      <p class="text-xs text-slate-500">لطفاً موقعیت مکانی (GPS) خود را فعال نگه دارید.</p>
+    </div>
+  }
+
+  <!-- Submitting State -->
+  @if (viewState() === 'submitting') {
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center space-y-3">
+      <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <h3 class="text-base font-bold text-slate-800">در حال ثبت تردد...</h3>
+      <p class="text-xs text-slate-500">لطفاً چند لحظه شکیبا باشید.</p>
+    </div>
+  }
+
+  <!-- Success View State -->
+  @if (viewState() === 'success') {
+    <div class="bg-white rounded-2xl p-6 border border-emerald-200 shadow-sm flex flex-col items-center justify-center text-center space-y-4">
+      <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+
+      <div>
+        <h3 class="text-lg font-bold text-emerald-800">
+          {{ todayAttendance()?.isCheckedOut ? 'خروج شما با موفقیت ثبت شد' : 'ورود شما با موفقیت ثبت شد' }}
+        </h3>
+        @if (todayAttendance()?.workLocationName) {
+          <p class="text-xs text-slate-500 mt-1">محل کار: {{ todayAttendance()?.workLocationName }} (تأیید شد)</p>
+        }
+      </div>
+
+      <div class="w-full bg-emerald-50/60 rounded-xl p-4 border border-emerald-100 flex justify-around">
+        <div>
+          <span class="block text-[11px] text-slate-500">ساعت ورود</span>
+          <span class="text-base font-bold text-slate-800">
+            {{ todayAttendance()?.checkInTime ? (todayAttendance()?.checkInTime | persianDigits) : '--:--' }}
+          </span>
+        </div>
+        @if (todayAttendance()?.checkOutTime) {
+          <div class="border-r border-emerald-200 pr-4">
+            <span class="block text-[11px] text-slate-500">ساعت خروج</span>
+            <span class="text-base font-bold text-slate-800">
+              {{ todayAttendance()?.checkOutTime | persianDigits }}
+            </span>
+          </div>
+        }
+      </div>
+
+      <button
+        type="button"
+        (click)="onViewTodayStatus()"
+        class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition shadow-sm"
+      >
+        مشاهده وضعیت امروز
+      </button>
+    </div>
+  }
+
+  <!-- Error View State -->
+  @if (viewState() === 'error') {
+    <div class="bg-white rounded-2xl p-6 border border-rose-200 shadow-sm flex flex-col items-center justify-center text-center space-y-4">
+      <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+      </div>
+
+      <div class="space-y-1">
+        <h3 class="text-base font-bold text-slate-800">خطا در ثبت حضور و غیاب</h3>
+        <p class="text-xs text-rose-600 font-medium leading-relaxed px-2">
+          {{ errorMessage() || 'ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.' }}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        (click)="onRetry()"
+        class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-sm font-bold transition"
+      >
+        تلاش مجدد
+      </button>
+    </div>
+  }
+
+  <!-- Main Today Status View (Ready State) -->
+  @if (viewState() === 'ready') {
+    <!-- Today's Status Card -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h2 class="text-sm font-bold text-slate-800">وضعیت امروز</h2>
+
+        @if (!todayAttendance()?.isCheckedIn) {
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+            هنوز ورود ثبت نشده
+          </span>
+        } @else if (todayAttendance()?.isCheckedIn && !todayAttendance()?.isCheckedOut) {
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            در محل کار (حاضر)
+          </span>
+        } @else {
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            خروج ثبت شده
+          </span>
+        }
+      </div>
+
+      <!-- Time Statistics -->
+      <div class="grid grid-cols-3 gap-3 text-center bg-slate-50/70 p-3 rounded-xl border border-slate-100">
+        <div>
+          <span class="block text-[11px] text-slate-400 mb-0.5">ورود</span>
+          <span class="text-sm font-bold text-slate-800">
+            {{ todayAttendance()?.checkInTime ? (todayAttendance()?.checkInTime! | persianDigits) : '--:--' }}
+          </span>
+        </div>
+        <div class="border-x border-slate-200 px-2">
+          <span class="block text-[11px] text-slate-400 mb-0.5">خروج</span>
+          <span class="text-sm font-bold text-slate-800">
+            {{ todayAttendance()?.checkOutTime ? (todayAttendance()?.checkOutTime! | persianDigits) : '--:--' }}
+          </span>
+        </div>
+        <div>
+          <span class="block text-[11px] text-slate-400 mb-0.5">مدت کار</span>
+          <span class="text-sm font-bold text-slate-800">
+            {{ todayAttendance()?.workDuration ? (todayAttendance()?.workDuration! | persianDigits) : '--' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Primary Call To Action Button -->
+      <div class="pt-2">
+        @if (!todayAttendance()?.isCheckedIn) {
+          <button
+            type="button"
+            (click)="onStartScan()"
+            class="w-full py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm rounded-xl transition shadow-sm flex items-center justify-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+            </svg>
+            <span>ثبت ورود</span>
+          </button>
+        } @else if (todayAttendance()?.isCheckedIn && !todayAttendance()?.isCheckedOut) {
+          <button
+            type="button"
+            (click)="onStartScan()"
+            class="w-full py-3 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-bold text-sm rounded-xl transition shadow-sm flex items-center justify-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            <span>ثبت خروج</span>
+          </button>
+        } @else {
+          <div class="text-center p-2 text-xs font-semibold text-slate-500 bg-slate-100 rounded-xl">
+            تردد امروز شما تکمیل شده است.
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Today's Shift Card -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+      <h2 class="text-sm font-bold text-slate-800">شیفت امروز</h2>
+
+      @if (todayAttendance()?.shift) {
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
+          <div>
+            <span class="text-sm font-bold text-slate-800 block">{{ todayAttendance()?.shift?.name }}</span>
+            <span class="text-xs text-slate-500">ساعات موظفی کاری</span>
+          </div>
+
+          <div class="flex items-center gap-2 dir-ltr text-sm font-bold text-slate-700">
+            <span>{{ todayAttendance()?.shift?.startTime | persianDigits }}</span>
+            <span class="text-slate-300">─────</span>
+            <span>{{ todayAttendance()?.shift?.endTime | persianDigits }}</span>
+          </div>
+        </div>
+      } @else {
+        <div class="text-center py-4 text-xs font-medium text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+          شیفتی برای امروز ثبت نشده است.
+        </div>
+      }
+    </div>
+  }
+</div>
