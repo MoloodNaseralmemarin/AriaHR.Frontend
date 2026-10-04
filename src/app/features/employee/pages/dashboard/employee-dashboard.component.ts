@@ -41,7 +41,7 @@ import { RouterLink } from '@angular/router';
             <span class="text-2xl">⏱</span>
             <span class="mt-2 text-xs font-medium text-slate-700">ثبت و مشاهد حضور</span>
           </a>
-          <a routerLink="/employee/leaves" class="flex flex-col items-center justify-center rounded-xl bg-slate-50 p-4 transition hover:bg-slate-100">
+          <a routerLink="/employee/leave-requests" class="flex flex-col items-center justify-center rounded-xl bg-slate-50 p-4 transition hover:bg-slate-100">
             <span class="text-2xl">🌴</span>
             <span class="mt-2 text-xs font-medium text-slate-700">درخواست مرخصی</span>
           </a>

@@ -1,0 +1,32 @@
+
+> aria-hr.frontend@0.0.0 build
+> ng build
+
+❯ Building...
+✔ Building...
+Initial chunk files | Names                      |  Raw size | Estimated transfer size
+main-SI3U4MIN.js    | main                       | 700.03 kB |               150.08 kB
+chunk-DpXeqJ1_.js   | -                          | 285.26 kB |                78.03 kB
+styles-UGY3G4SA.css | styles                     |  54.61 kB |                 7.91 kB
+
+                    | Initial total              |   1.04 MB |               236.01 kB
+
+Lazy chunk files    | Names                      |  Raw size | Estimated transfer size
+chunk-DhI2EAEs.js   | employee-list-component    |  14.69 kB |                 4.31 kB
+chunk-DWO3DjHr.js   | employee-form-component    |  14.64 kB |                 3.93 kB
+chunk-CksRc84s.js   | employee-details-component |   6.43 kB |                 2.37 kB
+chunk-hE6IUF4q.js   | -                          | 779 bytes |               779 bytes
+chunk-U8my7FiO.js   | employees-routes           | 418 bytes |               418 bytes
+
+Application bundle generation complete. [11.697 seconds] - 2026-10-04T15:02:44.843Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mbundle initial exceeded maximum budget. Budget 1.00 MB was not met by 39.90 kB with a total of 1.04 MB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'qrcode' used by 'src/app/shared/components/qr-code-modal/qr-code-modal.component.ts' is not ESM[0m
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
+
+
+Output location: /app/dist/AriaHR.Frontend
