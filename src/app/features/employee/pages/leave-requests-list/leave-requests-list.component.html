@@ -1,0 +1,317 @@
+<div class="space-y-6 pb-12">
+  <!-- Toast -->
+  <div *ngIf="showToast()" class="fixed top-5 left-1/2 z-50 -translate-x-1/2 transition-all">
+    <app-toast [message]="toastMessage()" [tone]="toastTone()"></app-toast>
+  </div>
+
+  <!-- Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">درخواست‌های مرخصی</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        درخواست مرخصی جدید ثبت کنید و وضعیت درخواست‌های قبلی خود را مشاهده کنید.
+      </p>
+    </div>
+    <a
+      routerLink="/employee/leave-requests/new"
+      class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 transition focus:outline-hidden"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      <span>درخواست مرخصی جدید</span>
+    </a>
+  </div>
+
+  <!-- Summary Cards Section -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <app-summary-card
+      label="در انتظار بررسی"
+      [value]="summary().pendingCount"
+      tone="warning"
+    >
+      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    </app-summary-card>
+
+    <app-summary-card
+      label="تأیید شده"
+      [value]="summary().approvedCount"
+      tone="success"
+    >
+      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+    </app-summary-card>
+
+    <app-summary-card
+      label="رد شده"
+      [value]="summary().rejectedCount"
+      tone="danger"
+    >
+      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="15" y1="9" x2="9" y2="15" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+      </svg>
+    </app-summary-card>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+    <app-skeleton-loader variant="card" [count]="3"></app-skeleton-loader>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!isLoading() && errorMsg()" class="flex flex-col items-center justify-center rounded-2xl border border-rose-100 bg-rose-50/50 p-8 text-center">
+    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600 mb-3">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    </div>
+    <p class="text-sm font-medium text-slate-800 mb-4">{{ errorMsg() }}</p>
+    <button
+      (click)="loadData()"
+      class="rounded-xl border border-rose-200 bg-white px-4 py-2 text-xs font-bold text-rose-700 shadow-2xs hover:bg-rose-50 transition cursor-pointer"
+    >
+      تلاش مجدد
+    </button>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading() && !errorMsg() && requests().length === 0">
+    <app-empty-state
+      title="هنوز درخواست مرخصی ثبت نکرده‌اید."
+      description="اولین درخواست مرخصی خود را ثبت کنید."
+      actionLabel="ثبت درخواست مرخصی"
+      actionRoute="/employee/leave-requests/new"
+    ></app-empty-state>
+  </div>
+
+  <!-- Previous Requests Section (Table for Desktop, Cards for Mobile) -->
+  <div *ngIf="!isLoading() && !errorMsg() && requests().length > 0" class="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+    <!-- Desktop Table -->
+    <div class="hidden md:block overflow-x-auto">
+      <table class="w-full text-right text-sm text-slate-700">
+        <thead class="bg-slate-50/80 text-xs font-bold text-slate-500 uppercase border-b border-slate-200">
+          <tr>
+            <th scope="col" class="px-6 py-4">نوع مرخصی</th>
+            <th scope="col" class="px-6 py-4">تاریخ</th>
+            <th scope="col" class="px-6 py-4">بازه</th>
+            <th scope="col" class="px-6 py-4">مدت</th>
+            <th scope="col" class="px-6 py-4">وضعیت</th>
+            <th scope="col" class="px-6 py-4 text-center">جزئیات</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr *ngFor="let req of requests()" class="hover:bg-slate-50/60 transition">
+            <td class="px-6 py-4 font-semibold text-slate-800">
+              {{ req.leaveType === 'daily' ? 'مرخصی روزانه' : 'مرخصی ساعتی' }}
+            </td>
+            <td class="px-6 py-4 font-medium text-slate-600">
+              <span dir="ltr" class="inline-block">{{ getDisplayDate(req) }}</span>
+            </td>
+            <td class="px-6 py-4 text-slate-600">
+              <span dir="ltr" class="inline-block">{{ getDisplayRange(req) | persianDigits }}</span>
+            </td>
+            <td class="px-6 py-4 font-medium text-slate-800">
+              {{ req.durationText | persianDigits }}
+            </td>
+            <td class="px-6 py-4">
+              <app-status-badge
+                [tone]="getStatusBadgeTone(req.status)"
+                [label]="getStatusBadgeLabel(req.status)"
+              ></app-status-badge>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <button
+                (click)="openDetails(req)"
+                class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span>مشاهده</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Responsive Cards -->
+    <div class="block md:hidden divide-y divide-slate-100">
+      <div *ngFor="let req of requests()" class="p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-bold text-slate-800">
+            {{ req.leaveType === 'daily' ? 'مرخصی روزانه' : 'مرخصی ساعتی' }}
+          </span>
+          <app-status-badge
+            [tone]="getStatusBadgeTone(req.status)"
+            [label]="getStatusBadgeLabel(req.status)"
+          ></app-status-badge>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 pt-1">
+          <div>
+            <span class="text-slate-400 block mb-0.5">تاریخ</span>
+            <span dir="ltr" class="font-medium text-slate-800 inline-block">{{ getDisplayDate(req) }}</span>
+          </div>
+
+          <div>
+            <span class="text-slate-400 block mb-0.5">بازه</span>
+            <span dir="ltr" class="font-medium text-slate-800 inline-block">{{ getDisplayRange(req) | persianDigits }}</span>
+          </div>
+
+          <div class="col-span-2 pt-1">
+            <span class="text-slate-400 block mb-0.5">مدت</span>
+            <span class="font-bold text-blue-700">{{ req.durationText | persianDigits }}</span>
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <button
+            (click)="openDetails(req)"
+            class="w-full inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+          >
+            <span>مشاهده جزئیات</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Request Details Slide-Over Drawer Panel -->
+  <div *ngIf="isDrawerOpen()" class="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+    <!-- Backdrop -->
+    <div
+      (click)="closeDrawer()"
+      class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+    ></div>
+
+    <div class="fixed inset-y-0 right-0 flex max-w-full pl-10">
+      <div class="w-screen max-w-md bg-white shadow-2xl flex flex-col">
+        <!-- Drawer Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <h2 class="text-lg font-bold text-slate-800" id="slide-over-title">
+            جزئیات درخواست مرخصی
+          </h2>
+          <button
+            (click)="closeDrawer()"
+            class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div *ngIf="selectedRequest()" class="flex-1 overflow-y-auto p-6 space-y-6 text-sm">
+          <!-- Status & Type Header Card -->
+          <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 flex items-center justify-between">
+            <div>
+              <span class="text-xs font-medium text-slate-500 block mb-0.5">نوع مرخصی</span>
+              <span class="font-bold text-slate-800 text-base">
+                {{ selectedRequest()?.leaveType === 'daily' ? 'مرخصی روزانه' : 'مرخصی ساعتی' }}
+              </span>
+            </div>
+            <app-status-badge
+              [tone]="getStatusBadgeTone(selectedRequest()?.status || 'pending')"
+              [label]="getStatusBadgeLabel(selectedRequest()?.status || 'pending')"
+            ></app-status-badge>
+          </div>
+
+          <!-- Date & Duration Info -->
+          <div class="space-y-4 rounded-2xl border border-slate-200/80 p-4">
+            <div *ngIf="selectedRequest()?.leaveType === 'daily'" class="grid grid-cols-2 gap-4">
+              <div>
+                <span class="text-xs font-medium text-slate-500 block mb-1">از تاریخ</span>
+                <span dir="ltr" class="font-semibold text-slate-800 inline-block">
+                  {{ persianDateService.toJalaliString(selectedRequest()?.startDate, true, 'DD-MM-YYYY') }}
+                </span>
+              </div>
+              <div>
+                <span class="text-xs font-medium text-slate-500 block mb-1">تا تاریخ</span>
+                <span dir="ltr" class="font-semibold text-slate-800 inline-block">
+                  {{ persianDateService.toJalaliString(selectedRequest()?.endDate, true, 'DD-MM-YYYY') }}
+                </span>
+              </div>
+            </div>
+
+            <div *ngIf="selectedRequest()?.leaveType === 'hourly'" class="grid grid-cols-2 gap-4">
+              <div>
+                <span class="text-xs font-medium text-slate-500 block mb-1">تاریخ</span>
+                <span dir="ltr" class="font-semibold text-slate-800 inline-block">
+                  {{ persianDateService.toJalaliString(selectedRequest()?.date, true, 'DD-MM-YYYY') }}
+                </span>
+              </div>
+              <div>
+                <span class="text-xs font-medium text-slate-500 block mb-1">ساعت</span>
+                <span dir="ltr" class="font-semibold text-slate-800 inline-block">
+                  {{ selectedRequest()?.startTime | persianDigits }} تا {{ selectedRequest()?.endTime | persianDigits }}
+                </span>
+              </div>
+            </div>
+
+            <div class="border-t border-slate-100 pt-3">
+              <span class="text-xs font-medium text-slate-500 block mb-1">مدت</span>
+              <span class="font-bold text-blue-700 text-base">
+                {{ selectedRequest()?.durationText | persianDigits }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Submitted Date -->
+          <div>
+            <span class="text-xs font-medium text-slate-500 block mb-1">تاریخ ثبت درخواست</span>
+            <span dir="ltr" class="font-semibold text-slate-700 inline-block">
+              {{ selectedRequest()?.createdAt | jalali:'persian':'DD-MM-YYYY' }}
+            </span>
+          </div>
+
+          <!-- Reason -->
+          <div>
+            <span class="text-xs font-medium text-slate-500 block mb-1">دلیل درخواست</span>
+            <div class="rounded-xl bg-slate-50 p-3 text-slate-700 text-xs leading-relaxed min-h-[60px]">
+              {{ selectedRequest()?.reason || 'دلیلی ثبت نشده است.' }}
+            </div>
+          </div>
+
+          <!-- Manager Feedback / Rejection Reason -->
+          <div *ngIf="selectedRequest()?.rejectionReason" class="rounded-2xl border border-rose-100 bg-rose-50/60 p-4 space-y-1">
+            <span class="text-xs font-bold text-rose-700 block">دلیل رد درخواست</span>
+            <p class="text-xs text-rose-600 leading-relaxed">
+              {{ selectedRequest()?.rejectionReason }}
+            </p>
+          </div>
+
+          <div *ngIf="selectedRequest()?.managerComment" class="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 space-y-1">
+            <span class="text-xs font-bold text-blue-700 block">توضیحات مدیر</span>
+            <p class="text-xs text-blue-600 leading-relaxed">
+              {{ selectedRequest()?.managerComment }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="border-t border-slate-100 p-4">
+          <button
+            (click)="closeDrawer()"
+            class="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+          >
+            بستن
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

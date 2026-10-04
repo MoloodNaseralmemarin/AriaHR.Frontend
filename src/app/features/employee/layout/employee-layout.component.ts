@@ -55,7 +55,7 @@ interface NavItem {
             <button
               type="button"
               (click)="onLogout()"
-              class="rounded-lg p-1.5 text-rose-600 transition hover:bg-rose-50"
+              class="rounded-lg p-1.5 text-rose-600 transition hover:bg-rose-50 cursor-pointer"
               title="خروج"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -72,7 +72,7 @@ interface NavItem {
           <button
             type="button"
             (click)="onLogout()"
-            class="flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50"
+            class="flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 cursor-pointer"
           >
             <span>خروج</span>
           </button>
@@ -92,7 +92,7 @@ interface NavItem {
           <a routerLink="/employee/attendance" routerLinkActive="text-blue-600 font-bold" class="flex flex-col items-center justify-center text-xs text-slate-500">
             <span class="text-lg">⏱</span><span>تردد</span>
           </a>
-          <a routerLink="/employee/leaves" routerLinkActive="text-blue-600 font-bold" class="flex flex-col items-center justify-center text-xs text-slate-500">
+          <a routerLink="/employee/leave-requests" routerLinkActive="text-blue-600 font-bold" class="flex flex-col items-center justify-center text-xs text-slate-500">
             <span class="text-lg">🌴</span><span>مرخصی</span>
           </a>
           <a routerLink="/employee/profile" routerLinkActive="text-blue-600 font-bold" class="flex flex-col items-center justify-center text-xs text-slate-500">
@@ -111,7 +111,7 @@ export class EmployeeLayoutComponent {
     { label: 'داشبورد', route: '/employee/dashboard', icon: '⌂' },
     { label: 'پروفایل من', route: '/employee/profile', icon: '👤' },
     { label: 'حضور و غیاب', route: '/employee/attendance', icon: '⏱' },
-    { label: 'مرخصی‌ها', route: '/employee/leaves', icon: '🌴' },
+    { label: 'مرخصی‌ها', route: '/employee/leave-requests', icon: '🌴' },
     { label: 'درخواست‌ها', route: '/employee/requests', icon: '📝' },
     { label: 'اعلان‌ها', route: '/employee/notifications', icon: '🔔' },
     { label: 'تنظیمات', route: '/employee/settings', icon: '⚙' },
