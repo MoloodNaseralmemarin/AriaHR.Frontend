@@ -31,6 +31,7 @@ import { SettingsComponent as CenterManagerSettingsComponent } from './features/
 // Employee Components
 import { EmployeeLayoutComponent } from './features/employee/layout/employee-layout.component';
 import { EmployeeDashboardComponent } from './features/employee/pages/dashboard/employee-dashboard.component';
+import { EmployeeAttendanceComponent } from './features/employee/pages/attendance/employee-attendance.component';
 import { EmployeePlaceholderPageComponent } from './features/employee/pages/placeholder/employee-placeholder.component';
 
 export const routes: Routes = [
@@ -90,7 +91,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: EmployeeDashboardComponent },
       { path: 'profile', component: EmployeePlaceholderPageComponent },
-      { path: 'attendance', component: EmployeePlaceholderPageComponent },
+      { path: 'attendance', component: EmployeeAttendanceComponent },
       { path: 'leaves', component: EmployeePlaceholderPageComponent },
       { path: 'requests', component: EmployeePlaceholderPageComponent },
       { path: 'notifications', component: EmployeePlaceholderPageComponent },
