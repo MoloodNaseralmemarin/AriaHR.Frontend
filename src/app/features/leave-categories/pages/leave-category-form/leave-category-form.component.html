@@ -8,9 +8,15 @@
   <app-page-header
     [title]="isEditMode() ? 'ویرایش دسته‌بندی مرخصی' : 'افزودن دسته‌بندی مرخصی جدید'"
     [subtitle]="isEditMode() ? 'ویرایش مشخصات و قوانین دسته‌بندی مرخصی' : 'تعریف دسته‌بندی جدید مرخصی برای کارکنان مرکز'"
-    actionLabel="بازگشت به لیست"
-    actionRoute="/center-manager/leave-categories"
-  ></app-page-header>
+  >
+    <a
+      actions
+      routerLink="/center-manager/leave-categories"
+      class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
+    >
+      بازگشت به لیست
+    </a>
+  </app-page-header>
 
   <!-- Form Card -->
   <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 md:p-8">

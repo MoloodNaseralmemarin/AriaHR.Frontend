@@ -1,6 +1,7 @@
 import '@angular/compiler';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Injector, runInInjectionContext } from '@angular/core';
+import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { LeaveCategoryListComponent } from './leave-category-list.component';
@@ -18,6 +19,10 @@ describe('LeaveCategoryListComponent (Isolated Unit Tests)', () => {
   const mockAuthService = {
     userDetails: vi.fn().mockReturnValue({ organizationId: 'org-1' }),
     getCurrentUser: vi.fn().mockReturnValue(of({ organizationId: 'org-1' })),
+  };
+
+  const mockRouter = {
+    navigate: vi.fn(),
   };
 
   const mockCategories: LeaveCategoryDto[] = [
@@ -46,6 +51,7 @@ describe('LeaveCategoryListComponent (Isolated Unit Tests)', () => {
       providers: [
         { provide: LeaveCategoryService, useValue: mockLeaveCategoryService },
         { provide: AuthService, useValue: mockAuthService },
+        { provide: Router, useValue: mockRouter },
       ],
     });
 
@@ -89,6 +95,12 @@ describe('LeaveCategoryListComponent (Isolated Unit Tests)', () => {
     comp.onSearchInput('بدون حقوق');
     expect(comp.filteredCategories().length).toBe(1);
     expect(comp.filteredCategories()[0].id).toBe('cat-2');
+  });
+
+  it('onAddCategory() should navigate to new leave category route', () => {
+    const comp = createComponent();
+    comp.onAddCategory();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/center-manager/leave-categories/new']);
   });
 
   it('confirmToggleActive() sets pendingToggleItem', () => {

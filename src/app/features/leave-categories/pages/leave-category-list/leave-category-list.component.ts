@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 import { LeaveCategoryService } from '../../services/leave-category.service';
@@ -36,6 +36,7 @@ type LeaveCategoryFilter = 'all' | 'active' | 'inactive';
 export class LeaveCategoryListComponent implements OnInit {
   private readonly leaveCategoryService = inject(LeaveCategoryService);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly categories = signal<LeaveCategoryDto[]>([]);
   readonly isLoading = signal(false);
@@ -104,6 +105,10 @@ export class LeaveCategoryListComponent implements OnInit {
         this.isLoading.set(false);
       },
     });
+  }
+
+  onAddCategory(): void {
+    this.router.navigate(['/center-manager/leave-categories/new']);
   }
 
   onSearchInput(value: string): void {
