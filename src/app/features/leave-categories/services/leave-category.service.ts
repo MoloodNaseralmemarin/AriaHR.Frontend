@@ -16,7 +16,7 @@ import { UpdateLeaveCategoryDto } from '../models/update-leave-category.dto';
 })
 export class LeaveCategoryService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = `${environment.apiUrl}/api/requests/leave-categories`;
+  private readonly apiUrl = `${environment.apiUrl}/api/leave-categories`;
 
   /** Retrieves all leave categories for the authenticated organization. */
   getAll(): Observable<LeaveCategoryDto[]> {
@@ -40,11 +40,11 @@ export class LeaveCategoryService {
 
   /** Activates a leave category. */
   activate(id: string): Observable<LeaveCategoryDto> {
-    return this.http.put<LeaveCategoryDto>(`${this.apiUrl}/${id}/activate`, {});
+    return this.http.patch<LeaveCategoryDto>(`${this.apiUrl}/${id}/activate`, null);
   }
 
   /** Deactivates a leave category. */
   deactivate(id: string): Observable<LeaveCategoryDto> {
-    return this.http.put<LeaveCategoryDto>(`${this.apiUrl}/${id}/deactivate`, {});
+    return this.http.patch<LeaveCategoryDto>(`${this.apiUrl}/${id}/deactivate`, null);
   }
 }

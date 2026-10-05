@@ -15,9 +15,10 @@ describe('LeaveCategoryService (Isolated Unit Tests)', () => {
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
+    patch: vi.fn(),
   };
 
-  const baseUrl = `${environment.apiUrl}/api/requests/leave-categories`;
+  const baseUrl = `${environment.apiUrl}/api/leave-categories`;
 
   const mockCategory: LeaveCategoryDto = {
     id: 'cat-1',
@@ -101,25 +102,25 @@ describe('LeaveCategoryService (Isolated Unit Tests)', () => {
     expect(mockHttpClient.put).toHaveBeenCalledWith(`${baseUrl}/cat-1`, updateDto);
   });
 
-  it('activate() should PUT to activate endpoint', () => {
-    mockHttpClient.put.mockReturnValue(of({ ...mockCategory, isActive: true }));
+  it('activate() should PATCH to activate endpoint with no request body', () => {
+    mockHttpClient.patch.mockReturnValue(of({ ...mockCategory, isActive: true }));
     const service = createService();
 
     service.activate('cat-1').subscribe((result) => {
       expect(result.isActive).toBe(true);
     });
 
-    expect(mockHttpClient.put).toHaveBeenCalledWith(`${baseUrl}/cat-1/activate`, {});
+    expect(mockHttpClient.patch).toHaveBeenCalledWith(`${baseUrl}/cat-1/activate`, null);
   });
 
-  it('deactivate() should PUT to deactivate endpoint', () => {
-    mockHttpClient.put.mockReturnValue(of({ ...mockCategory, isActive: false }));
+  it('deactivate() should PATCH to deactivate endpoint with no request body', () => {
+    mockHttpClient.patch.mockReturnValue(of({ ...mockCategory, isActive: false }));
     const service = createService();
 
     service.deactivate('cat-1').subscribe((result) => {
       expect(result.isActive).toBe(false);
     });
 
-    expect(mockHttpClient.put).toHaveBeenCalledWith(`${baseUrl}/cat-1/deactivate`, {});
+    expect(mockHttpClient.patch).toHaveBeenCalledWith(`${baseUrl}/cat-1/deactivate`, null);
   });
 });
