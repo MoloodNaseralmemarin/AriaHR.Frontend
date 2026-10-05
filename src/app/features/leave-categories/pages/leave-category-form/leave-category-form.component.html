@@ -1,0 +1,123 @@
+<div class="space-y-6">
+  <!-- Toast Notification -->
+  <div *ngIf="toastMessage()" class="fixed bottom-6 left-6 z-50">
+    <app-toast [message]="toastMessage()!" [tone]="toastTone()"></app-toast>
+  </div>
+
+  <!-- Page Header -->
+  <app-page-header
+    [title]="isEditMode() ? 'ویرایش دسته‌بندی مرخصی' : 'افزودن دسته‌بندی مرخصی جدید'"
+    [subtitle]="isEditMode() ? 'ویرایش مشخصات و قوانین دسته‌بندی مرخصی' : 'تعریف دسته‌بندی جدید مرخصی برای کارکنان مرکز'"
+    actionLabel="بازگشت به لیست"
+    actionRoute="/center-manager/leave-categories"
+  ></app-page-header>
+
+  <!-- Form Card -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 md:p-8">
+    <!-- Skeleton Loader for Edit Mode Loading -->
+    <div *ngIf="isLoading()" class="py-4">
+      <app-skeleton-loader variant="row" [count]="4"></app-skeleton-loader>
+    </div>
+
+    <!-- Form Content -->
+    <form *ngIf="!isLoading()" [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6 max-w-2xl">
+      <!-- Name Field -->
+      <div>
+        <label for="name" class="block text-xs font-semibold text-slate-700 mb-2">
+          عنوان دسته‌بندی مرخصی <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="name"
+          type="text"
+          formControlName="name"
+          placeholder="مانند: مرخصی استحقاقی، مرخصی استعلاجی..."
+          class="w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:bg-white"
+          [ngClass]="{
+            'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500': form.get('name')?.invalid && form.get('name')?.touched,
+            'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500': !(form.get('name')?.invalid && form.get('name')?.touched)
+          }"
+        />
+        <div *ngIf="form.get('name')?.invalid && form.get('name')?.touched" class="mt-1.5 text-xs text-rose-600 space-y-0.5">
+          <p *ngIf="form.get('name')?.errors?.['required'] || form.get('name')?.errors?.['whitespace']">
+            عنوان دسته‌بندی مرخصی الزامی است و نمی‌تواند تنها حاوی فاصله خالی باشد.
+          </p>
+        </div>
+      </div>
+
+      <!-- Max Days Per Year Field -->
+      <div>
+        <label for="maxDaysPerYear" class="block text-xs font-semibold text-slate-700 mb-2">
+          حداکثر روز مجاز در سال <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="maxDaysPerYear"
+          type="number"
+          min="0"
+          formControlName="maxDaysPerYear"
+          placeholder="0"
+          class="w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:bg-white"
+          [ngClass]="{
+            'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500': form.get('maxDaysPerYear')?.invalid && form.get('maxDaysPerYear')?.touched,
+            'border-slate-200 focus:ring-blue-500/20 focus:border-blue-500': !(form.get('maxDaysPerYear')?.invalid && form.get('maxDaysPerYear')?.touched)
+          }"
+        />
+        <div *ngIf="form.get('maxDaysPerYear')?.invalid && form.get('maxDaysPerYear')?.touched" class="mt-1.5 text-xs text-rose-600 space-y-0.5">
+          <p *ngIf="form.get('maxDaysPerYear')?.errors?.['required']">
+            تعداد روزهای مجاز در سال الزامی است.
+          </p>
+          <p *ngIf="form.get('maxDaysPerYear')?.errors?.['min']">
+            تعداد روز نمی‌تواند عدد منفی باشد.
+          </p>
+        </div>
+      </div>
+
+      <!-- Switches Section -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+        <!-- Is Paid Switch -->
+        <div class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+          <div>
+            <span class="block text-xs font-semibold text-slate-800">مرخصی با حقوق</span>
+            <span class="block text-[11px] text-slate-500 mt-0.5">محاسبه حقوق در طول ایام مرخصی</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" formControlName="isPaid" class="sr-only peer" />
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+
+        <!-- Requires Attachment Switch -->
+        <div class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+          <div>
+            <span class="block text-xs font-semibold text-slate-800">نیازمند پیوست مدرک</span>
+            <span class="block text-[11px] text-slate-500 mt-0.5">الزام بارگذاری فایل یا مدرک پزشکی/اداری</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" formControlName="requiresAttachment" class="sr-only peer" />
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
+        <a
+          routerLink="/center-manager/leave-categories"
+          class="px-5 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+        >
+          انصراف
+        </a>
+        <button
+          type="submit"
+          [disabled]="isSubmitting()"
+          class="px-6 py-2.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-all disabled:opacity-50 flex items-center gap-2"
+        >
+          <svg *ngIf="isSubmitting()" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ isEditMode() ? 'ذخیره تغییرات' : 'ثبت دسته‌بندی' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
