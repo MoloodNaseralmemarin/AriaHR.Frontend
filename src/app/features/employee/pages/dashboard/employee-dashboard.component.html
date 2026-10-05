@@ -1,0 +1,199 @@
+<section class="space-y-6">
+  <!-- Header / Greeting Block -->
+  <div class="animate-in">
+    <p class="text-sm font-medium text-blue-600">پنل اختصاصی کارمند</p>
+    <div class="mt-1 flex items-end justify-between gap-3">
+      <div>
+        @if (isLoadingUser()) {
+          <div class="h-8 w-48 animate-pulse rounded-lg bg-slate-200 sm:w-56" aria-label="در حال دریافت نام"></div>
+        } @else {
+          <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">سلام، {{ employeeName() }} 👋</h1>
+        }
+        <p class="mt-1 text-sm text-slate-500">خلاصه کارکرد، شیفت و وضعیت درخواست‌های شما • {{ todayFormattedDate }}</p>
+      </div>
+      <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-600 text-lg font-bold text-white shadow-sm">
+        {{ avatarInitial() }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Summary & Stats -->
+  <section aria-label="خلاصه کارکرد" class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+    <article class="stat-card">
+      <span class="stat-icon blue">⏱</span>
+      <span class="stat-label">ساعت کار این ماه</span>
+      <strong>--</strong>
+      <span class="stat-note">بر اساس گزارش ماهانه</span>
+    </article>
+    <article class="stat-card">
+      <span class="stat-icon green">✓</span>
+      <span class="stat-label">روزهای حضور</span>
+      <strong>--</strong>
+      <span class="stat-note">در ماه جاری</span>
+    </article>
+    <article class="stat-card">
+      <span class="stat-icon amber">♙</span>
+      <span class="stat-label">روزهای غیبت</span>
+      <strong>--</strong>
+      <span class="stat-note">در ماه جاری</span>
+    </article>
+    <article class="stat-card">
+      <span class="stat-icon violet">🌴</span>
+      <span class="stat-label">مرخصی‌های در انتظار</span>
+      <strong>{{ (leaveSummary()?.pendingCount ?? 0) | persianDigits }}</strong>
+      <span class="stat-note">درخواست فعال</span>
+    </article>
+  </section>
+
+  <!-- Quick Action Banner -->
+  <a routerLink="/employee/attendance" class="primary-action">
+    <span class="action-plus">⏱</span>
+    <span>
+      <strong>ثبت و مشاهده تردد امروز</strong>
+      <small>جهت اسکن بارکد موقعیت مکانی و ثبت ورود/خروج کلیک کنید</small>
+    </span>
+    <span class="action-arrow">←</span>
+  </a>
+
+  <!-- Today's Attendance & Today's Shift Grid -->
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <!-- Today's Attendance Block -->
+    <section class="section-block flex flex-col justify-between">
+      <div>
+        <div class="section-heading">
+          <div>
+            <h2>تردد امروز</h2>
+            <p>وضعیت ورود و خروج شما در تاریخ امروز</p>
+          </div>
+          <a routerLink="/employee/attendance" class="view-all">مدیریت تردد <span>←</span></a>
+        </div>
+
+        <div class="list-card p-4 space-y-4">
+          @if (isLoadingAttendance()) {
+            <div class="p-4 text-center text-sm text-slate-500 animate-pulse">در حال دریافت وضعیت تردد...</div>
+          } @else {
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <span class="text-xs font-medium text-slate-500">وضعیت فعلی</span>
+              <span class="rounded-full px-3 py-1 text-xs font-bold" [class]="attendanceStatusClass()">
+                {{ attendanceStatusLabel() }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-center">
+              <div class="rounded-xl bg-slate-50 p-3">
+                <span class="block text-xs text-slate-500">زمان ورود</span>
+                <strong class="mt-1 block text-base font-bold text-slate-800">
+                  {{ (todayAttendance()?.checkInTime || '--:--') | persianDigits }}
+                </strong>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-3">
+                <span class="block text-xs text-slate-500">زمان خروج</span>
+                <strong class="mt-1 block text-base font-bold text-slate-800">
+                  {{ (todayAttendance()?.checkOutTime || '--:--') | persianDigits }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
+              <span>مدت زمان کارکرد امروز:</span>
+              <strong class="font-bold text-slate-800">
+                {{ (todayAttendance()?.workDuration || '--') | persianDigits }}
+              </strong>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Today's Shift Block -->
+    <section class="section-block flex flex-col justify-between">
+      <div>
+        <div class="section-heading">
+          <div>
+            <h2>شیفت کاری امروز</h2>
+            <p>مشخصات و زمان‌بندی شیفت تعریف شده</p>
+          </div>
+        </div>
+
+        <div class="list-card p-4 space-y-4">
+          @if (isLoadingAttendance()) {
+            <div class="p-4 text-center text-sm text-slate-500 animate-pulse">در حال دریافت اطلاعات شیفت...</div>
+          } @else if (todayAttendance()?.shift) {
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <strong class="text-sm font-bold text-slate-900">{{ todayAttendance()?.shift?.name }}</strong>
+                @if (todayAttendance()?.workLocationName) {
+                  <p class="text-xs text-slate-500 mt-0.5">محل خدمت: {{ todayAttendance()?.workLocationName }}</p>
+                }
+              </div>
+              <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">فعال</span>
+            </div>
+
+            <div class="flex items-center justify-between rounded-xl bg-blue-50/50 p-3.5 text-blue-900">
+              <span class="text-xs font-medium">ساعات کاری شیفت:</span>
+              <strong class="text-sm font-bold">
+                {{ (todayAttendance()?.shift?.startTime || '--:--') | persianDigits }} تا {{ (todayAttendance()?.shift?.endTime || '--:--') | persianDigits }}
+              </strong>
+            </div>
+          } @else {
+            <div class="p-6 text-center text-sm text-slate-500">
+              شیفت کاری خاصی برای امروز تعیین نشده است
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Leave Summary & Recent Requests -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <h2>خلاصه مرخصی‌ها و درخواست‌ها</h2>
+        <p>آخرین درخواست ثبت شده و وضعیت آن</p>
+      </div>
+      <a routerLink="/employee/leave" class="view-all">مشاهده همه مرخصی‌ها <span>←</span></a>
+    </div>
+
+    <div class="list-card">
+      @if (isLoadingLeaves()) {
+        <div class="p-4 text-center text-sm text-slate-500 animate-pulse">در حال دریافت اطلاعات مرخصی...</div>
+      } @else if (latestLeaveRequest(); as req) {
+        <a routerLink="/employee/leave" class="center-row">
+          <div class="center-avatar">🌴</div>
+          <div class="center-main">
+            <strong>
+              {{ req.leaveType === 'daily' ? 'مرخصی روزانه' : 'مرخصی ساعتی' }} • {{ req.durationText }}
+            </strong>
+            <span>تاریخ: {{ ((req.startDate || req.date) || '') | persianDigits }} {{ req.reason ? '• ' + req.reason : '' }}</span>
+          </div>
+          <span class="status-pill" [class]="getLeaveStatusClass(req.status)">
+            {{ getLeaveStatusLabel(req.status) }}
+          </span>
+          <span class="row-arrow">‹</span>
+        </a>
+      } @else {
+        <div class="p-6 text-center text-sm text-slate-500">
+          هیچ درخواستی ثبت نشده است
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Notifications Section -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <h2>اعلان‌های اخیر</h2>
+        <p>پیام‌ها و اطلاعیه‌های دریافتی</p>
+      </div>
+      <a routerLink="/employee/notifications" class="view-all">مشاهده همه <span>←</span></a>
+    </div>
+
+    <div class="list-card activity-card">
+      <div class="p-6 text-center text-sm text-slate-500">
+        هیچ اعلانی وجود ندارد
+      </div>
+    </div>
+  </section>
+</section>
