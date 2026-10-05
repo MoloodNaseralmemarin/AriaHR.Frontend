@@ -1,34 +1,39 @@
+
+> aria-hr.frontend@0.0.0 start
+> ng serve
+
 ❯ Building...
 ✔ Building...
-Initial chunk files | Names                      |  Raw size
-main.js             | main                       | 747.70 kB |
-styles.css          | styles                     |  68.15 kB |
-chunk-LLR6ZSK6.js   | -                          |  23.03 kB |
-chunk-5PPOQ35G.js   | -                          |  16.55 kB |
-chunk-E2BDEUNF.js   | -                          |  16.42 kB |
-chunk-LS44AVHG.js   | -                          |  10.13 kB |
-chunk-VUJOFXKG.js   | -                          | 987 bytes |
+Initial chunk files | Names                         |  Raw size
+main.js             | main                          | 785.40 kB |
+styles.css          | styles                        |  71.58 kB |
+chunk-VQPR4FWJ.js   | -                             |  14.29 kB |
+chunk-XG6EPT3D.js   | -                             |  10.34 kB |
+chunk-AW2JWLNQ.js   | -                             |  10.17 kB |
+chunk-5TNX2QI6.js   | -                             |   9.94 kB |
+chunk-D2FYJQRE.js   | -                             |   7.63 kB |
+chunk-GTSA2AU2.js   | -                             |   6.54 kB |
+chunk-IBHFWU3Z.js   | -                             |   4.54 kB |
+chunk-GZZZ5IV2.js   | -                             |   1.96 kB |
+chunk-NYG6OOZM.js   | -                             |   1.23 kB |
+chunk-VUJOFXKG.js   | -                             | 987 bytes |
 
-                    | Initial total              | 882.97 kB
+                    | Initial total                 | 924.60 kB
 
-Lazy chunk files    | Names                      |  Raw size
-chunk-OR2NU2T7.js   | employee-list-component    |  47.52 kB |
-chunk-PU2UB6U3.js   | employee-form-component    |  47.38 kB |
-chunk-YFY4PJWQ.js   | employee-details-component |  22.72 kB |
-chunk-RBT3V7NY.js   | -                          |   1.68 kB |
-chunk-EJWWWPX3.js   | employees-routes           | 754 bytes |
+Lazy chunk files    | Names                         |  Raw size
+chunk-AWTTY3JH.js   | employee-list-component       |  47.70 kB |
+chunk-UNX7SYNY.js   | employee-form-component       |  47.48 kB |
+chunk-P5IPOEE5.js   | leave-category-list-component |  44.09 kB |
+chunk-SX2WEZAG.js   | leave-category-form-component |  32.22 kB |
+chunk-VJZJINCE.js   | employee-details-component    |  22.86 kB |
+chunk-HISNNW52.js   | -                             |   1.81 kB |
+chunk-DVGKV54E.js   | -                             |   1.68 kB |
+chunk-UA6K6Y2M.js   | employees-routes              | 754 bytes |
+chunk-6VL2BVVB.js   | leave-categories-routes       | 662 bytes |
 
-Application bundle generation complete. [6.539 seconds] - 2026-10-04T14:58:52.170Z
+Application bundle generation complete. [7.268 seconds] - 2026-10-05T14:23:32.947Z
 
 Watch mode enabled. Watching for file changes...
 NOTE: Raw file sizes do not reflect development server per-request transformations.
   ➜  Local:   http://localhost:4200/
-2:58:53 PM [vite] (client) [optimizer] bundling dependencies...
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Initial chunk files | Names |  Raw size
-main.js             | main  | 749.86 kB |
-
-Application bundle generation complete. [3.195 seconds] - 2026-10-04T15:02:06.040Z
-
-Component update sent to client(s).
+2:23:34 PM [vite] (client) [optimizer] bundling dependencies...

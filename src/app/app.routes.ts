@@ -72,6 +72,13 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/employees/employees.routes').then((m) => m.EMPLOYEE_ROUTES),
       },
+      {
+        path: 'leave-categories',
+        loadChildren: () =>
+          import('./features/leave-categories/leave-categories.routes').then(
+            (m) => m.LEAVE_CATEGORY_ROUTES
+          ),
+      },
       { path: 'attendance', component: CenterManagerAttendanceComponent },
       { path: 'shifts', component: CenterManagerShiftsComponent },
       { path: 'shifts/create', component: CenterManagerCreateShiftComponent },
