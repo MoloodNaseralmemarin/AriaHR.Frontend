@@ -14,7 +14,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
           @if (isLoadingUser()) {
             <div class="h-6 w-48 animate-pulse rounded-lg bg-slate-200 sm:h-7 sm:w-56" aria-label="در حال بارگذاری نام"></div>
           } @else {
-            <p class="text-base font-bold text-blue-600 sm:text-lg">سلام، {{ employeeName() }} 👋</p>
+            <p class="text-base font-bold text-blue-600 sm:text-lg">سلام، {{ employeeName() }}</p>
           }
         </div>
         <h1 class="mt-1 text-xl font-bold text-slate-800 sm:text-2xl">داشبورد کارمند</h1>
