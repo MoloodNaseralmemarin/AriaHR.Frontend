@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-employee-dashboard',
@@ -9,7 +10,14 @@ import { RouterLink } from '@angular/router';
   template: `
     <div class="space-y-6">
       <div>
-        <h1 class="text-xl font-bold text-slate-800 sm:text-2xl">داشبورد کارمند</h1>
+        <div class="min-h-[28px] sm:min-h-[32px] flex items-center">
+          @if (isLoadingUser()) {
+            <div class="h-6 w-48 animate-pulse rounded-lg bg-slate-200 sm:h-7 sm:w-56" aria-label="در حال بارگذاری نام"></div>
+          } @else {
+            <p class="text-base font-bold text-blue-600 sm:text-lg">سلام، {{ employeeName() }} 👋</p>
+          }
+        </div>
+        <h1 class="mt-1 text-xl font-bold text-slate-800 sm:text-2xl">داشبورد کارمند</h1>
         <p class="mt-1 text-xs text-slate-500 sm:text-sm">خلاصه وضعیت حضور، مرخصی‌ها و درخواست‌های فعال شما</p>
       </div>
 
@@ -59,4 +67,41 @@ import { RouterLink } from '@angular/router';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EmployeeDashboardComponent {}
+export class EmployeeDashboardComponent implements OnInit {
+  private readonly authService = inject(AuthService);
+
+  readonly isLoadingUser = signal<boolean>(!this.authService.userDetails() && !this.authService.currentUser());
+
+  readonly employeeName = computed(() => {
+    const details = this.authService.userDetails();
+    if (details) {
+      const first = details.firstName ? details.firstName.trim() : '';
+      const last = details.lastName ? details.lastName.trim() : '';
+      const full = `${first} ${last}`.trim();
+      if (full) {
+        return full;
+      }
+    }
+
+    const user = this.authService.currentUser();
+    if (user && user.fullName && user.fullName.trim()) {
+      return user.fullName.trim();
+    }
+
+    return 'کارمند';
+  });
+
+  ngOnInit(): void {
+    if (!this.authService.userDetails()) {
+      this.isLoadingUser.set(true);
+    }
+    this.authService.getCurrentUser().subscribe({
+      next: () => {
+        this.isLoadingUser.set(false);
+      },
+      error: () => {
+        this.isLoadingUser.set(false);
+      },
+    });
+  }
+}
