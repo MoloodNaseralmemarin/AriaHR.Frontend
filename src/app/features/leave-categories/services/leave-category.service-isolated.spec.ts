@@ -44,7 +44,7 @@ describe('LeaveCategoryService (Isolated Unit Tests)', () => {
     vi.clearAllMocks();
   });
 
-  it('getAll() should GET all leave categories', () => {
+  it('getAll() should GET all leave categories from /api/requests/leave-categories', () => {
     mockHttpClient.get.mockReturnValue(of([mockCategory]));
     const service = createService();
 
@@ -52,7 +52,7 @@ describe('LeaveCategoryService (Isolated Unit Tests)', () => {
       expect(result).toEqual([mockCategory]);
     });
 
-    expect(mockHttpClient.get).toHaveBeenCalledWith(baseUrl);
+    expect(mockHttpClient.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/leave-categories`);
   });
 
   it('getById() should GET category by ID', () => {

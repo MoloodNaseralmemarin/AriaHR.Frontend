@@ -20,7 +20,7 @@ export class LeaveCategoryService {
 
   /** Retrieves all leave categories for the authenticated organization. */
   getAll(): Observable<LeaveCategoryDto[]> {
-    return this.http.get<LeaveCategoryDto[]>(this.apiUrl);
+    return this.http.get<LeaveCategoryDto[]>(`${environment.apiUrl}/api/requests/leave-categories`);
   }
 
   /** Retrieves a specific leave category by ID. */
