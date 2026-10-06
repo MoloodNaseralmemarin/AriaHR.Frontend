@@ -5,12 +5,19 @@
   </div>
 
   <!-- Page Header -->
-  <app-page-header
-    title="دسته‌بندی‌های مرخصی"
-    subtitle="مدیریت و پیکربندی انواع مرخصی‌های تعریف شده برای مرکز"
-    actionLabel="افزودن دسته‌بندی جدید"
-    actionRoute="/center-manager/leave-categories/new"
-  ></app-page-header>
+  <app-page-header title="دسته‌بندی‌های مرخصی" subtitle="مدیریت و پیکربندی انواع مرخصی‌های تعریف شده برای مرکز">
+    <a
+      actions
+      routerLink="/center-manager/leave-categories/new"
+      class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      افزودن دسته‌بندی جدید
+    </a>
+  </app-page-header>
 
   <!-- Error Alert -->
   <div *ngIf="errorMessage()" class="rounded-xl bg-rose-50 p-4 border border-rose-200 flex items-center gap-3 text-rose-700">
@@ -160,7 +167,7 @@
         title="هیچ دسته‌بندی مرخصی یافت نشد"
         description="هنوز هیچ دسته‌بندی مرخصی برای این مرکز ثبت نشده است یا با فیلترهای شما همخوانی ندارد."
         actionLabel="افزودن دسته‌بندی جدید"
-        actionRoute="/center-manager/leave-categories/new"
+        (action)="onAddCategory()"
       ></app-empty-state>
     </div>
   </div>
