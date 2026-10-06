@@ -4,6 +4,8 @@ import { Injector, runInInjectionContext } from '@angular/core';
 import { of, throwError } from 'rxjs';
 
 import { LeaveCategoryListComponent } from './leave-category-list.component';
+import { Router } from '@angular/router';
+
 import { LeaveCategoryService } from '../../services/leave-category.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { LeaveCategoryDto } from '../../models/leave-category.dto';
@@ -18,6 +20,10 @@ describe('LeaveCategoryListComponent (Isolated Unit Tests)', () => {
   const mockAuthService = {
     userDetails: vi.fn().mockReturnValue({ organizationId: 'org-1' }),
     getCurrentUser: vi.fn().mockReturnValue(of({ organizationId: 'org-1' })),
+  };
+
+  const mockRouter = {
+    navigate: vi.fn(),
   };
 
   const mockCategories: LeaveCategoryDto[] = [
@@ -46,6 +52,7 @@ describe('LeaveCategoryListComponent (Isolated Unit Tests)', () => {
       providers: [
         { provide: LeaveCategoryService, useValue: mockLeaveCategoryService },
         { provide: AuthService, useValue: mockAuthService },
+        { provide: Router, useValue: mockRouter },
       ],
     });
 
@@ -54,6 +61,12 @@ describe('LeaveCategoryListComponent (Isolated Unit Tests)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('onAddCategory() navigates to /center-manager/leave-categories/new', () => {
+    const comp = createComponent();
+    comp.onAddCategory();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/center-manager/leave-categories/new']);
   });
 
   it('loadCategories() should fetch and populate categories signal', () => {
