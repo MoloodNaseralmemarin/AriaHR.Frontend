@@ -2,7 +2,7 @@ import '@angular/compiler';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { LeaveCategoryService } from './leave-category.service';
 import { LeaveCategoryDto } from '../models/leave-category.dto';
@@ -66,7 +66,7 @@ describe('LeaveCategoryService (Isolated Unit Tests)', () => {
     expect(mockHttpClient.get).toHaveBeenCalledWith(`${baseUrl}/cat-1`);
   });
 
-  it('create() should POST create DTO', () => {
+  it('create() should POST create DTO with 4 required fields', () => {
     const createDto: CreateLeaveCategoryDto = {
       name: 'مرخصی استعلاجی',
       maxDaysPerYear: 15,
@@ -84,7 +84,7 @@ describe('LeaveCategoryService (Isolated Unit Tests)', () => {
     expect(mockHttpClient.post).toHaveBeenCalledWith(baseUrl, createDto);
   });
 
-  it('update() should PUT update DTO', () => {
+  it('update() should PUT update DTO with exact 4 required fields to /api/leave-categories/{id}', () => {
     const updateDto: UpdateLeaveCategoryDto = {
       name: 'مرخصی ویرایش شده',
       maxDaysPerYear: 20,
@@ -97,6 +97,29 @@ describe('LeaveCategoryService (Isolated Unit Tests)', () => {
 
     service.update('cat-1', updateDto).subscribe((result) => {
       expect(result).toEqual(mockCategory);
+    });
+
+    expect(mockHttpClient.put).toHaveBeenCalledWith(`${baseUrl}/cat-1`, updateDto);
+    expect(Object.keys(updateDto)).toEqual(['name', 'maxDaysPerYear', 'isPaid', 'requiresAttachment']);
+  });
+
+  it('update() should handle API error', () => {
+    const updateDto: UpdateLeaveCategoryDto = {
+      name: 'مرخصی ویرایش شده',
+      maxDaysPerYear: 20,
+      isPaid: false,
+      requiresAttachment: false,
+    };
+
+    const apiError = { status: 400, message: 'Bad Request' };
+    mockHttpClient.put.mockReturnValue(throwError(() => apiError));
+    const service = createService();
+
+    service.update('cat-1', updateDto).subscribe({
+      next: () => expect.fail('Should have failed'),
+      error: (err) => {
+        expect(err).toEqual(apiError);
+      },
     });
 
     expect(mockHttpClient.put).toHaveBeenCalledWith(`${baseUrl}/cat-1`, updateDto);
