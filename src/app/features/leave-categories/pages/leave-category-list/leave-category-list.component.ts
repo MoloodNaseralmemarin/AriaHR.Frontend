@@ -107,10 +107,6 @@ export class LeaveCategoryListComponent implements OnInit {
     });
   }
 
-  onAddCategory(): void {
-    this.router.navigate(['/center-manager/leave-categories/new']);
-  }
-
   onSearchInput(value: string): void {
     this.searchTerm.set(value);
   }

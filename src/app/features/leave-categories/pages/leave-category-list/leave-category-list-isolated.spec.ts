@@ -63,12 +63,6 @@ describe('LeaveCategoryListComponent (Isolated Unit Tests)', () => {
     vi.clearAllMocks();
   });
 
-  it('onAddCategory() navigates to /center-manager/leave-categories/new', () => {
-    const comp = createComponent();
-    comp.onAddCategory();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/center-manager/leave-categories/new']);
-  });
-
   it('loadCategories() should fetch and populate categories signal', () => {
     mockLeaveCategoryService.getAll.mockReturnValue(of(mockCategories));
     const comp = createComponent();
