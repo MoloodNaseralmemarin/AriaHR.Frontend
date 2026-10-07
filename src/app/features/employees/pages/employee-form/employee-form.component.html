@@ -168,7 +168,7 @@
         </div>
       </div>
 
-      <!-- Gender & Profile Image Path -->
+      <!-- Gender & Profile Image File Upload -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
           <label class="block text-xs font-semibold text-slate-700 mb-1.5">جنسیت</label>
@@ -182,13 +182,46 @@
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">مسیر تصویر پروفایل</label>
-          <input
-            type="text"
-            formControlName="profileImagePath"
-            placeholder="اختیاری"
-            class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
-          />
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+            تصویر پروفایل <span class="text-slate-400 font-normal">(اختیاری)</span>
+          </label>
+
+          <!-- File Input & Preview Area -->
+          <div class="flex items-center gap-4">
+            <div *ngIf="imagePreviewUrl()" class="relative flex-shrink-0">
+              <img
+                [src]="imagePreviewUrl()"
+                alt="Profile Preview"
+                class="h-16 w-16 rounded-full object-cover border border-slate-200"
+              />
+              <button
+                type="button"
+                (click)="removeImage()"
+                class="absolute -top-1 -right-1 rounded-full bg-rose-500 p-1 text-white hover:bg-rose-600 transition shadow"
+                title="حذف تصویر"
+              >
+                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="flex-grow">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                (change)="onImageSelected($event)"
+                class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition cursor-pointer"
+              />
+              <p class="mt-1 text-[11px] text-slate-400">
+                فرمت‌های مجاز: JPG، PNG، WEBP (حداکثر ۵ مگابایت)
+              </p>
+            </div>
+          </div>
+
+          <p *ngIf="imageError()" class="mt-1.5 text-xs text-rose-600">
+            {{ imageError() }}
+          </p>
         </div>
       </div>
 

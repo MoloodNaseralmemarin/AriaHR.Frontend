@@ -67,9 +67,11 @@ describe('EmployeeService', () => {
     req.flush(mockEmployee);
   });
 
-  it('should create employee', () => {
+  it('should create employee without image using FormData', () => {
     const createDto: CreateEmployeeDto = {
-      userId: 'user-1',
+      firstName: 'علی',
+      lastName: 'علوی',
+      phoneNumber: '09121234567',
       organizationId: 'org-1',
       personnelCode: '1001',
       nationalCode: '1234567890',
@@ -83,27 +85,121 @@ describe('EmployeeService', () => {
 
     const req = httpMock.expectOne(`${environment.apiUrl}/api/organizations/employees`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(createDto);
+    expect(req.request.body instanceof FormData).toBe(true);
+
+    const formData = req.request.body as FormData;
+    expect(formData.get('firstName')).toBe('علی');
+    expect(formData.get('phoneNumber')).toBe('09121234567');
+    expect(formData.has('profileImage')).toBe(false);
+
     req.flush(mockEmployee);
   });
 
-  it('should update employee', () => {
+  it('should create employee with image using FormData', () => {
+    const dummyFile = new File(['dummy content'], 'avatar.png', { type: 'image/png' });
+    const createDto: CreateEmployeeDto = {
+      firstName: 'رضا',
+      lastName: 'رضایی',
+      phoneNumber: '09129876543',
+      organizationId: 'org-1',
+      personnelCode: '1002',
+      nationalCode: '0987654321',
+      birthDate: '1995-05-05',
+      hireDate: '2023-01-01',
+      profileImage: dummyFile,
+    };
+
+    service.createEmployee(createDto).subscribe((res) => {
+      expect(res.id).toBe('emp-1');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/organizations/employees`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+
+    const formData = req.request.body as FormData;
+    expect(formData.get('firstName')).toBe('رضا');
+    expect(formData.get('profileImage')).toEqual(dummyFile);
+
+    req.flush(mockEmployee);
+  });
+
+  it('should update employee without changing image', () => {
     const updateDto: UpdateEmployeeDto = {
       organizationId: 'org-1',
       personnelCode: '1001',
       nationalCode: '1234567890',
       birthDate: '1990-01-01',
       hireDate: '2022-01-01',
-      isActive: false,
+      isActive: true,
+      removeProfileImage: false,
     };
 
     service.updateEmployee('emp-1', updateDto).subscribe((res) => {
-      expect(res.isActive).toBe(false);
+      expect(res.isActive).toBe(true);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/emp-1`);
     expect(req.request.method).toBe('PUT');
-    req.flush({ ...mockEmployee, isActive: false });
+    expect(req.request.body instanceof FormData).toBe(true);
+
+    const formData = req.request.body as FormData;
+    expect(formData.get('removeProfileImage')).toBe('false');
+    expect(formData.has('profileImage')).toBe(false);
+
+    req.flush(mockEmployee);
+  });
+
+  it('should update employee with new image', () => {
+    const dummyFile = new File(['new image content'], 'new-avatar.jpg', { type: 'image/jpeg' });
+    const updateDto: UpdateEmployeeDto = {
+      organizationId: 'org-1',
+      personnelCode: '1001',
+      nationalCode: '1234567890',
+      birthDate: '1990-01-01',
+      hireDate: '2022-01-01',
+      isActive: true,
+      profileImage: dummyFile,
+      removeProfileImage: false,
+    };
+
+    service.updateEmployee('emp-1', updateDto).subscribe((res) => {
+      expect(res.id).toBe('emp-1');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/emp-1`);
+    expect(req.request.method).toBe('PUT');
+
+    const formData = req.request.body as FormData;
+    expect(formData.get('profileImage')).toEqual(dummyFile);
+    expect(formData.get('removeProfileImage')).toBe('false');
+
+    req.flush(mockEmployee);
+  });
+
+  it('should update employee with removeProfileImage = true', () => {
+    const updateDto: UpdateEmployeeDto = {
+      organizationId: 'org-1',
+      personnelCode: '1001',
+      nationalCode: '1234567890',
+      birthDate: '1990-01-01',
+      hireDate: '2022-01-01',
+      isActive: true,
+      removeProfileImage: true,
+    };
+
+    service.updateEmployee('emp-1', updateDto).subscribe((res) => {
+      expect(res.id).toBe('emp-1');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/employees/emp-1`);
+    expect(req.request.method).toBe('PUT');
+
+    const formData = req.request.body as FormData;
+    expect(formData.get('removeProfileImage')).toBe('true');
+    expect(formData.has('profileImage')).toBe(false);
+
+    req.flush(mockEmployee);
   });
 
   it('should delete employee', () => {
