@@ -94,8 +94,9 @@ export class LeaveCategoryListComponent implements OnInit {
     this.errorMessage.set(null);
 
     this.leaveCategoryService.getAll().subscribe({
-      next: (data) => {
-        this.categories.set(data || []);
+      next: (rawList: any[]) => {
+        const normalized = (rawList || []).map((item) => this.normalizeCategory(item));
+        this.categories.set(normalized);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -105,6 +106,30 @@ export class LeaveCategoryListComponent implements OnInit {
         this.isLoading.set(false);
       },
     });
+  }
+
+  private normalizeCategory(raw: any): LeaveCategoryDto {
+    if (!raw) {
+      return {
+        id: '',
+        organizationId: '',
+        name: '',
+        maxDaysPerYear: 0,
+        isPaid: true,
+        requiresAttachment: false,
+        isActive: true,
+      };
+    }
+
+    return {
+      id: raw.id ?? raw.Id ?? '',
+      organizationId: raw.organizationId ?? raw.OrganizationId ?? '',
+      name: raw.name ?? raw.Name ?? '',
+      maxDaysPerYear: raw.maxDaysPerYear ?? raw.MaxDaysPerYear ?? 0,
+      isPaid: Boolean(raw.isPaid ?? raw.IsPaid ?? true),
+      requiresAttachment: Boolean(raw.requiresAttachment ?? raw.RequiresAttachment ?? false),
+      isActive: Boolean(raw.isActive ?? raw.IsActive ?? false),
+    };
   }
 
   onSearchInput(value: string): void {
@@ -136,8 +161,10 @@ export class LeaveCategoryListComponent implements OnInit {
       : this.leaveCategoryService.activate(category.id);
 
     action$.subscribe({
-      next: (updated) => {
-        const nextState = updated && typeof updated.isActive === 'boolean' ? updated.isActive : !category.isActive;
+      next: (rawUpdated: any) => {
+        const updatedObj = rawUpdated ? this.normalizeCategory(rawUpdated) : null;
+        const nextState = updatedObj && typeof updatedObj.isActive === 'boolean' ? updatedObj.isActive : !category.isActive;
+
         this.categories.update((list) =>
           list.map((c) => (c.id === category.id ? { ...c, isActive: nextState } : c))
         );

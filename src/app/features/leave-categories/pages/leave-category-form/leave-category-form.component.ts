@@ -42,12 +42,18 @@ export class LeaveCategoryFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.isEditMode.set(true);
-      this.categoryId.set(id);
-      this.loadCategoryDetails(id);
-    }
+    this.route.paramMap.subscribe((params) => {
+      const id = params.get('id');
+      if (id) {
+        this.isEditMode.set(true);
+        this.categoryId.set(id);
+        this.loadCategoryDetails(id);
+      } else {
+        this.isEditMode.set(false);
+        this.categoryId.set(null);
+        this.resetForm();
+      }
+    });
   }
 
   private initForm(): void {
@@ -59,6 +65,17 @@ export class LeaveCategoryFormComponent implements OnInit {
     });
   }
 
+  private resetForm(): void {
+    if (this.form) {
+      this.form.reset({
+        name: '',
+        maxDaysPerYear: 0,
+        isPaid: true,
+        requiresAttachment: false,
+      });
+    }
+  }
+
   private noWhitespaceValidator(control: any) {
     const isWhitespace = (control.value || '').trim().length === 0;
     const isValid = !isWhitespace;
@@ -68,13 +85,20 @@ export class LeaveCategoryFormComponent implements OnInit {
   loadCategoryDetails(id: string): void {
     this.isLoading.set(true);
     this.leaveCategoryService.getById(id).subscribe({
-      next: (cat) => {
-        this.form.patchValue({
-          name: cat.name,
-          maxDaysPerYear: cat.maxDaysPerYear,
-          isPaid: cat.isPaid,
-          requiresAttachment: cat.requiresAttachment,
-        });
+      next: (rawCat: any) => {
+        if (rawCat) {
+          const name = rawCat.name ?? rawCat.Name ?? '';
+          const maxDaysPerYear = rawCat.maxDaysPerYear ?? rawCat.MaxDaysPerYear ?? 0;
+          const isPaid = rawCat.isPaid ?? rawCat.IsPaid ?? true;
+          const requiresAttachment = rawCat.requiresAttachment ?? rawCat.RequiresAttachment ?? false;
+
+          this.form.patchValue({
+            name,
+            maxDaysPerYear,
+            isPaid: Boolean(isPaid),
+            requiresAttachment: Boolean(requiresAttachment),
+          });
+        }
         this.isLoading.set(false);
       },
       error: (err) => {

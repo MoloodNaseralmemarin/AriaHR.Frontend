@@ -1,0 +1,39 @@
+
+> aria-hr.frontend@0.0.0 start
+> ng serve
+
+❯ Building...
+✔ Building...
+Initial chunk files | Names                         |  Raw size
+main.js             | main                          | 785.40 kB |
+styles.css          | styles                        |  71.66 kB |
+chunk-VQPR4FWJ.js   | -                             |  14.29 kB |
+chunk-XG6EPT3D.js   | -                             |  10.34 kB |
+chunk-AW2JWLNQ.js   | -                             |  10.17 kB |
+chunk-5TNX2QI6.js   | -                             |   9.94 kB |
+chunk-D2FYJQRE.js   | -                             |   7.63 kB |
+chunk-GTSA2AU2.js   | -                             |   6.54 kB |
+chunk-IBHFWU3Z.js   | -                             |   4.54 kB |
+chunk-GZZZ5IV2.js   | -                             |   1.96 kB |
+chunk-NYG6OOZM.js   | -                             |   1.23 kB |
+chunk-VUJOFXKG.js   | -                             | 987 bytes |
+
+                    | Initial total                 | 924.68 kB
+
+Lazy chunk files    | Names                         |  Raw size
+chunk-AWTTY3JH.js   | employee-list-component       |  47.70 kB |
+chunk-UNX7SYNY.js   | employee-form-component       |  47.48 kB |
+chunk-YTAJBIKQ.js   | leave-category-list-component |  45.82 kB |
+chunk-PCXSBUZ4.js   | leave-category-form-component |  34.14 kB |
+chunk-VJZJINCE.js   | employee-details-component    |  22.86 kB |
+chunk-4HIZUYHI.js   | -                             |   1.86 kB |
+chunk-DVGKV54E.js   | -                             |   1.68 kB |
+chunk-UA6K6Y2M.js   | employees-routes              | 754 bytes |
+chunk-HWWMHWPR.js   | leave-categories-routes       | 662 bytes |
+
+Application bundle generation complete. [7.658 seconds] - 2026-10-07T06:27:41.197Z
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  ➜  Local:   http://localhost:4200/
+6:27:42 AM [vite] (client) [optimizer] bundling dependencies...
