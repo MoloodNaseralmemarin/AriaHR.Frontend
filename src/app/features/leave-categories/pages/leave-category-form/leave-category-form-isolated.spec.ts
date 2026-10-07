@@ -20,14 +20,6 @@ describe('LeaveCategoryFormComponent (Isolated Unit Tests)', () => {
     navigate: vi.fn(),
   };
 
-  const mockActivatedRoute = {
-    snapshot: {
-      paramMap: {
-        get: vi.fn(),
-      },
-    },
-  };
-
   const mockCategory: LeaveCategoryDto = {
     id: 'cat-100',
     organizationId: 'org-1',
@@ -39,7 +31,16 @@ describe('LeaveCategoryFormComponent (Isolated Unit Tests)', () => {
   };
 
   function createComponent(paramId: string | null = null): LeaveCategoryFormComponent {
-    mockActivatedRoute.snapshot.paramMap.get.mockReturnValue(paramId);
+    const mockActivatedRoute = {
+      snapshot: {
+        paramMap: {
+          get: (key: string) => paramId,
+        },
+      },
+      paramMap: of({
+        get: (key: string) => paramId,
+      }),
+    };
 
     const injector = Injector.create({
       providers: [
@@ -72,6 +73,26 @@ describe('LeaveCategoryFormComponent (Isolated Unit Tests)', () => {
     expect(comp.form.get('maxDaysPerYear')?.value).toBe(0);
     expect(comp.form.get('isPaid')?.value).toBe(true);
     expect(comp.form.get('requiresAttachment')?.value).toBe(false);
+  });
+
+  it('should correctly populate form when API returns PascalCase properties', () => {
+    const pascalCaseCategory = {
+      Id: 'cat-200',
+      Name: 'مرخصی استعلاجی',
+      MaxDaysPerYear: 15,
+      IsPaid: false,
+      RequiresAttachment: true,
+      IsActive: true,
+    };
+    mockLeaveCategoryService.getById.mockReturnValue(of(pascalCaseCategory));
+    const comp = createComponent('cat-200');
+    comp.ngOnInit();
+
+    expect(comp.isEditMode()).toBe(true);
+    expect(comp.form.get('name')?.value).toBe('مرخصی استعلاجی');
+    expect(comp.form.get('maxDaysPerYear')?.value).toBe(15);
+    expect(comp.form.get('isPaid')?.value).toBe(false);
+    expect(comp.form.get('requiresAttachment')?.value).toBe(true);
   });
 
   it('should initialize form in edit mode and populate values when ID is present in route', () => {

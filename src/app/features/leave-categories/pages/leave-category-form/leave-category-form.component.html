@@ -8,9 +8,19 @@
   <app-page-header
     [title]="isEditMode() ? 'ویرایش دسته‌بندی مرخصی' : 'افزودن دسته‌بندی مرخصی جدید'"
     [subtitle]="isEditMode() ? 'ویرایش مشخصات و قوانین دسته‌بندی مرخصی' : 'تعریف دسته‌بندی جدید مرخصی برای کارکنان مرکز'"
-    actionLabel="بازگشت به لیست"
-    actionRoute="/center-manager/leave-categories"
-  ></app-page-header>
+  >
+    <a
+      actions
+      routerLink="/center-manager/leave-categories"
+      class="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      بازگشت به لیست
+    </a>
+  </app-page-header>
 
   <!-- Form Card -->
   <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 md:p-8">

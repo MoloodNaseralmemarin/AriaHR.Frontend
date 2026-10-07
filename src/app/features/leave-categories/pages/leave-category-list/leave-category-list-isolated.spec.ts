@@ -73,6 +73,36 @@ describe('LeaveCategoryListComponent (Isolated Unit Tests)', () => {
     expect(comp.isLoading()).toBe(false);
   });
 
+  it('loadCategories() should handle PascalCase properties from API response', () => {
+    const pascalCategories = [
+      {
+        Id: 'cat-3',
+        OrganizationId: 'org-1',
+        Name: 'مرخصی ازدواج',
+        MaxDaysPerYear: 3,
+        IsPaid: true,
+        RequiresAttachment: true,
+        IsActive: true,
+      },
+    ];
+    mockLeaveCategoryService.getAll.mockReturnValue(of(pascalCategories));
+    const comp = createComponent();
+
+    comp.loadCategories();
+
+    expect(comp.categories()).toEqual([
+      {
+        id: 'cat-3',
+        organizationId: 'org-1',
+        name: 'مرخصی ازدواج',
+        maxDaysPerYear: 3,
+        isPaid: true,
+        requiresAttachment: true,
+        isActive: true,
+      },
+    ]);
+  });
+
   it('filteredCategories should filter by status and search query', () => {
     mockLeaveCategoryService.getAll.mockReturnValue(of(mockCategories));
     const comp = createComponent();
