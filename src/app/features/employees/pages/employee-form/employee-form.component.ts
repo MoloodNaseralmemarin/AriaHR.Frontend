@@ -31,6 +31,21 @@ export function nationalCodeValidator(control: AbstractControl): ValidationError
   return { nationalCode: true };
 }
 
+export type EmployeeFormControlName =
+  | 'firstName'
+  | 'lastName'
+  | 'phoneNumber'
+  | 'email'
+  | 'personnelCode'
+  | 'nationalCode'
+  | 'birthDate'
+  | 'gender'
+  | 'hireDate'
+  | 'isActive'
+  | 'profileImagePath';
+
+export type StringEmployeeFormControlName = Exclude<EmployeeFormControlName, 'isActive'>;
+
 @Component({
   selector: 'app-employee-form',
   standalone: true,
@@ -97,7 +112,7 @@ export class EmployeeFormComponent implements OnInit {
   }
 
   private setupServerErrorClearing(): void {
-    const fields: Array<keyof typeof this.form.controls> = [
+    const fields: StringEmployeeFormControlName[] = [
       'phoneNumber',
       'nationalCode',
       'personnelCode',
@@ -122,7 +137,7 @@ export class EmployeeFormComponent implements OnInit {
 
     let errorMapped = false;
 
-    const fieldMappings: Array<{ keyword: string; controlName: keyof typeof this.form.controls }> = [
+    const fieldMappings: Array<{ keyword: string; controlName: StringEmployeeFormControlName }> = [
       { keyword: 'شماره موبایل', controlName: 'phoneNumber' },
       { keyword: 'کد ملی', controlName: 'nationalCode' },
       { keyword: 'کد پرسنلی', controlName: 'personnelCode' },
@@ -207,7 +222,7 @@ export class EmployeeFormComponent implements OnInit {
     });
   }
 
-  isControlInvalid(name: keyof typeof this.form.controls): boolean {
+  isControlInvalid(name: EmployeeFormControlName): boolean {
     const control = this.form.controls[name];
     return control.invalid && (control.touched || control.dirty);
   }
