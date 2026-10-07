@@ -78,7 +78,7 @@
             class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
           />
           <p *ngIf="isControlInvalid('phoneNumber')" class="mt-1 text-xs text-rose-600">
-            شماره موبایل معتبر ۱۱ رقمی (شروع با ۰۹) وارد کنید.
+            {{ form.controls.phoneNumber.errors?.['server'] || 'شماره موبایل معتبر ۱۱ رقمی (شروع با ۰۹) وارد کنید.' }}
           </p>
         </div>
 
@@ -94,7 +94,7 @@
             class="w-full font-mono rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
           />
           <p *ngIf="isControlInvalid('email')" class="mt-1 text-xs text-rose-600">
-            فرمت ایمیل نامعتبر است.
+            {{ form.controls.email.errors?.['server'] || 'فرمت ایمیل نامعتبر است.' }}
           </p>
         </div>
       </div>
@@ -113,7 +113,7 @@
             class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
           />
           <p *ngIf="isControlInvalid('personnelCode')" class="mt-1 text-xs text-rose-600">
-            کد پرسنلی الزامی است.
+            {{ form.controls.personnelCode.errors?.['server'] || 'کد پرسنلی الزامی است.' }}
           </p>
         </div>
 
@@ -130,7 +130,7 @@
             class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
           />
           <p *ngIf="isControlInvalid('nationalCode')" class="mt-1 text-xs text-rose-600">
-            کد ملی معتبر ۱۰ رقمی وارد کنید.
+            {{ form.controls.nationalCode.errors?.['server'] || 'کد ملی معتبر ۱۰ رقمی وارد کنید.' }}
           </p>
         </div>
       </div>

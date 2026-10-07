@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { NonNullableFormBuilder, FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { EmployeeFormComponent } from './employee-form.component';
 import { EmployeeService } from '../../services/employee.service';
@@ -89,6 +89,85 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
         personnelCode: '1004',
         nationalCode: '1234567890',
       })
+    );
+  });
+
+  it('should map duplicate field server error and set server error on corresponding control', () => {
+    const comp = createComponent();
+    comp.ngOnInit();
+
+    mockEmployeeService.createEmployee.mockReturnValueOnce(
+      throwError(() => ({
+        status: 400,
+        error: {
+          title: 'ورودی نامعتبر',
+          status: 400,
+          detail: 'کاربری با این شماره موبایل قبلاً ثبت شده است.',
+        },
+      }))
+    );
+
+    comp.form.patchValue({
+      firstName: 'علی',
+      lastName: 'محمدی',
+      phoneNumber: '09121234567',
+      personnelCode: '1004',
+      nationalCode: '1234567890',
+      birthDate: '1990-01-01',
+      hireDate: '2022-01-01',
+    });
+
+    comp.submit();
+
+    expect(comp.form.controls.phoneNumber.errors?.['server']).toBe(
+      'کاربری با این شماره موبایل قبلاً ثبت شده است.'
+    );
+  });
+
+  it('should clear server error when form control value changes', () => {
+    const comp = createComponent();
+    comp.ngOnInit();
+
+    comp.form.controls.nationalCode.setErrors({
+      server: 'کاربری با این کد ملی قبلاً ثبت شده است.',
+    });
+
+    expect(comp.form.controls.nationalCode.errors?.['server']).toBeTruthy();
+
+    comp.form.controls.nationalCode.setValue('0012345679');
+
+    expect(comp.form.controls.nationalCode.errors?.['server']).toBeUndefined();
+  });
+
+  it('should handle edit mode duplicate error mapping for nationalCode, personnelCode, and email', () => {
+    const comp = createComponent();
+    comp.ngOnInit();
+    comp.isEditMode.set(true);
+    (comp as any).employeeId = 'emp-1';
+
+    mockEmployeeService.updateEmployee.mockReturnValueOnce(
+      throwError(() => ({
+        status: 400,
+        error: {
+          detail: 'کاربری با این کد ملی قبلاً ثبت شده است.',
+        },
+      }))
+    );
+
+    comp.form.patchValue({
+      firstName: 'علی',
+      lastName: 'محمدی',
+      phoneNumber: '09121234567',
+      personnelCode: '1004',
+      nationalCode: '1234567890',
+      birthDate: '1990-01-01',
+      hireDate: '2022-01-01',
+    });
+
+    comp.submit();
+
+    expect(comp.form.controls.nationalCode.errors?.['server']).toBe(
+      'کاربری با این کد ملی قبلاً ثبت شده است.'
     );
   });
 });
