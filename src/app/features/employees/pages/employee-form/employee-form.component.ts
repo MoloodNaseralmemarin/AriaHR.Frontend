@@ -41,10 +41,12 @@ export type EmployeeFormControlName =
   | 'birthDate'
   | 'gender'
   | 'hireDate'
-  | 'isActive'
-  | 'profileImagePath';
+  | 'isActive';
 
 export type StringEmployeeFormControlName = Exclude<EmployeeFormControlName, 'isActive'>;
+
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 @Component({
   selector: 'app-employee-form',
@@ -75,6 +77,13 @@ export class EmployeeFormComponent implements OnInit {
   readonly toastMessage = signal<string | null>(null);
   readonly toastTone = signal<ToastTone>('success');
 
+  // Image upload signals and state
+  readonly selectedProfileImage = signal<File | null>(null);
+  readonly imagePreviewUrl = signal<string | null>(null);
+  readonly removeProfileImage = signal<boolean>(false);
+  readonly imageError = signal<string | null>(null);
+
+  private existingImageUrl: string | null = null;
   private employeeId: string | null = null;
 
   readonly genderOptions = [
@@ -93,7 +102,6 @@ export class EmployeeFormComponent implements OnInit {
     gender: [''],
     hireDate: ['', Validators.required],
     isActive: [true],
-    profileImagePath: [''],
   });
 
   ngOnInit(): void {
@@ -144,7 +152,6 @@ export class EmployeeFormComponent implements OnInit {
       { keyword: 'ایمیل', controlName: 'email' },
     ];
 
-    // Check for errors array if backend provides structured errors list
     const errorsList: string[] = [];
     if (Array.isArray(errorObj?.errors)) {
       errorsList.push(...errorObj.errors);
@@ -189,7 +196,6 @@ export class EmployeeFormComponent implements OnInit {
     this.isLoading.set(true);
     this.employeeService.getEmployeeById(id).subscribe({
       next: (employee) => {
-        // Extract names if user object or userFullName present, or fallback
         let firstName = '';
         let lastName = '';
         if (employee.firstName) {
@@ -209,8 +215,13 @@ export class EmployeeFormComponent implements OnInit {
           gender: employee.gender ?? '',
           hireDate: employee.hireDate ? employee.hireDate.substring(0, 10) : '',
           isActive: employee.isActive ?? true,
-          profileImagePath: employee.profileImagePath ?? '',
         });
+
+        if (employee.profileImagePath) {
+          this.existingImageUrl = employee.profileImagePath;
+          this.imagePreviewUrl.set(employee.profileImagePath);
+        }
+
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -236,9 +247,62 @@ export class EmployeeFormComponent implements OnInit {
     }
   }
 
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+
+    const file = input.files[0];
+    this.imageError.set(null);
+
+    // Validate type
+    const fileType = file.type.toLowerCase();
+    if (!ALLOWED_IMAGE_TYPES.includes(fileType)) {
+      this.imageError.set('فرمت تصویر باید یکی از موارد JPG، JPEG، PNG یا WEBP باشد.');
+      input.value = '';
+      return;
+    }
+
+    // Validate size
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      this.imageError.set('حجم تصویر نباید بیشتر از ۵ مگابایت باشد.');
+      input.value = '';
+      return;
+    }
+
+    this.selectedProfileImage.set(file);
+    this.removeProfileImage.set(false);
+
+    // Create local object URL for preview safely
+    if (typeof FileReader !== 'undefined') {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreviewUrl.set(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeImage(): void {
+    this.selectedProfileImage.set(null);
+    this.imagePreviewUrl.set(null);
+    this.imageError.set(null);
+
+    if (this.isEditMode() && this.existingImageUrl) {
+      this.removeProfileImage.set(true);
+    } else {
+      this.removeProfileImage.set(false);
+    }
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    if (this.imageError()) {
       return;
     }
 
@@ -259,7 +323,6 @@ export class EmployeeFormComponent implements OnInit {
     const normalizedPersonnelCode = normalizePersianDigits(raw.personnelCode).trim();
     const emailVal = raw.email.trim() ? raw.email.trim() : null;
     const genderVal = raw.gender ? raw.gender : null;
-    const profileImagePathVal = raw.profileImagePath.trim() ? raw.profileImagePath.trim() : null;
 
     if (this.isEditMode() && this.employeeId) {
       const request: UpdateEmployeeDto = {
@@ -270,7 +333,8 @@ export class EmployeeFormComponent implements OnInit {
         gender: genderVal || undefined,
         hireDate: raw.hireDate,
         isActive: raw.isActive,
-        profileImagePath: profileImagePathVal || undefined,
+        profileImage: this.selectedProfileImage(),
+        removeProfileImage: this.removeProfileImage(),
       };
 
       this.employeeService.updateEmployee(this.employeeId, request).subscribe({
@@ -297,7 +361,7 @@ export class EmployeeFormComponent implements OnInit {
         birthDate: raw.birthDate,
         hireDate: raw.hireDate,
         gender: genderVal,
-        profileImagePath: profileImagePathVal,
+        profileImage: this.selectedProfileImage(),
         organizationId: orgId,
       };
 

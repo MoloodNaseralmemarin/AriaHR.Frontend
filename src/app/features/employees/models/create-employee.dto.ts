@@ -8,6 +8,6 @@ export interface CreateEmployeeDto {
   birthDate: string;
   hireDate: string;
   gender?: string | null;
-  profileImagePath?: string | null;
+  profileImage?: File | null;
   organizationId: string;
 }

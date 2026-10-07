@@ -24,14 +24,47 @@ export class EmployeeService {
   }
 
   createEmployee(request: CreateEmployeeDto): Observable<EmployeeResponseDto> {
+    const formData = new FormData();
+    formData.append('firstName', request.firstName);
+    formData.append('lastName', request.lastName);
+    formData.append('phoneNumber', request.phoneNumber);
+    if (request.email) formData.append('email', request.email);
+    formData.append('personnelCode', request.personnelCode);
+    formData.append('nationalCode', request.nationalCode);
+    formData.append('birthDate', request.birthDate);
+    formData.append('hireDate', request.hireDate);
+    if (request.gender) formData.append('gender', request.gender);
+    formData.append('organizationId', request.organizationId);
+
+    if (request.profileImage) {
+      formData.append('profileImage', request.profileImage);
+    }
+
     return this.http.post<EmployeeResponseDto>(
       this.orgEmployeesUrl,
-      request
+      formData
     );
   }
 
   updateEmployee(id: string, request: UpdateEmployeeDto): Observable<EmployeeResponseDto> {
-    return this.http.put<EmployeeResponseDto>(`${this.apiUrl}/${id}`, request);
+    const formData = new FormData();
+    formData.append('organizationId', request.organizationId);
+    formData.append('personnelCode', request.personnelCode);
+    formData.append('nationalCode', request.nationalCode);
+    formData.append('birthDate', request.birthDate);
+    if (request.gender) formData.append('gender', request.gender);
+    formData.append('hireDate', request.hireDate);
+    formData.append('isActive', String(request.isActive));
+
+    if (request.removeProfileImage !== undefined) {
+      formData.append('removeProfileImage', String(request.removeProfileImage));
+    }
+
+    if (request.profileImage) {
+      formData.append('profileImage', request.profileImage);
+    }
+
+    return this.http.put<EmployeeResponseDto>(`${this.apiUrl}/${id}`, formData);
   }
 
   deleteEmployee(id: string): Observable<void> {

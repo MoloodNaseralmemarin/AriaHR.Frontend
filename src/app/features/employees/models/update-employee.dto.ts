@@ -6,5 +6,6 @@ export interface UpdateEmployeeDto {
   gender?: string;
   hireDate: string;
   isActive: boolean;
-  profileImagePath?: string;
+  profileImage?: File | null;
+  removeProfileImage?: boolean;
 }
