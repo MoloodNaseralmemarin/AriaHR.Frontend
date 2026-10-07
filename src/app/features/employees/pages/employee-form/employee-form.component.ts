@@ -89,8 +89,84 @@ export class EmployeeFormComponent implements OnInit {
     this.employeeId = this.route.snapshot.paramMap.get('id');
     this.isEditMode.set(!!this.employeeId);
 
+    this.setupServerErrorClearing();
+
     if (this.employeeId) {
       this.loadEmployee(this.employeeId);
+    }
+  }
+
+  private setupServerErrorClearing(): void {
+    const fields: Array<keyof typeof this.form.controls> = [
+      'phoneNumber',
+      'nationalCode',
+      'personnelCode',
+      'email',
+    ];
+
+    fields.forEach((fieldName) => {
+      const control = this.form.controls[fieldName];
+      control.valueChanges.subscribe(() => {
+        if (control.errors?.['server']) {
+          const { server, ...remainingErrors } = control.errors;
+          const hasRemaining = Object.keys(remainingErrors).length > 0;
+          control.setErrors(hasRemaining ? remainingErrors : null);
+        }
+      });
+    });
+  }
+
+  private handleDuplicateErrors(err: any): void {
+    const errorObj = err?.error;
+    const detailMessage: string = errorObj?.detail || errorObj?.message || err?.message || '';
+
+    let errorMapped = false;
+
+    const fieldMappings: Array<{ keyword: string; controlName: keyof typeof this.form.controls }> = [
+      { keyword: 'شماره موبایل', controlName: 'phoneNumber' },
+      { keyword: 'کد ملی', controlName: 'nationalCode' },
+      { keyword: 'کد پرسنلی', controlName: 'personnelCode' },
+      { keyword: 'ایمیل', controlName: 'email' },
+    ];
+
+    // Check for errors array if backend provides structured errors list
+    const errorsList: string[] = [];
+    if (Array.isArray(errorObj?.errors)) {
+      errorsList.push(...errorObj.errors);
+    } else if (errorObj?.errors && typeof errorObj.errors === 'object') {
+      Object.values(errorObj.errors).forEach((val) => {
+        if (Array.isArray(val)) {
+          errorsList.push(...val.map(String));
+        } else if (typeof val === 'string') {
+          errorsList.push(val);
+        }
+      });
+    }
+
+    if (detailMessage) {
+      errorsList.push(detailMessage);
+    }
+
+    errorsList.forEach((msg) => {
+      fieldMappings.forEach(({ keyword, controlName }) => {
+        if (msg.includes(keyword)) {
+          const control = this.form.controls[controlName];
+          if (control) {
+            control.setErrors({
+              ...control.errors,
+              server: msg,
+            });
+            control.markAsTouched();
+            errorMapped = true;
+          }
+        }
+      });
+    });
+
+    if (!errorMapped) {
+      this.errorMessage.set(
+        detailMessage || 'خطا در ثبت کارمند. لطفاً ورودی‌ها را بررسی کنید.'
+      );
     }
   }
 
@@ -191,10 +267,8 @@ export class EmployeeFormComponent implements OnInit {
           }, 1000);
         },
         error: (err) => {
-          this.errorMessage.set(
-            err?.error?.message || err?.message || 'خطا در ذخیره تغییرات.'
-          );
           this.isSubmitting.set(false);
+          this.handleDuplicateErrors(err);
         },
       });
     } else {
@@ -221,10 +295,8 @@ export class EmployeeFormComponent implements OnInit {
           }, 1000);
         },
         error: (err) => {
-          this.errorMessage.set(
-            err?.error?.message || err?.message || 'خطا در ثبت کارمند جدید. لطفاً ورودی‌ها را بررسی کنید.'
-          );
           this.isSubmitting.set(false);
+          this.handleDuplicateErrors(err);
         },
       });
     }
