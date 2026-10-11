@@ -22,6 +22,7 @@ import { DashboardComponent as CenterManagerDashboardComponent } from './feature
 import { AttendanceComponent as CenterManagerAttendanceComponent } from './features/center-manager/pages/attendance/attendance.component';
 import { ShiftsComponent as CenterManagerShiftsComponent } from './features/center-manager/pages/shifts/shifts.component';
 import { CreateShiftComponent as CenterManagerCreateShiftComponent } from './features/center-manager/pages/create-shift/create-shift.component';
+import { EditShiftComponent as CenterManagerEditShiftComponent } from './features/center-manager/pages/edit-shift/edit-shift.component';
 import { CreateWorkLocationComponent as CenterManagerCreateWorkLocationComponent } from './features/center-manager/pages/create-work-location/create-work-location.component';
 import { RequestsComponent as CenterManagerRequestsComponent } from './features/center-manager/pages/requests/requests.component';
 import { ReportsComponent as CenterManagerReportsComponent } from './features/center-manager/pages/reports/reports.component';
@@ -82,6 +83,7 @@ export const routes: Routes = [
       { path: 'attendance', component: CenterManagerAttendanceComponent },
       { path: 'shifts', component: CenterManagerShiftsComponent },
       { path: 'shifts/create', component: CenterManagerCreateShiftComponent },
+      { path: 'shifts/:id/edit', component: CenterManagerEditShiftComponent },
       { path: 'work-locations/create', component: CenterManagerCreateWorkLocationComponent },
       { path: 'requests', component: CenterManagerRequestsComponent },
       { path: 'reports', component: CenterManagerReportsComponent },
