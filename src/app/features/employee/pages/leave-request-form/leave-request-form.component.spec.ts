@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { LeaveRequestFormComponent } from './leave-request-form.component';
 import { LeaveRequestService } from '../../services/leave-request.service';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 describe('LeaveRequestFormComponent', () => {
   let component: LeaveRequestFormComponent;
@@ -80,19 +80,70 @@ describe('LeaveRequestFormComponent', () => {
     component.form.patchValue({
       startDate: '2025-02-10',
       endDate: '2025-02-12',
-      reason: 'استراحت',
+      reason: '  استراحت  ',
     });
 
     component.onSubmit();
 
     expect(leaveRequestServiceMock.createLeaveRequest).toHaveBeenCalledWith({
-      leaveType: 'daily',
-      startDate: '2025-02-10',
-      endDate: '2025-02-12',
-      date: undefined,
-      startTime: undefined,
-      endTime: undefined,
+      leaveType: 1,
+      date: '2025-02-10',
+      startTime: null,
+      endTime: null,
       reason: 'استراحت',
     });
+  });
+
+  it('should submit hourly leave with correct numeric leaveType 2 and formatted times', () => {
+    leaveRequestServiceMock.createLeaveRequest.mockReturnValue(of({ id: 'req-2' }));
+    component.setLeaveType('hourly');
+    component.form.patchValue({
+      date: '2025-02-15',
+      startTime: '08:30',
+      endTime: '12:30',
+      reason: '',
+    });
+
+    component.onSubmit();
+
+    expect(leaveRequestServiceMock.createLeaveRequest).toHaveBeenCalledWith({
+      leaveType: 2,
+      date: '2025-02-15',
+      startTime: '08:30',
+      endTime: '12:30',
+      reason: null,
+    });
+  });
+
+  it('should extract ProblemDetails error message on HTTP failure', () => {
+    leaveRequestServiceMock.createLeaveRequest.mockReturnValue(
+      throwError(() => ({
+        error: { detail: 'موجودی مرخصی شما کافی نیست.' },
+      }))
+    );
+    component.setLeaveType('daily');
+    component.form.patchValue({
+      startDate: '2025-02-10',
+      endDate: '2025-02-12',
+    });
+
+    component.onSubmit();
+
+    expect(component.formError()).toBe('موجودی مرخصی شما کافی نیست.');
+    expect(component.isSubmitting()).toBe(false);
+  });
+
+  it('should prevent duplicate submissions while submitting', () => {
+    leaveRequestServiceMock.createLeaveRequest.mockReturnValue(of({ id: 'req-3' }));
+    component.setLeaveType('daily');
+    component.form.patchValue({
+      startDate: '2025-02-10',
+      endDate: '2025-02-12',
+    });
+
+    component.isSubmitting.set(true);
+    component.onSubmit();
+
+    expect(leaveRequestServiceMock.createLeaveRequest).not.toHaveBeenCalled();
   });
 });

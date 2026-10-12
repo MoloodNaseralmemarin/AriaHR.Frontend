@@ -63,9 +63,9 @@ describe('LeaveRequestService', () => {
     expect(httpClientMock.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/attendance/leaves/summary`);
   });
 
-  it('should create a leave request via POST /api/attendance/leaves', () => {
-    const dto: CreateLeaveRequestDto = {
-      leaveType: 'hourly',
+  it('should create a leave request via POST /api/requests/leave', () => {
+    const dto = {
+      leaveType: 2,
       date: '2025-02-15',
       startTime: '08:30',
       endTime: '12:30',
@@ -89,6 +89,6 @@ describe('LeaveRequestService', () => {
       expect(res).toEqual(mockResponse);
     });
 
-    expect(httpClientMock.post).toHaveBeenCalledWith(`${environment.apiUrl}/api/attendance/leaves`, dto);
+    expect(httpClientMock.post).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/leave`, dto);
   });
 });
