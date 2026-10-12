@@ -33,3 +33,114 @@ Watch mode enabled. Watching for file changes...
 NOTE: Raw file sizes do not reflect development server per-request transformations.
   ➜  Local:   http://localhost:4200/
 7:58:21 AM [vite] (client) [optimizer] bundling dependencies...
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names                   |  Raw size
+main.js             | main                    | 828.58 kB |
+
+Lazy chunk files    | Names                   |  Raw size
+chunk-4CIUS5DE.js   | employee-form-component |  58.21 kB |
+chunk-BS7KA5DU.js   | employees-routes        | 754 bytes |
+
+Application bundle generation complete. [10.236 seconds] - 2026-10-12T08:43:03.798Z
+
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names                   |  Raw size
+main.js             | main                    | 828.58 kB |
+
+Lazy chunk files    | Names                   |  Raw size
+chunk-BMI22Y5K.js   | employee-form-component |  58.86 kB |
+chunk-XXXN77NV.js   | employees-routes        | 754 bytes |
+
+Application bundle generation complete. [1.788 seconds] - 2026-10-12T08:43:05.610Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names                   |  Raw size
+main.js             | main                    | 828.58 kB |
+styles.css          | styles                  |  73.79 kB |
+chunk-BZMAVQNF.js   | -                       |  21.62 kB |
+
+Lazy chunk files    | Names                   |  Raw size
+chunk-5TODO76S.js   | employee-form-component |  58.86 kB |
+chunk-IDICINXP.js   | employees-routes        | 754 bytes |
+
+Application bundle generation complete. [2.126 seconds] - 2026-10-12T08:45:28.895Z
+
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names                   |  Raw size
+main.js             | main                    | 828.58 kB |
+
+Lazy chunk files    | Names                   |  Raw size
+chunk-WJXDQ5HS.js   | employee-form-component |  58.72 kB |
+chunk-UPBMVSCZ.js   | employees-routes        | 754 bytes |
+
+Application bundle generation complete. [1.374 seconds] - 2026-10-12T08:45:39.259Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names                         |  Raw size
+main.js             | main                          | 828.58 kB |
+styles.css          | styles                        |  73.79 kB |
+chunk-BZMAVQNF.js   | -                             |  21.62 kB |
+chunk-VQPR4FWJ.js   | -                             |  14.29 kB |
+chunk-XG6EPT3D.js   | -                             |  10.34 kB |
+chunk-5TNX2QI6.js   | -                             |   9.94 kB |
+chunk-D2FYJQRE.js   | -                             |   7.63 kB |
+chunk-GTSA2AU2.js   | -                             |   6.54 kB |
+chunk-IBHFWU3Z.js   | -                             |   4.54 kB |
+chunk-GZZZ5IV2.js   | -                             |   1.96 kB |
+chunk-GOMI4DH3.js   | -                             |   1.42 kB |
+chunk-NYG6OOZM.js   | -                             |   1.23 kB |
+
+                    | Initial total                 | 981.88 kB
+
+Lazy chunk files    | Names                         |  Raw size
+chunk-WJXDQ5HS.js   | employee-form-component       |  58.72 kB |
+chunk-C2P34KDX.js   | employee-list-component       |  47.75 kB |
+chunk-APHV4ZXM.js   | leave-category-list-component |  45.82 kB |
+chunk-ILO2PSNS.js   | leave-category-form-component |  34.14 kB |
+chunk-5CQQSZ7L.js   | employee-details-component    |  22.91 kB |
+chunk-V7UKUUUU.js   | -                             |   3.10 kB |
+chunk-4HIZUYHI.js   | -                             |   1.86 kB |
+chunk-UPBMVSCZ.js   | employees-routes              | 754 bytes |
+chunk-ESNC6NSA.js   | leave-categories-routes       | 662 bytes |
+
+Application bundle generation complete. [0.135 seconds] - 2026-10-12T08:46:05.049Z
+
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names                         |  Raw size
+main.js             | main                          | 828.58 kB |
+styles.css          | styles                        |  73.79 kB |
+chunk-BZMAVQNF.js   | -                             |  21.62 kB |
+chunk-VQPR4FWJ.js   | -                             |  14.29 kB |
+chunk-XG6EPT3D.js   | -                             |  10.34 kB |
+chunk-5TNX2QI6.js   | -                             |   9.94 kB |
+chunk-D2FYJQRE.js   | -                             |   7.63 kB |
+chunk-GTSA2AU2.js   | -                             |   6.54 kB |
+chunk-IBHFWU3Z.js   | -                             |   4.54 kB |
+chunk-GZZZ5IV2.js   | -                             |   1.96 kB |
+chunk-GOMI4DH3.js   | -                             |   1.42 kB |
+chunk-NYG6OOZM.js   | -                             |   1.23 kB |
+
+                    | Initial total                 | 981.88 kB
+
+Lazy chunk files    | Names                         |  Raw size
+chunk-WJXDQ5HS.js   | employee-form-component       |  58.72 kB |
+chunk-C2P34KDX.js   | employee-list-component       |  47.75 kB |
+chunk-APHV4ZXM.js   | leave-category-list-component |  45.82 kB |
+chunk-ILO2PSNS.js   | leave-category-form-component |  34.14 kB |
+chunk-5CQQSZ7L.js   | employee-details-component    |  22.91 kB |
+chunk-V7UKUUUU.js   | -                             |   3.10 kB |
+chunk-4HIZUYHI.js   | -                             |   1.86 kB |
+chunk-UPBMVSCZ.js   | employees-routes              | 754 bytes |
+chunk-ESNC6NSA.js   | leave-categories-routes       | 662 bytes |
+
+Application bundle generation complete. [0.151 seconds] - 2026-10-12T08:46:11.475Z

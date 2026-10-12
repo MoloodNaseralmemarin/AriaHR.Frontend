@@ -99,7 +99,7 @@ export class EmployeeFormComponent implements OnInit {
     personnelCode: ['', Validators.required],
     nationalCode: ['', [Validators.required, nationalCodeValidator]],
     birthDate: ['', Validators.required],
-    gender: [''],
+    gender: ['', Validators.required],
     hireDate: ['', Validators.required],
     isActive: [true],
   });

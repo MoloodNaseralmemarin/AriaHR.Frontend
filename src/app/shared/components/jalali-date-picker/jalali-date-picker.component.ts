@@ -6,7 +6,6 @@ import {
   forwardRef,
   inject,
   signal,
-  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -54,29 +53,29 @@ const PERSIAN_MONTH_NAMES = [
   ],
   template: `
     <div dir="rtl" class="w-full space-y-2">
-      <!-- Direct Segmented Inputs for Year, Month, Day in RTL order -->
-      <div class="grid grid-cols-3 gap-2">
-        <!-- Day Input (روز) -->
-        <div>
-          <label class="block text-[11px] font-medium text-slate-500 mb-1">
-            روز
+      <!-- Direct Segmented Inputs for Year, Month, Day in RTL order: Year (سال), Month (ماه), Day (روز) -->
+      <div class="grid grid-cols-3 gap-2.5 items-end">
+        <!-- Year Input (سال) -->
+        <div class="min-w-0">
+          <label class="block text-xs font-semibold text-slate-700 mb-1 truncate whitespace-nowrap overflow-visible">
+            سال
           </label>
           <input
             type="text"
-            placeholder="روز (۱-۳۱)"
-            maxlength="2"
+            placeholder="مثال: ۱۳۷۰"
+            maxlength="4"
             [disabled]="disabled"
-            [value]="dayInput()"
-            (input)="onSegmentInput('day', $event)"
+            [value]="yearInput()"
+            (input)="onSegmentInput('year', $event)"
             (blur)="onBlur()"
             dir="ltr"
-            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-medium text-slate-800 transition duration-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-slate-100 disabled:text-slate-400"
+            class="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-center text-sm text-slate-800 transition duration-200 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400 font-sans"
           />
         </div>
 
         <!-- Month Dropdown / Selection (ماه) -->
-        <div>
-          <label class="block text-[11px] font-medium text-slate-500 mb-1">
+        <div class="min-w-0">
+          <label class="block text-xs font-semibold text-slate-700 mb-1 truncate whitespace-nowrap overflow-visible">
             ماه
           </label>
           <select
@@ -84,35 +83,35 @@ const PERSIAN_MONTH_NAMES = [
             [value]="monthSelect()"
             (change)="onSegmentSelect('month', $event)"
             (blur)="onBlur()"
-            class="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-center text-xs font-medium text-slate-800 transition duration-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-slate-100 disabled:text-slate-400"
+            class="w-full rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs text-slate-800 transition duration-200 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400 font-sans"
           >
             <option value="">انتخاب ماه</option>
             <option *ngFor="let m of monthOptions" [value]="m.value">
-              {{ m.value | number }} - {{ m.label }}
+              {{ m.value }} - {{ m.label }}
             </option>
           </select>
         </div>
 
-        <!-- Year Input (سال) -->
-        <div>
-          <label class="block text-[11px] font-medium text-slate-500 mb-1">
-            سال
+        <!-- Day Input (روز) -->
+        <div class="min-w-0">
+          <label class="block text-xs font-semibold text-slate-700 mb-1 truncate whitespace-nowrap overflow-visible">
+            روز
           </label>
           <input
             type="text"
-            placeholder="سال (مثال: ۱۳۷۰)"
-            maxlength="4"
+            placeholder="۱-۳۱"
+            maxlength="2"
             [disabled]="disabled"
-            [value]="yearInput()"
-            (input)="onSegmentInput('year', $event)"
+            [value]="dayInput()"
+            (input)="onSegmentInput('day', $event)"
             (blur)="onBlur()"
             dir="ltr"
-            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-medium text-slate-800 transition duration-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-slate-100 disabled:text-slate-400"
+            class="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-center text-sm text-slate-800 transition duration-200 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400 font-sans"
           />
         </div>
       </div>
 
-      <!-- Quick Continuous Input & Formatted Jalali Display Preview -->
+      <!-- Formatted Display Preview (YYYY/MM/DD) -->
       <div class="relative w-full">
         <input
           type="text"
@@ -123,7 +122,7 @@ const PERSIAN_MONTH_NAMES = [
           (input)="onInputChange($event)"
           (blur)="onBlur()"
           dir="ltr"
-          class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-left text-xs text-slate-700 transition duration-200 focus:bg-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-slate-100 disabled:text-slate-400"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-left text-xs text-slate-700 transition duration-200 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400 font-sans"
         />
         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4">
@@ -139,7 +138,7 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
   private readonly persianDateService = inject(PersianDateService);
 
   @Input() id = '';
-  @Input() placeholder = 'روز-ماه-سال (مثال: ۱۵-۰۲-۱۴۰۵)';
+  @Input() placeholder = 'سال/ماه/روز (مثال: ۱۳۷۰/۱۲/۳۰)';
   @Input() digitsFormat: 'persian' | 'ascii' = 'persian';
   @Input() dateFormat: 'DD-MM-YYYY' | 'YYYY-MM-DD' = 'DD-MM-YYYY';
 
@@ -147,15 +146,15 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
 
   disabled = false;
 
-  // Holds the formatted Jalali string for continuous UI display
+  // Holds the formatted Jalali string for UI preview (e.g. "۱۳۷۰/۱۲/۳۰")
   readonly displayValue = signal<string>('');
 
-  // Individual segment signals for Day, Month, Year
-  readonly dayInput = signal<string>('');
-  readonly monthSelect = signal<string>('');
+  // Individual segment signals for Year, Month, Day
   readonly yearInput = signal<string>('');
+  readonly monthSelect = signal<string>('');
+  readonly dayInput = signal<string>('');
 
-  // Internal storage for the model value in Gregorian format (e.g. "2026-05-05")
+  // Internal storage for model value in Gregorian format (e.g. "1991-03-21")
   private gregorianValue: string | null = null;
 
   onChange: (value: string | null) => void = () => {};
@@ -164,18 +163,19 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
   writeValue(val: string | null): void {
     this.gregorianValue = val;
     if (val) {
+      // Force Jalali display format YYYY/MM/DD
       const jalaliStr = this.persianDateService.toJalaliString(
         val,
         this.digitsFormat,
-        this.dateFormat
-      );
+        'YYYY-MM-DD'
+      ).replace(/-/g, '/');
       this.displayValue.set(jalaliStr);
       this.updateSegmentsFromJalali(jalaliStr);
     } else {
       this.displayValue.set('');
-      this.dayInput.set('');
-      this.monthSelect.set('');
       this.yearInput.set('');
+      this.monthSelect.set('');
+      this.dayInput.set('');
     }
   }
 
@@ -193,9 +193,9 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
 
   private updateSegmentsFromJalali(jalaliStr: string): void {
     if (!jalaliStr) {
-      this.dayInput.set('');
-      this.monthSelect.set('');
       this.yearInput.set('');
+      this.monthSelect.set('');
+      this.dayInput.set('');
       return;
     }
 
@@ -207,12 +207,12 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
 
     if (parts.length === 3) {
       if (parts[0].length === 4) {
-        // YYYY-MM-DD
+        // YYYY/MM/DD
         this.yearInput.set(formatDigits(parts[0]));
         this.monthSelect.set(parts[1] ? String(parseInt(parts[1], 10)) : '');
         this.dayInput.set(formatDigits(parts[2]));
       } else {
-        // DD-MM-YYYY
+        // DD/MM/YYYY
         this.dayInput.set(formatDigits(parts[0]));
         this.monthSelect.set(parts[1] ? String(parseInt(parts[1], 10)) : '');
         this.yearInput.set(formatDigits(parts[2]));
@@ -225,10 +225,10 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
     const asciiDigits = normalizeMobileNumber(rawVal);
     const formatted = this.digitsFormat === 'persian' ? toPersianDigits(asciiDigits) : asciiDigits;
 
-    if (type === 'day') {
-      this.dayInput.set(formatted);
-    } else if (type === 'year') {
+    if (type === 'year') {
       this.yearInput.set(formatted);
+    } else if (type === 'day') {
+      this.dayInput.set(formatted);
     }
 
     this.rebuildJalaliFromSegments();
@@ -241,44 +241,46 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
   }
 
   private rebuildJalaliFromSegments(): void {
-    const asciiDay = normalizePersianDigits(this.dayInput()).trim();
-    const asciiMonthNum = this.monthSelect().trim();
     const asciiYear = normalizePersianDigits(this.yearInput()).trim();
+    const asciiMonthNum = this.monthSelect().trim();
+    const asciiDay = normalizePersianDigits(this.dayInput()).trim();
 
-    if (!asciiDay && !asciiMonthNum && !asciiYear) {
+    if (!asciiYear && !asciiMonthNum && !asciiDay) {
       this.displayValue.set('');
       this.gregorianValue = null;
       this.onChange(null);
       return;
     }
 
-    const dayPad = asciiDay ? asciiDay.padStart(2, '0') : '';
-    const monthPad = asciiMonthNum ? asciiMonthNum.padStart(2, '0') : '';
     const yearVal = asciiYear;
+    const monthPad = asciiMonthNum ? asciiMonthNum.padStart(2, '0') : '';
+    const dayPad = asciiDay ? asciiDay.padStart(2, '0') : '';
 
     const formatDigits = (str: string) =>
       this.digitsFormat === 'persian' ? toPersianDigits(str) : str;
 
-    let display = '';
+    let displayParts: string[] = [];
 
-    if (dayPad || monthPad || yearVal) {
-      if (this.dateFormat === 'YYYY-MM-DD') {
-        display = [formatDigits(yearVal), formatDigits(monthPad), formatDigits(dayPad)]
-          .filter(Boolean)
-          .join('-');
-      } else {
-        display = [formatDigits(dayPad), formatDigits(monthPad), formatDigits(yearVal)]
-          .filter(Boolean)
-          .join('-');
-      }
-    }
+    if (yearVal) displayParts.push(formatDigits(yearVal));
+    if (monthPad) displayParts.push(formatDigits(monthPad));
+    if (dayPad) displayParts.push(formatDigits(dayPad));
 
+    const display = displayParts.join('/');
     this.displayValue.set(display);
 
-    if (asciiDay && asciiMonthNum && asciiYear && asciiYear.length === 4) {
-      const gVal = this.persianDateService.toGregorianString(`${asciiDay}-${asciiMonthNum}-${asciiYear}`);
-      this.gregorianValue = gVal;
-      this.onChange(gVal);
+    if (asciiYear && asciiYear.length === 4 && asciiMonthNum && asciiDay) {
+      const jy = parseInt(asciiYear, 10);
+      const jm = parseInt(asciiMonthNum, 10);
+      const jd = parseInt(asciiDay, 10);
+
+      if (this.persianDateService.isValidJalaliDate(jy, jm, jd)) {
+        const gVal = this.persianDateService.toGregorianString(`${asciiYear}/${asciiMonthNum}/${asciiDay}`);
+        this.gregorianValue = gVal;
+        this.onChange(gVal);
+      } else {
+        this.gregorianValue = null;
+        this.onChange(null);
+      }
     } else {
       this.gregorianValue = null;
       this.onChange(null);
@@ -294,36 +296,24 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
 
     let formattedDisplay = '';
 
-    if (this.dateFormat === 'YYYY-MM-DD') {
-      // Auto-format continuous digits YYYYMMDD
-      if (asciiInput.length <= 4) {
-        formattedDisplay = formatDigits(asciiInput);
-      } else if (asciiInput.length <= 6) {
-        formattedDisplay = `${formatDigits(asciiInput.slice(0, 4))}-${formatDigits(asciiInput.slice(4))}`;
-      } else {
-        formattedDisplay = `${formatDigits(asciiInput.slice(0, 4))}-${formatDigits(asciiInput.slice(4, 6))}-${formatDigits(asciiInput.slice(6, 8))}`;
-      }
+    // Continuous input YYYYMMDD
+    if (asciiInput.length <= 4) {
+      formattedDisplay = formatDigits(asciiInput);
+    } else if (asciiInput.length <= 6) {
+      formattedDisplay = `${formatDigits(asciiInput.slice(0, 4))}/${formatDigits(asciiInput.slice(4))}`;
     } else {
-      // Auto-format continuous digits DDMMYYYY
-      if (asciiInput.length <= 2) {
-        formattedDisplay = formatDigits(asciiInput);
-      } else if (asciiInput.length <= 4) {
-        formattedDisplay = `${formatDigits(asciiInput.slice(0, 2))}-${formatDigits(asciiInput.slice(2))}`;
-      } else {
-        formattedDisplay = `${formatDigits(asciiInput.slice(0, 2))}-${formatDigits(asciiInput.slice(2, 4))}-${formatDigits(asciiInput.slice(4, 8))}`;
-      }
+      formattedDisplay = `${formatDigits(asciiInput.slice(0, 4))}/${formatDigits(asciiInput.slice(4, 6))}/${formatDigits(asciiInput.slice(6, 8))}`;
     }
 
-    // Preserve explicit dash or slash separators typed by user
+    // Preserve explicit slash or dash separators typed by user
     if (rawInput.includes('-') || rawInput.includes('/')) {
       const parts = rawInput.split(/[-/]/).map((p) => normalizeMobileNumber(p));
-      formattedDisplay = parts.map((p) => formatDigits(p)).join('-');
+      formattedDisplay = parts.map((p) => formatDigits(p)).join('/');
     }
 
     this.displayValue.set(formattedDisplay);
     this.updateSegmentsFromJalali(formattedDisplay);
 
-    // Convert display Jalali to Gregorian for forms model
     const gVal = this.persianDateService.toGregorianString(formattedDisplay);
     this.gregorianValue = gVal;
     this.onChange(gVal);
@@ -335,7 +325,7 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
 
   validate(control: AbstractControl): ValidationErrors | null {
     const val = control.value;
-    const hasAnyInput = this.displayValue() || this.dayInput() || this.monthSelect() || this.yearInput();
+    const hasAnyInput = this.displayValue() || this.yearInput() || this.monthSelect() || this.dayInput();
 
     if (!val && !hasAnyInput) {
       return null; // Let Required validator handle empty state

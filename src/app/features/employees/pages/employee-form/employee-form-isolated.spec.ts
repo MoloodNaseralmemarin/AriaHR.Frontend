@@ -71,7 +71,7 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
     expect(comp.form.controls.phoneNumber.value).toBe('۰۹۱۲۱۲۳۴۵۶۷');
   });
 
-  it('should create employee with unselected gender (gender = null) and empty email (email = null)', () => {
+  it('should require gender selection and mark form invalid when gender is unselected', () => {
     const comp = createComponent();
     comp.ngOnInit();
 
@@ -83,7 +83,31 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
       personnelCode: '۱۰-۰۴',
       nationalCode: '۱۲۳۴۵۶۷۸۹۰',
       birthDate: '1990-01-01',
-      gender: '',
+      gender: '', // Empty placeholder selection
+      hireDate: '2022-01-01',
+    });
+
+    expect(comp.form.controls.gender.invalid).toBe(true);
+    expect(comp.form.controls.gender.errors?.['required']).toBe(true);
+
+    comp.submit();
+
+    expect(mockEmployeeService.createEmployee).not.toHaveBeenCalled();
+  });
+
+  it('should submit successfully when gender is explicitly selected (Male or Female) and email is empty', () => {
+    const comp = createComponent();
+    comp.ngOnInit();
+
+    comp.form.patchValue({
+      firstName: 'علی',
+      lastName: 'محمدی',
+      phoneNumber: '۰۹۱۲۱۲۳۴۵۶۷',
+      email: '',
+      personnelCode: '۱۰-۰۴',
+      nationalCode: '۱۲۳۴۵۶۷۸۹۰',
+      birthDate: '1990-01-01',
+      gender: 'Male',
       hireDate: '2022-01-01',
     });
 
@@ -93,40 +117,11 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
     expect(mockEmployeeService.createEmployee).toHaveBeenCalledWith(
       expect.objectContaining({
         email: null,
-        gender: null,
+        gender: 'Male',
         phoneNumber: '09121234567',
         personnelCode: '10-04',
         nationalCode: '1234567890',
         profileImage: null,
-      })
-    );
-  });
-
-  it('should update employee with unselected gender (gender = undefined/null) and empty email', () => {
-    const comp = createComponent();
-    comp.ngOnInit();
-    comp.isEditMode.set(true);
-    (comp as any).employeeId = 'emp-1';
-
-    comp.form.patchValue({
-      firstName: 'علی',
-      lastName: 'محمدی',
-      phoneNumber: '۰۹۱۲۱۲۳۴۵۶۷',
-      personnelCode: '۱۰-۰۴',
-      nationalCode: '۱۲۳۴۵۶۷۸۹۰',
-      birthDate: '1990-01-01',
-      gender: '',
-      hireDate: '2022-01-01',
-    });
-
-    comp.submit();
-
-    expect(mockEmployeeService.updateEmployee).toHaveBeenCalledWith(
-      'emp-1',
-      expect.objectContaining({
-        gender: undefined,
-        profileImage: null,
-        removeProfileImage: false,
       })
     );
   });
@@ -159,6 +154,7 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
       personnelCode: '۱۰-۰۴',
       nationalCode: '۱۲۳۴۵۶۷۸۹۰',
       birthDate: '1990-01-01',
+      gender: 'Female',
       hireDate: '2022-01-01',
     });
 
@@ -178,6 +174,7 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
 
     expect(mockEmployeeService.createEmployee).toHaveBeenCalledWith(
       expect.objectContaining({
+        gender: 'Female',
         profileImage: dummyFile,
       })
     );
@@ -232,6 +229,7 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
       personnelCode: '۱۰-۰۴',
       nationalCode: '۱۲۳۴۵۶۷۸۹۰',
       birthDate: '1990-01-01',
+      gender: 'Male',
       hireDate: '2022-01-01',
     });
 
@@ -240,6 +238,7 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
     expect(mockEmployeeService.updateEmployee).toHaveBeenCalledWith(
       'emp-1',
       expect.objectContaining({
+        gender: 'Male',
         profileImage: null,
         removeProfileImage: false,
       })
@@ -259,6 +258,7 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
       personnelCode: '۱۰-۰۴',
       nationalCode: '۱۲۳۴۵۶۷۸۹۰',
       birthDate: '1990-01-01',
+      gender: 'Female',
       hireDate: '2022-01-01',
     });
 
@@ -272,6 +272,7 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
     expect(mockEmployeeService.updateEmployee).toHaveBeenCalledWith(
       'emp-1',
       expect.objectContaining({
+        gender: 'Female',
         profileImage: newFile,
         removeProfileImage: false,
       })
@@ -292,6 +293,7 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
       personnelCode: '۱۰-۰۴',
       nationalCode: '۱۲۳۴۵۶۷۸۹۰',
       birthDate: '1990-01-01',
+      gender: 'Male',
       hireDate: '2022-01-01',
     });
 
@@ -331,6 +333,7 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
       personnelCode: '۱۰-۰۴',
       nationalCode: '۱۲۳۴۵۶۷۸۹۰',
       birthDate: '1990-01-01',
+      gender: 'Male',
       hireDate: '2022-01-01',
     });
 
