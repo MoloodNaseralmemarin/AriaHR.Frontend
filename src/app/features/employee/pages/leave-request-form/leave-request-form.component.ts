@@ -130,6 +130,10 @@ export class LeaveRequestFormComponent {
   }
 
   onSubmit() {
+    if (this.isSubmitting()) {
+      return;
+    }
+
     this.formError.set(null);
     const type = this.selectedLeaveType();
 
