@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
+  CreateLeaveRequestApiDto,
   CreateLeaveRequestDto,
   LeaveRequestDto,
   LeaveSummaryDto,
@@ -14,6 +15,7 @@ import {
 export class LeaveRequestService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/api/attendance/leaves`;
+  private readonly submitApiUrl = `${environment.apiUrl}/api/requests/leave`;
 
   /**
    * Retrieves all leave requests for the authenticated employee.
@@ -32,10 +34,10 @@ export class LeaveRequestService {
   }
 
   /**
-   * Submits a new leave request.
-   * Endpoint: POST /api/attendance/leaves
+   * Submits a new leave request to the backend requests API.
+   * Endpoint: POST /api/requests/leave
    */
-  createLeaveRequest(dto: CreateLeaveRequestDto): Observable<LeaveRequestDto> {
-    return this.http.post<LeaveRequestDto>(this.apiUrl, dto);
+  createLeaveRequest(dto: CreateLeaveRequestApiDto | CreateLeaveRequestDto): Observable<LeaveRequestDto> {
+    return this.http.post<LeaveRequestDto>(this.submitApiUrl, dto);
   }
 }

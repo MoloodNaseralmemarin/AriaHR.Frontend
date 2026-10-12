@@ -7,7 +7,7 @@ import { TimeInputComponent } from '../../../../shared/components/time-input/tim
 import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { LeaveRequestService } from '../../services/leave-request.service';
-import { CreateLeaveRequestDto, LeaveType } from '../../models/leave-request.model';
+import { CreateLeaveRequestApiDto, CreateLeaveRequestDto, LeaveType } from '../../models/leave-request.model';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
 
 @Component({
@@ -177,17 +177,18 @@ export class LeaveRequestFormComponent {
     this.isSubmitting.set(true);
 
     const formVal = this.form.value;
-    const dto: CreateLeaveRequestDto = {
-      leaveType: type,
-      startDate: type === 'daily' ? formVal.startDate : undefined,
-      endDate: type === 'daily' ? formVal.endDate : undefined,
-      date: type === 'hourly' ? formVal.date : undefined,
-      startTime: type === 'hourly' ? formVal.startTime : undefined,
-      endTime: type === 'hourly' ? formVal.endTime : undefined,
-      reason: formVal.reason?.trim() || undefined,
+    const rawDate = type === 'daily' ? formVal.startDate : formVal.date;
+    const formattedDate = this.toGregorian(rawDate);
+
+    const apiDto: CreateLeaveRequestApiDto = {
+      leaveType: type === 'daily' ? 1 : 2,
+      date: formattedDate,
+      startTime: type === 'hourly' && formVal.startTime ? formVal.startTime : null,
+      endTime: type === 'hourly' && formVal.endTime ? formVal.endTime : null,
+      reason: formVal.reason?.trim() ? formVal.reason.trim() : null,
     };
 
-    this.leaveRequestService.createLeaveRequest(dto).subscribe({
+    this.leaveRequestService.createLeaveRequest(apiDto).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.triggerToast('درخواست مرخصی با موفقیت ثبت شد.', 'success');
@@ -195,12 +196,41 @@ export class LeaveRequestFormComponent {
           this.router.navigate(['/employee/leave-requests']);
         }, 1200);
       },
-      error: () => {
+      error: (err: any) => {
         this.isSubmitting.set(false);
-        this.formError.set('ثبت درخواست انجام نشد. لطفاً دوباره تلاش کنید.');
-        this.triggerToast('ثبت درخواست انجام نشد. لطفاً دوباره تلاش کنید.', 'error');
+        let msg = 'ثبت درخواست انجام نشد. لطفاً دوباره تلاش کنید.';
+        if (err?.error) {
+          if (typeof err.error === 'string') {
+            msg = err.error;
+          } else if (err.error.detail) {
+            msg = err.error.detail;
+          } else if (err.error.message) {
+            msg = err.error.message;
+          } else if (err.error.title) {
+            msg = err.error.title;
+          } else if (err.error.errors && typeof err.error.errors === 'object') {
+            const errorValues = Object.values(err.error.errors).flat();
+            if (errorValues.length > 0 && typeof errorValues[0] === 'string') {
+              msg = errorValues[0];
+            }
+          }
+        }
+        this.formError.set(msg);
+        this.triggerToast(msg, 'error');
       },
     });
+  }
+
+  private toGregorian(dateVal: string | null | undefined): string {
+    if (!dateVal) return '';
+    const trimmed = dateVal.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const year = parseInt(trimmed.substring(0, 4), 10);
+      if (year >= 1900 && year <= 2100) {
+        return trimmed;
+      }
+    }
+    return this.persianDateService.toGregorianString(trimmed) || trimmed;
   }
 
   private triggerToast(message: string, tone: ToastTone) {

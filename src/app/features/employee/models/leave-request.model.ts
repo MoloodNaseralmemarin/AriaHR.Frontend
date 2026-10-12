@@ -12,6 +12,14 @@ export interface CreateLeaveRequestDto {
   reason?: string;
 }
 
+export interface CreateLeaveRequestApiDto {
+  leaveType: number;
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+  reason: string | null;
+}
+
 export interface LeaveRequestDto {
   id: string;
   leaveType: LeaveType;
