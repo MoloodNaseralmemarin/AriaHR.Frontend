@@ -1,8 +1,8 @@
-import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LeaveRequestService } from '../../services/leave-request.service';
-import { LeaveRequestDto, LeaveSummaryDto } from '../../models/leave-request.model';
+import { LeaveRequestDto, LeaveSummaryDto, LeaveType, LeaveRequestStatus } from '../../models/leave-request.model';
 import { SummaryCardComponent } from '../../../../shared/components/summary-card/summary-card.component';
 import { StatusBadgeComponent, BadgeTone } from '../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -44,6 +44,23 @@ export class LeaveRequestsListComponent implements OnInit {
     rejectedCount: 0,
   });
 
+  // Filtering signals
+  readonly selectedStatusFilter = signal<LeaveRequestStatus | 'all'>('all');
+  readonly selectedTypeFilter = signal<LeaveType | 'all'>('all');
+
+  // Computed filtered list
+  readonly filteredRequests = computed(() => {
+    const list = this.requests();
+    const statusFilter = this.selectedStatusFilter();
+    const typeFilter = this.selectedTypeFilter();
+
+    return list.filter((req) => {
+      const matchStatus = statusFilter === 'all' || req.status === statusFilter;
+      const matchType = typeFilter === 'all' || req.leaveType === typeFilter;
+      return matchStatus && matchType;
+    });
+  });
+
   // Selected request for Details Drawer
   readonly selectedRequest = signal<LeaveRequestDto | null>(null);
   readonly isDrawerOpen = signal<boolean>(false);
@@ -66,24 +83,52 @@ export class LeaveRequestsListComponent implements OnInit {
         const list = data || [];
         this.requests.set(list);
 
-        // Compute summary counts from list if summary endpoint isn't separate
-        const pending = list.filter((r) => r.status === 'pending').length;
-        const approved = list.filter((r) => r.status === 'approved').length;
-        const rejected = list.filter((r) => r.status === 'rejected').length;
-
-        this.summary.set({
-          pendingCount: pending,
-          approvedCount: approved,
-          rejectedCount: rejected,
+        // Attempt to fetch dedicated summary endpoint, fallback to computing from list
+        this.leaveRequestService.getLeaveSummary().subscribe({
+          next: (summaryData) => {
+            if (summaryData) {
+              this.summary.set(summaryData);
+            } else {
+              this.computeSummaryFromList(list);
+            }
+            this.isLoading.set(false);
+          },
+          error: () => {
+            this.computeSummaryFromList(list);
+            this.isLoading.set(false);
+          },
         });
-
-        this.isLoading.set(false);
       },
       error: () => {
         this.isLoading.set(false);
         this.errorMsg.set('خطا در دریافت اطلاعات درخواست‌های مرخصی. لطفاً مجدداً تلاش کنید.');
       },
     });
+  }
+
+  private computeSummaryFromList(list: LeaveRequestDto[]): void {
+    const pending = list.filter((r) => r.status === 'pending').length;
+    const approved = list.filter((r) => r.status === 'approved').length;
+    const rejected = list.filter((r) => r.status === 'rejected').length;
+
+    this.summary.set({
+      pendingCount: pending,
+      approvedCount: approved,
+      rejectedCount: rejected,
+    });
+  }
+
+  setStatusFilter(status: LeaveRequestStatus | 'all'): void {
+    this.selectedStatusFilter.set(status);
+  }
+
+  setTypeFilter(type: LeaveType | 'all'): void {
+    this.selectedTypeFilter.set(type);
+  }
+
+  resetFilters(): void {
+    this.selectedStatusFilter.set('all');
+    this.selectedTypeFilter.set('all');
   }
 
   openDetails(req: LeaveRequestDto): void {
