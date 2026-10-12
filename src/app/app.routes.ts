@@ -4,7 +4,6 @@ import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 
 import { LoginPageComponent } from './features/auth/pages/login/login-page.component';
-import { SplashComponent } from './features/auth/pages/splash/splash.component';
 import { VerifyOtpPageComponent } from './features/auth/pages/verify-otp/verify-otp-page.component';
 
 // System Admin Components
@@ -35,7 +34,10 @@ import { EmployeeDashboardComponent } from './features/employee/pages/dashboard/
 import { EmployeeAttendanceComponent } from './features/employee/pages/attendance/employee-attendance.component';
 import { LeaveRequestsListComponent } from './features/employee/pages/leave-requests-list/leave-requests-list.component';
 import { LeaveRequestFormComponent } from './features/employee/pages/leave-request-form/leave-request-form.component';
-import { EmployeePlaceholderPageComponent } from './features/employee/pages/placeholder/employee-placeholder.component';
+import { EmployeeProfileComponent } from './features/employee/pages/profile/employee-profile.component';
+import { EmployeeRequestsComponent } from './features/employee/pages/requests/employee-requests.component';
+import { EmployeeNotificationsComponent } from './features/employee/pages/notifications/employee-notifications.component';
+import { EmployeeSettingsComponent } from './features/employee/pages/settings/employee-settings.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -101,14 +103,14 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: EmployeeDashboardComponent },
-      { path: 'profile', component: EmployeePlaceholderPageComponent },
+      { path: 'profile', component: EmployeeProfileComponent },
       { path: 'attendance', component: EmployeeAttendanceComponent },
       { path: 'leaves', redirectTo: 'leave-requests', pathMatch: 'full' },
       { path: 'leave-requests', component: LeaveRequestsListComponent },
       { path: 'leave-requests/new', component: LeaveRequestFormComponent },
-      { path: 'requests', component: EmployeePlaceholderPageComponent },
-      { path: 'notifications', component: EmployeePlaceholderPageComponent },
-      { path: 'settings', component: EmployeePlaceholderPageComponent },
+      { path: 'requests', component: EmployeeRequestsComponent },
+      { path: 'notifications', component: EmployeeNotificationsComponent },
+      { path: 'settings', component: EmployeeSettingsComponent },
     ],
   },
 

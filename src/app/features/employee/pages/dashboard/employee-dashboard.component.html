@@ -1,199 +1,273 @@
 <section class="space-y-6">
   <!-- Header / Greeting Block -->
-  <div class="animate-in">
-    <p class="text-sm font-medium text-blue-600">پنل اختصاصی کارمند</p>
-    <div class="mt-1 flex items-end justify-between gap-3">
-      <div>
-        @if (isLoadingUser()) {
-          <div class="h-8 w-48 animate-pulse rounded-lg bg-slate-200 sm:w-56" aria-label="در حال دریافت نام"></div>
-        } @else {
-          <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">سلام، {{ employeeName() }} 👋</h1>
-        }
-        <p class="mt-1 text-sm text-slate-500">خلاصه کارکرد، شیفت و وضعیت درخواست‌های شما • {{ todayFormattedDate }}</p>
+  <div class="animate-in flex items-center justify-between gap-4 rounded-2xl bg-gradient-to-l from-blue-700 via-blue-600 to-indigo-700 p-5 sm:p-6 text-white shadow-md">
+    <div class="space-y-1.5">
+      <div class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur-md">
+        <span>🗓</span>
+        <span>{{ todayFormattedDate }}</span>
       </div>
-      <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-600 text-lg font-bold text-white shadow-sm">
-        {{ avatarInitial() }}
-      </div>
+      @if (isLoadingUser()) {
+        <div class="h-8 w-48 animate-pulse rounded-lg bg-white/20 sm:w-56" aria-label="در حال دریافت نام"></div>
+      } @else {
+        <h1 class="text-xl font-bold tracking-tight sm:text-2xl">سلام، {{ employeeName() }} 👋</h1>
+      }
+      <p class="text-xs text-blue-100 sm:text-sm">به سامانه مدیریت تردد و مرخصی آریا اچ‌آر خوش آمدید</p>
+    </div>
+
+    <div class="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-xl font-bold text-white backdrop-blur-md border border-white/20 shadow-inner">
+      {{ avatarInitial() }}
     </div>
   </div>
 
-  <!-- Attendance Summary & Stats -->
-  <section aria-label="خلاصه کارکرد" class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-    <article class="stat-card">
-      <span class="stat-icon blue">⏱</span>
-      <span class="stat-label">ساعت کار این ماه</span>
-      <strong>--</strong>
-      <span class="stat-note">بر اساس گزارش ماهانه</span>
-    </article>
-    <article class="stat-card">
-      <span class="stat-icon green">✓</span>
-      <span class="stat-label">روزهای حضور</span>
-      <strong>--</strong>
-      <span class="stat-note">در ماه جاری</span>
-    </article>
-    <article class="stat-card">
-      <span class="stat-icon amber">♙</span>
-      <span class="stat-label">روزهای غیبت</span>
-      <strong>--</strong>
-      <span class="stat-note">در ماه جاری</span>
-    </article>
-    <article class="stat-card">
-      <span class="stat-icon violet">🌴</span>
-      <span class="stat-label">مرخصی‌های در انتظار</span>
-      <strong>{{ (leaveSummary()?.pendingCount ?? 0) | persianDigits }}</strong>
-      <span class="stat-note">درخواست فعال</span>
-    </article>
-  </section>
-
-  <!-- Quick Action Banner -->
-  <a routerLink="/employee/attendance" class="primary-action">
-    <span class="action-plus">⏱</span>
-    <span>
-      <strong>ثبت و مشاهده تردد امروز</strong>
-      <small>جهت اسکن بارکد موقعیت مکانی و ثبت ورود/خروج کلیک کنید</small>
+  <!-- Primary Attendance Action Banner -->
+  <a
+    routerLink="/employee/attendance"
+    class="group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50/90 to-indigo-50/90 p-4 sm:p-5 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all duration-200"
+  >
+    <div class="flex items-center gap-3.5">
+      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm text-xl group-hover:scale-105 transition-transform">
+        ⏱
+      </div>
+      <div class="space-y-0.5">
+        <strong class="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+          ثبت و مدیریت تردد امروز
+        </strong>
+        <p class="text-xs text-slate-600">جهت اسکن بارکد QR و ثبت ورود یا خروج کلیک کنید</p>
+      </div>
+    </div>
+    <span class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs group-hover:bg-blue-700 transition-colors self-end sm:self-center">
+      <span>ورود به ثبت تردد</span>
+      <span class="text-sm">←</span>
     </span>
-    <span class="action-arrow">←</span>
   </a>
 
   <!-- Today's Attendance & Today's Shift Grid -->
-  <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-    <!-- Today's Attendance Block -->
-    <section class="section-block flex flex-col justify-between">
-      <div>
-        <div class="section-heading">
-          <div>
-            <h2>تردد امروز</h2>
-            <p>وضعیت ورود و خروج شما در تاریخ امروز</p>
+  <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+    <!-- Today's Attendance Card -->
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm">
+              ⏱
+            </div>
+            <div>
+              <h2 class="text-sm font-bold text-slate-900">تردد امروز</h2>
+              <p class="text-[11px] text-slate-500">وضعیت ورود و خروج ثبت شده</p>
+            </div>
           </div>
-          <a routerLink="/employee/attendance" class="view-all">مدیریت تردد <span>←</span></a>
+          <a routerLink="/employee/attendance" class="text-xs font-semibold text-blue-600 hover:text-blue-800 transition">
+            جزئیات <span>←</span>
+          </a>
         </div>
 
-        <div class="list-card p-4 space-y-4">
-          @if (isLoadingAttendance()) {
-            <div class="p-4 text-center text-sm text-slate-500 animate-pulse">در حال دریافت وضعیت تردد...</div>
-          } @else {
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span class="text-xs font-medium text-slate-500">وضعیت فعلی</span>
-              <span class="rounded-full px-3 py-1 text-xs font-bold" [class]="attendanceStatusClass()">
-                {{ attendanceStatusLabel() }}
-              </span>
-            </div>
+        @if (isLoadingAttendance()) {
+          <div class="p-6 text-center text-xs text-slate-500 animate-pulse">در حال دریافت وضعیت تردد...</div>
+        } @else {
+          <div class="flex items-center justify-between rounded-xl bg-slate-50 p-3">
+            <span class="text-xs font-medium text-slate-600">وضعیت حضور:</span>
+            <span class="rounded-full px-3 py-1 text-xs font-bold" [class]="attendanceStatusClass()">
+              {{ attendanceStatusLabel() }}
+            </span>
+          </div>
 
-            <div class="grid grid-cols-2 gap-3 text-center">
-              <div class="rounded-xl bg-slate-50 p-3">
-                <span class="block text-xs text-slate-500">زمان ورود</span>
-                <strong class="mt-1 block text-base font-bold text-slate-800">
-                  {{ (todayAttendance()?.checkInTime || '--:--') | persianDigits }}
-                </strong>
-              </div>
-              <div class="rounded-xl bg-slate-50 p-3">
-                <span class="block text-xs text-slate-500">زمان خروج</span>
-                <strong class="mt-1 block text-base font-bold text-slate-800">
-                  {{ (todayAttendance()?.checkOutTime || '--:--') | persianDigits }}
-                </strong>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
-              <span>مدت زمان کارکرد امروز:</span>
-              <strong class="font-bold text-slate-800">
-                {{ (todayAttendance()?.workDuration || '--') | persianDigits }}
+          <div class="grid grid-cols-2 gap-3 text-center">
+            <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+              <span class="block text-[11px] font-medium text-slate-500">زمان ورود</span>
+              <strong class="mt-1 block text-sm font-bold text-slate-800">
+                {{ (todayAttendance()?.checkInTime || '--:--') | persianDigits }}
               </strong>
             </div>
-          }
-        </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+              <span class="block text-[11px] font-medium text-slate-500">زمان خروج</span>
+              <strong class="mt-1 block text-sm font-bold text-slate-800">
+                {{ (todayAttendance()?.checkOutTime || '--:--') | persianDigits }}
+              </strong>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-slate-600 pt-1">
+            <span>مدت زمان کارکرد امروز:</span>
+            <strong class="font-bold text-slate-800">
+              {{ (todayAttendance()?.workDuration || '--') | persianDigits }}
+            </strong>
+          </div>
+        }
       </div>
     </section>
 
-    <!-- Today's Shift Block -->
-    <section class="section-block flex flex-col justify-between">
-      <div>
-        <div class="section-heading">
-          <div>
-            <h2>شیفت کاری امروز</h2>
-            <p>مشخصات و زمان‌بندی شیفت تعریف شده</p>
+    <!-- Today's Shift Card -->
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 font-bold text-sm">
+              🗓
+            </div>
+            <div>
+              <h2 class="text-sm font-bold text-slate-900">شیفت کاری امروز</h2>
+              <p class="text-[11px] text-slate-500">زمان‌بندی برنامه‌ریزی شده</p>
+            </div>
           </div>
         </div>
 
-        <div class="list-card p-4 space-y-4">
-          @if (isLoadingAttendance()) {
-            <div class="p-4 text-center text-sm text-slate-500 animate-pulse">در حال دریافت اطلاعات شیفت...</div>
-          } @else if (todayAttendance()?.shift) {
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <strong class="text-sm font-bold text-slate-900">{{ todayAttendance()?.shift?.name }}</strong>
-                @if (todayAttendance()?.workLocationName) {
-                  <p class="text-xs text-slate-500 mt-0.5">محل خدمت: {{ todayAttendance()?.workLocationName }}</p>
-                }
-              </div>
-              <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">فعال</span>
+        @if (isLoadingAttendance()) {
+          <div class="p-6 text-center text-xs text-slate-500 animate-pulse">در حال دریافت اطلاعات شیفت...</div>
+        } @else if (todayAttendance()?.shift; as s) {
+          <div class="flex items-center justify-between rounded-xl bg-slate-50 p-3">
+            <div>
+              <strong class="text-xs font-bold text-slate-900">{{ s.name }}</strong>
+              @if (todayAttendance()?.workLocationName) {
+                <p class="text-[11px] text-slate-500 mt-0.5">محل خدمت: {{ todayAttendance()?.workLocationName }}</p>
+              }
             </div>
+            <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">فعال</span>
+          </div>
 
-            <div class="flex items-center justify-between rounded-xl bg-blue-50/50 p-3.5 text-blue-900">
-              <span class="text-xs font-medium">ساعات کاری شیفت:</span>
-              <strong class="text-sm font-bold">
-                {{ (todayAttendance()?.shift?.startTime || '--:--') | persianDigits }} تا {{ (todayAttendance()?.shift?.endTime || '--:--') | persianDigits }}
-              </strong>
-            </div>
-          } @else {
-            <div class="p-6 text-center text-sm text-slate-500">
-              شیفت کاری خاصی برای امروز تعیین نشده است
-            </div>
-          }
-        </div>
+          <div class="flex items-center justify-between rounded-xl bg-blue-50/60 p-3.5 text-blue-900 border border-blue-100">
+            <span class="text-xs font-medium">ساعات کاری:</span>
+            <strong class="text-xs font-bold">
+              {{ (s.startTime || '--:--') | persianDigits }} تا {{ (s.endTime || '--:--') | persianDigits }}
+            </strong>
+          </div>
+        } @else {
+          <div class="p-8 text-center text-xs text-slate-500 bg-slate-50 rounded-xl">
+            شیفت کاری خاصی برای امروز تعیین نشده است
+          </div>
+        }
       </div>
     </section>
   </div>
 
   <!-- Leave Summary & Recent Requests -->
-  <section class="section-block">
-    <div class="section-heading">
-      <div>
-        <h2>خلاصه مرخصی‌ها و درخواست‌ها</h2>
-        <p>آخرین درخواست ثبت شده و وضعیت آن</p>
+  <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+      <div class="flex items-center gap-2.5">
+        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 font-bold text-sm">
+          🌴
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-slate-900">خلاصه مرخصی‌ها و درخواست‌ها</h2>
+          <p class="text-[11px] text-slate-500">آخرین وضعیت درخواست ثبت شده</p>
+        </div>
       </div>
-      <a routerLink="/employee/leave" class="view-all">مشاهده همه مرخصی‌ها <span>←</span></a>
+      <a routerLink="/employee/leave-requests" class="text-xs font-semibold text-blue-600 hover:text-blue-800 transition">
+        مشاهده همه <span>←</span>
+      </a>
     </div>
 
-    <div class="list-card">
-      @if (isLoadingLeaves()) {
-        <div class="p-4 text-center text-sm text-slate-500 animate-pulse">در حال دریافت اطلاعات مرخصی...</div>
-      } @else if (latestLeaveRequest(); as req) {
-        <a routerLink="/employee/leave" class="center-row">
-          <div class="center-avatar">🌴</div>
-          <div class="center-main">
-            <strong>
+    @if (isLoadingLeaves()) {
+      <div class="p-6 text-center text-xs text-slate-500 animate-pulse">در حال دریافت اطلاعات مرخصی...</div>
+    } @else if (latestLeaveRequest(); as req) {
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl bg-slate-50 p-4 border border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 text-base">
+            🌴
+          </div>
+          <div>
+            <strong class="text-xs font-bold text-slate-900 block">
               {{ req.leaveType === 'daily' ? 'مرخصی روزانه' : 'مرخصی ساعتی' }} • {{ req.durationText }}
             </strong>
-            <span>تاریخ: {{ ((req.startDate || req.date) || '') | persianDigits }} {{ req.reason ? '• ' + req.reason : '' }}</span>
+            <span class="text-[11px] text-slate-500 block mt-0.5">
+              تاریخ: {{ ((req.startDate || req.date) || '') | persianDigits }} {{ req.reason ? '• ' + req.reason : '' }}
+            </span>
           </div>
-          <span class="status-pill" [class]="getLeaveStatusClass(req.status)">
+        </div>
+
+        <div class="flex items-center gap-3 self-end sm:self-center">
+          <span class="rounded-full px-3 py-1 text-xs font-bold" [class]="getLeaveStatusClass(req.status)">
             {{ getLeaveStatusLabel(req.status) }}
           </span>
-          <span class="row-arrow">‹</span>
-        </a>
-      } @else {
-        <div class="p-6 text-center text-sm text-slate-500">
-          هیچ درخواستی ثبت نشده است
+          <a routerLink="/employee/leave-requests" class="text-slate-400 hover:text-slate-600 text-sm font-bold">‹</a>
         </div>
-      }
+      </div>
+    } @else {
+      <div class="p-8 text-center text-xs text-slate-500 bg-slate-50 rounded-xl space-y-2">
+        <p>هیچ درخواستی ثبت نشده است</p>
+        <a routerLink="/employee/leave-requests/new" class="inline-block text-xs font-bold text-blue-600 hover:underline">
+          ثبت درخواست مرخصی جدید ➕
+        </a>
+      </div>
+    }
+  </section>
+
+  <!-- Monthly Aggregates Summary Stats (With Explicit Context Notice) -->
+  <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+      <div>
+        <h2 class="text-sm font-bold text-slate-900">خلاصه کارکرد ماه جاری</h2>
+        <p class="text-[11px] text-slate-500">گزارش خلاصه کارکرد ماهانه</p>
+      </div>
+      <div class="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800 border border-amber-200/80">
+        <span>ℹ️</span>
+        <span>آمار تجمیعی ماهانه در حال حاضر در دسترس نیست</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+      <div class="rounded-xl bg-slate-50 p-3.5 text-center border border-slate-100 space-y-1">
+        <span class="block text-[11px] font-medium text-slate-500">ساعت کار این ماه</span>
+        <strong class="block text-lg font-bold text-slate-400">--</strong>
+        <span class="block text-[10px] text-slate-400">ساعت</span>
+      </div>
+
+      <div class="rounded-xl bg-slate-50 p-3.5 text-center border border-slate-100 space-y-1">
+        <span class="block text-[11px] font-medium text-slate-500">روزهای حضور</span>
+        <strong class="block text-lg font-bold text-slate-400">--</strong>
+        <span class="block text-[10px] text-slate-400">روز</span>
+      </div>
+
+      <div class="rounded-xl bg-slate-50 p-3.5 text-center border border-slate-100 space-y-1">
+        <span class="block text-[11px] font-medium text-slate-500">روزهای غیبت</span>
+        <strong class="block text-lg font-bold text-slate-400">--</strong>
+        <span class="block text-[10px] text-slate-400">روز</span>
+      </div>
+
+      <div class="rounded-xl bg-slate-50 p-3.5 text-center border border-slate-100 space-y-1">
+        <span class="block text-[11px] font-medium text-slate-500">مرخصی‌های فعال</span>
+        <strong class="block text-lg font-bold text-blue-700">
+          {{ (leaveSummary()?.pendingCount ?? 0) | persianDigits }}
+        </strong>
+        <span class="block text-[10px] text-slate-500">درخواست فعال</span>
+      </div>
     </div>
   </section>
 
-  <!-- Notifications Section -->
-  <section class="section-block">
-    <div class="section-heading">
-      <div>
-        <h2>اعلان‌های اخیر</h2>
-        <p>پیام‌ها و اطلاعیه‌های دریافتی</p>
-      </div>
-      <a routerLink="/employee/notifications" class="view-all">مشاهده همه <span>←</span></a>
-    </div>
+  <!-- Quick Shortcuts Grid -->
+  <section class="space-y-3">
+    <h2 class="text-sm font-bold text-slate-900">دسترسی‌های سریع</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <a
+        routerLink="/employee/attendance"
+        class="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 shadow-2xs transition text-center space-y-2 group"
+      >
+        <span class="text-2xl group-hover:scale-110 transition-transform">⏱</span>
+        <span class="text-xs font-bold text-slate-800">ثبت حضور و غیاب</span>
+      </a>
 
-    <div class="list-card activity-card">
-      <div class="p-6 text-center text-sm text-slate-500">
-        هیچ اعلانی وجود ندارد
-      </div>
+      <a
+        routerLink="/employee/leave-requests/new"
+        class="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 shadow-2xs transition text-center space-y-2 group"
+      >
+        <span class="text-2xl group-hover:scale-110 transition-transform">➕</span>
+        <span class="text-xs font-bold text-slate-800">ثبت مرخصی</span>
+      </a>
+
+      <a
+        routerLink="/employee/leave-requests"
+        class="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 shadow-2xs transition text-center space-y-2 group"
+      >
+        <span class="text-2xl group-hover:scale-110 transition-transform">🌴</span>
+        <span class="text-xs font-bold text-slate-800">سوابق مرخصی‌ها</span>
+      </a>
+
+      <a
+        routerLink="/employee/profile"
+        class="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 shadow-2xs transition text-center space-y-2 group"
+      >
+        <span class="text-2xl group-hover:scale-110 transition-transform">👤</span>
+        <span class="text-xs font-bold text-slate-800">پروفایل من</span>
+      </a>
     </div>
   </section>
 </section>
