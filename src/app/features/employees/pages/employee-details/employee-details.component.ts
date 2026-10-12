@@ -71,7 +71,7 @@ export class EmployeeDetailsComponent implements OnInit {
   }
 
   getGenderLabel(gender?: string | null): string {
-    if (!gender) return '—';
+    if (!gender) return 'تعیین نشده';
     if (gender === 'Male' || gender === 'مرد') return 'مرد';
     if (gender === 'Female' || gender === 'زن') return 'زن';
     return gender;
