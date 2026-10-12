@@ -144,3 +144,17 @@ chunk-UPBMVSCZ.js   | employees-routes              | 754 bytes |
 chunk-ESNC6NSA.js   | leave-categories-routes       | 662 bytes |
 
 Application bundle generation complete. [0.151 seconds] - 2026-10-12T08:46:11.475Z
+
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names                   |  Raw size
+main.js             | main                    | 828.58 kB |
+chunk-UIV72O7X.js   | -                       |  22.34 kB |
+
+Lazy chunk files    | Names                   |  Raw size
+chunk-AT4VPH2H.js   | employee-form-component |  58.72 kB |
+chunk-VIZ75Y26.js   | employees-routes        | 754 bytes |
+
+Application bundle generation complete. [8.258 seconds] - 2026-10-12T09:12:24.579Z
+
+Page reload sent to client(s).

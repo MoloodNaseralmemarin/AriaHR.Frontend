@@ -161,9 +161,12 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
   onTouched: () => void = () => {};
 
   writeValue(val: string | null): void {
+    if (this.gregorianValue === val && (this.displayValue() || this.yearInput())) {
+      return; // Prevent overwriting active user typing
+    }
+
     this.gregorianValue = val;
     if (val) {
-      // Force Jalali display format YYYY/MM/DD
       const jalaliStr = this.persianDateService.toJalaliString(
         val,
         this.digitsFormat,
@@ -211,11 +214,15 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
         this.yearInput.set(formatDigits(parts[0]));
         this.monthSelect.set(parts[1] ? String(parseInt(parts[1], 10)) : '');
         this.dayInput.set(formatDigits(parts[2]));
-      } else {
+      } else if (parts[2].length === 4) {
         // DD/MM/YYYY
         this.dayInput.set(formatDigits(parts[0]));
         this.monthSelect.set(parts[1] ? String(parseInt(parts[1], 10)) : '');
         this.yearInput.set(formatDigits(parts[2]));
+      } else {
+        this.yearInput.set(formatDigits(parts[0]));
+        this.monthSelect.set(parts[1] ? String(parseInt(parts[1], 10)) : '');
+        this.dayInput.set(formatDigits(parts[2]));
       }
     }
   }
@@ -289,26 +296,41 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
 
   onInputChange(event: Event): void {
     const rawInput = (event.target as HTMLInputElement).value;
-    const asciiInput = normalizeMobileNumber(rawInput);
+    const asciiInput = normalizePersianDigits(rawInput);
 
     const formatDigits = (str: string) =>
       this.digitsFormat === 'persian' ? toPersianDigits(str) : str;
 
     let formattedDisplay = '';
+    const parts = asciiInput.split(/[-/]/);
 
-    // Continuous input YYYYMMDD
-    if (asciiInput.length <= 4) {
-      formattedDisplay = formatDigits(asciiInput);
-    } else if (asciiInput.length <= 6) {
-      formattedDisplay = `${formatDigits(asciiInput.slice(0, 4))}/${formatDigits(asciiInput.slice(4))}`;
+    if (parts.length === 3) {
+      let y = '', m = '', d = '';
+      if (parts[0].length === 4) {
+        y = parts[0];
+        m = parts[1];
+        d = parts[2];
+      } else if (parts[2].length === 4) {
+        d = parts[0];
+        m = parts[1];
+        y = parts[2];
+      } else {
+        y = parts[0];
+        m = parts[1];
+        d = parts[2];
+      }
+      formattedDisplay = [formatDigits(y), formatDigits(m), formatDigits(d)]
+        .filter(Boolean)
+        .join('/');
     } else {
-      formattedDisplay = `${formatDigits(asciiInput.slice(0, 4))}/${formatDigits(asciiInput.slice(4, 6))}/${formatDigits(asciiInput.slice(6, 8))}`;
-    }
-
-    // Preserve explicit slash or dash separators typed by user
-    if (rawInput.includes('-') || rawInput.includes('/')) {
-      const parts = rawInput.split(/[-/]/).map((p) => normalizeMobileNumber(p));
-      formattedDisplay = parts.map((p) => formatDigits(p)).join('/');
+      const digitsOnly = normalizeMobileNumber(rawInput);
+      if (digitsOnly.length <= 4) {
+        formattedDisplay = formatDigits(digitsOnly);
+      } else if (digitsOnly.length <= 6) {
+        formattedDisplay = `${formatDigits(digitsOnly.slice(0, 4))}/${formatDigits(digitsOnly.slice(4))}`;
+      } else {
+        formattedDisplay = `${formatDigits(digitsOnly.slice(0, 4))}/${formatDigits(digitsOnly.slice(4, 6))}/${formatDigits(digitsOnly.slice(6, 8))}`;
+      }
     }
 
     this.displayValue.set(formattedDisplay);
