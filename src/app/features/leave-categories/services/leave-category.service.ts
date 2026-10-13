@@ -1,11 +1,36 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { environment } from '../../../../environments/environment';
 import { LeaveCategoryDto } from '../models/leave-category.dto';
 import { CreateLeaveCategoryDto } from '../models/create-leave-category.dto';
 import { UpdateLeaveCategoryDto } from '../models/update-leave-category.dto';
+
+export function normalizeLeaveCategory(raw: any): LeaveCategoryDto {
+  if (!raw) {
+    return {
+      id: '',
+      organizationId: '',
+      name: '',
+      maxDaysPerYear: 0,
+      isPaid: true,
+      requiresAttachment: false,
+      isActive: true,
+    };
+  }
+
+  return {
+    id: raw.id ?? raw.Id ?? '',
+    organizationId: raw.organizationId ?? raw.OrganizationId ?? '',
+    name: raw.name ?? raw.Name ?? '',
+    maxDaysPerYear: raw.maxDaysPerYear ?? raw.MaxDaysPerYear ?? 0,
+    isPaid: Boolean(raw.isPaid ?? raw.IsPaid ?? true),
+    requiresAttachment: Boolean(raw.requiresAttachment ?? raw.RequiresAttachment ?? false),
+    isActive: Boolean(raw.isActive ?? raw.IsActive ?? false),
+  };
+}
 
 /**
  * Feature API service for managing organization Leave Categories.
@@ -20,12 +45,19 @@ export class LeaveCategoryService {
 
   /** Retrieves all leave categories for the authenticated organization. */
   getAll(): Observable<LeaveCategoryDto[]> {
-    return this.http.get<LeaveCategoryDto[]>(`${environment.apiUrl}/api/requests/leave-categories`);
+    return this.http.get<any>(`${environment.apiUrl}/api/requests/leave-categories`).pipe(
+      map((res) => {
+        const list = Array.isArray(res) ? res : res?.items || res?.data || res?.value || [];
+        return list.map((item: any) => normalizeLeaveCategory(item));
+      })
+    );
   }
 
   /** Retrieves a specific leave category by ID. */
   getById(id: string): Observable<LeaveCategoryDto> {
-    return this.http.get<LeaveCategoryDto>(`${this.apiUrl}/${id}`);
+    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+      map((raw) => normalizeLeaveCategory(raw))
+    );
   }
 
   /** Creates a new leave category. */

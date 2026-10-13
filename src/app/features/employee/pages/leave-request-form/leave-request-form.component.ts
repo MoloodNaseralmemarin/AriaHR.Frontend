@@ -135,7 +135,8 @@ export class LeaveRequestFormComponent implements OnInit {
 
     this.leaveCategoryService.getAll().subscribe({
       next: (list) => {
-        const activeCategories = (list || []).filter((c) => c.isActive !== false);
+        const rawList = Array.isArray(list) ? list : (list as any)?.items || (list as any)?.data || (list as any)?.value || [];
+        const activeCategories = rawList.filter((c: LeaveCategoryDto) => c && c.isActive !== false);
         this.categories.set(activeCategories);
         this.isLoadingCategories.set(false);
 
@@ -144,8 +145,21 @@ export class LeaveRequestFormComponent implements OnInit {
         }
       },
       error: (err) => {
+        console.error('Error loading leave categories:', err);
         this.isLoadingCategories.set(false);
-        this.categoriesError.set('خطا در دریافت لیست دسته‌بندی‌های مرخصی.');
+        let msg = 'خطا در دریافت لیست دسته‌بندی‌های مرخصی.';
+        if (err?.status === 0) {
+          msg = 'عدم برقراری ارتباط با سرور جهت دریافت دسته‌بندی‌ها.';
+        } else if (err?.status === 401) {
+          msg = 'شما وارد سیستم نشده‌اید. لطفاً مجدداً وارد شوید.';
+        } else if (err?.status === 403) {
+          msg = 'شما دسترسی لازم برای دریافت دسته‌بندی‌های مرخصی را ندارید.';
+        } else if (err?.error?.message) {
+          msg = err.error.message;
+        } else if (typeof err?.error === 'string') {
+          msg = err.error;
+        }
+        this.categoriesError.set(msg);
       },
     });
   }

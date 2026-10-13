@@ -44,8 +44,17 @@ describe('LeaveCategoryService (Isolated Unit Tests)', () => {
     vi.clearAllMocks();
   });
 
-  it('getAll() should GET all leave categories from /api/requests/leave-categories', () => {
-    mockHttpClient.get.mockReturnValue(of([mockCategory]));
+  it('getAll() should GET all leave categories from /api/requests/leave-categories and normalize PascalCase items', () => {
+    const rawPascalCaseItem = {
+      Id: 'cat-1',
+      OrganizationId: 'org-123',
+      Name: 'مرخصی استحقاقی',
+      MaxDaysPerYear: 30,
+      IsPaid: true,
+      RequiresAttachment: false,
+      IsActive: true,
+    };
+    mockHttpClient.get.mockReturnValue(of([rawPascalCaseItem]));
     const service = createService();
 
     service.getAll().subscribe((result) => {
@@ -53,6 +62,28 @@ describe('LeaveCategoryService (Isolated Unit Tests)', () => {
     });
 
     expect(mockHttpClient.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/leave-categories`);
+  });
+
+  it('getAll() should handle wrapped response shapes like { items: [...] }', () => {
+    const wrappedResponse = {
+      items: [
+        {
+          Id: 'cat-1',
+          OrganizationId: 'org-123',
+          Name: 'مرخصی استحقاقی',
+          MaxDaysPerYear: 30,
+          IsPaid: true,
+          RequiresAttachment: false,
+          IsActive: true,
+        },
+      ],
+    };
+    mockHttpClient.get.mockReturnValue(of(wrappedResponse));
+    const service = createService();
+
+    service.getAll().subscribe((result) => {
+      expect(result).toEqual([mockCategory]);
+    });
   });
 
   it('getById() should GET category by ID', () => {
