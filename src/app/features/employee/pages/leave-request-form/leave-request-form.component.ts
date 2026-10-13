@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -7,7 +7,9 @@ import { TimeInputComponent } from '../../../../shared/components/time-input/tim
 import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { LeaveRequestService } from '../../services/leave-request.service';
-import { CreateLeaveRequestApiDto, CreateLeaveRequestDto, LeaveType } from '../../models/leave-request.model';
+import { LeaveCategoryService } from '../../../leave-categories/services/leave-category.service';
+import { LeaveCategoryDto } from '../../../leave-categories/models/leave-category.dto';
+import { CreateLeaveRequestApiDto, LeaveType } from '../../models/leave-request.model';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
 
 @Component({
@@ -26,15 +28,21 @@ import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe'
   styleUrls: ['./leave-request-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LeaveRequestFormComponent {
+export class LeaveRequestFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly leaveRequestService = inject(LeaveRequestService);
+  private readonly leaveCategoryService = inject(LeaveCategoryService);
   private readonly persianDateService = inject(PersianDateService);
 
   readonly selectedLeaveType = signal<LeaveType>('daily');
   readonly isSubmitting = signal<boolean>(false);
   readonly formError = signal<string | null>(null);
+
+  // Leave Categories state
+  readonly categories = signal<LeaveCategoryDto[]>([]);
+  readonly isLoadingCategories = signal<boolean>(false);
+  readonly categoriesError = signal<string | null>(null);
 
   // Toast state
   readonly showToast = signal<boolean>(false);
@@ -43,6 +51,7 @@ export class LeaveRequestFormComponent {
 
   readonly form: FormGroup = this.fb.group({
     leaveType: ['daily', [Validators.required]],
+    leaveCategoryId: ['', [Validators.required]],
     startDate: [''],
     endDate: [''],
     date: [''],
@@ -116,6 +125,31 @@ export class LeaveRequestFormComponent {
     return endVal ? this.persianDateService.toJalaliString(endVal, true, 'DD-MM-YYYY') : '---';
   });
 
+  ngOnInit(): void {
+    this.loadCategories();
+  }
+
+  loadCategories(): void {
+    this.isLoadingCategories.set(true);
+    this.categoriesError.set(null);
+
+    this.leaveCategoryService.getAll().subscribe({
+      next: (list) => {
+        const activeCategories = (list || []).filter((c) => c.isActive !== false);
+        this.categories.set(activeCategories);
+        this.isLoadingCategories.set(false);
+
+        if (activeCategories.length > 0 && !this.form.get('leaveCategoryId')?.value) {
+          this.form.patchValue({ leaveCategoryId: activeCategories[0].id });
+        }
+      },
+      error: (err) => {
+        this.isLoadingCategories.set(false);
+        this.categoriesError.set('خطا در دریافت لیست دسته‌بندی‌های مرخصی.');
+      },
+    });
+  }
+
   constructor() {
     // Listen to form value changes
     this.form.valueChanges.subscribe((val) => {
@@ -125,8 +159,22 @@ export class LeaveRequestFormComponent {
 
   setLeaveType(type: LeaveType) {
     this.selectedLeaveType.set(type);
-    this.form.patchValue({ leaveType: type });
     this.formError.set(null);
+
+    if (type === 'daily') {
+      this.form.patchValue({
+        leaveType: 'daily',
+        date: '',
+        startTime: '',
+        endTime: '',
+      });
+    } else {
+      this.form.patchValue({
+        leaveType: 'hourly',
+        startDate: '',
+        endDate: '',
+      });
+    }
   }
 
   onSubmit() {
@@ -137,6 +185,11 @@ export class LeaveRequestFormComponent {
     this.formError.set(null);
     const type = this.selectedLeaveType();
 
+    if (!this.form.get('leaveCategoryId')?.value) {
+      this.formError.set('لطفاً دسته مرخصی را انتخاب کنید.');
+      return;
+    }
+
     if (type === 'daily') {
       const startDate = this.form.get('startDate')?.value;
       const endDate = this.form.get('endDate')?.value;
@@ -146,7 +199,10 @@ export class LeaveRequestFormComponent {
         return;
       }
 
-      if (new Date(endDate) < new Date(startDate)) {
+      const gregStart = this.toGregorian(startDate);
+      const gregEnd = this.toGregorian(endDate);
+
+      if (new Date(gregEnd) < new Date(gregStart)) {
         this.formError.set('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.');
         return;
       }
@@ -177,12 +233,14 @@ export class LeaveRequestFormComponent {
     this.isSubmitting.set(true);
 
     const formVal = this.form.value;
-    const rawDate = type === 'daily' ? formVal.startDate : formVal.date;
-    const formattedDate = this.toGregorian(rawDate);
+    const gregStartDate = type === 'daily' ? this.toGregorian(formVal.startDate) : this.toGregorian(formVal.date);
+    const gregEndDate = type === 'daily' ? this.toGregorian(formVal.endDate) : this.toGregorian(formVal.date);
 
     const apiDto: CreateLeaveRequestApiDto = {
       leaveType: type === 'daily' ? 1 : 2,
-      date: formattedDate,
+      leaveCategoryId: formVal.leaveCategoryId,
+      startDate: gregStartDate,
+      endDate: gregEndDate,
       startTime: type === 'hourly' && formVal.startTime ? formVal.startTime : null,
       endTime: type === 'hourly' && formVal.endTime ? formVal.endTime : null,
       reason: formVal.reason?.trim() ? formVal.reason.trim() : null,
@@ -199,7 +257,14 @@ export class LeaveRequestFormComponent {
       error: (err: any) => {
         this.isSubmitting.set(false);
         let msg = 'ثبت درخواست انجام نشد. لطفاً دوباره تلاش کنید.';
-        if (err?.error) {
+
+        if (err?.status === 0) {
+          msg = 'عدم برقراری ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.';
+        } else if (err?.status === 401) {
+          msg = 'شما وارد سیستم نشده‌اید. لطفاً مجدداً وارد شوید.';
+        } else if (err?.status === 403) {
+          msg = 'شما دسترسی لازم برای ثبت این درخواست را ندارید.';
+        } else if (err?.error) {
           if (typeof err.error === 'string') {
             msg = err.error;
           } else if (err.error.detail) {

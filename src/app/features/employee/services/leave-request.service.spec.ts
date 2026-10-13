@@ -63,10 +63,42 @@ describe('LeaveRequestService', () => {
     expect(httpClientMock.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/attendance/leaves/summary`);
   });
 
-  it('should create a leave request via POST /api/requests/leave', () => {
+  it('should create a daily leave request via POST /api/requests/leave', () => {
+    const dto = {
+      leaveType: 1,
+      leaveCategoryId: 'cat-1',
+      startDate: '2025-02-10',
+      endDate: '2025-02-12',
+      startTime: null,
+      endTime: null,
+      reason: 'استراحت',
+    };
+
+    const mockResponse: LeaveRequestDto = {
+      id: '1',
+      leaveType: 'daily',
+      startDate: '2025-02-10',
+      endDate: '2025-02-12',
+      durationText: '3 روز',
+      reason: 'استراحت',
+      status: 'pending',
+      createdAt: '2025-02-09T10:00:00Z',
+    };
+    httpClientMock.post.mockReturnValue(of(mockResponse));
+
+    service.createLeaveRequest(dto).subscribe((res) => {
+      expect(res).toEqual(mockResponse);
+    });
+
+    expect(httpClientMock.post).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/leave`, dto);
+  });
+
+  it('should create an hourly leave request via POST /api/requests/leave', () => {
     const dto = {
       leaveType: 2,
-      date: '2025-02-15',
+      leaveCategoryId: 'cat-2',
+      startDate: '2025-02-15',
+      endDate: '2025-02-15',
       startTime: '08:30',
       endTime: '12:30',
       reason: 'کارهای شخصی',
@@ -75,7 +107,8 @@ describe('LeaveRequestService', () => {
     const mockResponse: LeaveRequestDto = {
       id: '2',
       leaveType: 'hourly',
-      date: '2025-02-15',
+      startDate: '2025-02-15',
+      endDate: '2025-02-15',
       startTime: '08:30',
       endTime: '12:30',
       durationText: '4 ساعت',

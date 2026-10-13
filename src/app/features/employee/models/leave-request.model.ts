@@ -14,7 +14,9 @@ export interface CreateLeaveRequestDto {
 
 export interface CreateLeaveRequestApiDto {
   leaveType: number;
-  date: string;
+  leaveCategoryId: string;
+  startDate: string;
+  endDate: string;
   startTime: string | null;
   endTime: string | null;
   reason: string | null;
