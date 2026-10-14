@@ -59,6 +59,15 @@ describe('LeaveRequestFormComponent', () => {
     expect(component.form.get('leaveCategoryId')?.value).toBe('cat-1');
   });
 
+  it('should preserve id, organizationId, and name on loaded categories and bind id in form', () => {
+    component.ngOnInit();
+    const categories = component.categories();
+    expect(categories[0].id).toBe('cat-1');
+    expect(categories[0].organizationId).toBe('org-1');
+    expect(categories[0].name).toBe('استحقاقی');
+    expect(component.form.get('leaveCategoryId')?.value).toBe('cat-1');
+  });
+
   it('should display specific Persian error message on HTTP 403 Forbidden category fetch failure', () => {
     leaveCategoryServiceMock.getAll.mockReturnValue(throwError(() => ({ status: 403 })));
     component.ngOnInit();
