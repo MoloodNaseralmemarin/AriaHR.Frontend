@@ -136,8 +136,14 @@ export class EmployeeRequestsComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.leaveService.getLeaveSummary().subscribe({
-      next: (res) => this.summary.set(res),
+    this.leaveService.getLeaveRequests().subscribe({
+      next: (list) => {
+        const reqs = list || [];
+        const pending = reqs.filter((r) => r.status === 'pending').length;
+        const approved = reqs.filter((r) => r.status === 'approved').length;
+        const rejected = reqs.filter((r) => r.status === 'rejected').length;
+        this.summary.set({ pendingCount: pending, approvedCount: approved, rejectedCount: rejected });
+      },
       error: () => {},
     });
   }

@@ -18,6 +18,7 @@ describe('LeaveRequestFormComponent', () => {
   const mockCategories = [
     { id: 'cat-1', name: 'استحقاقی', isPaid: true, isActive: true, maxDaysPerYear: 30, requiresAttachment: false, organizationId: 'org-1' },
     { id: 'cat-2', name: 'استعلاجی', isPaid: true, isActive: true, maxDaysPerYear: 15, requiresAttachment: true, organizationId: 'org-1' },
+    { id: 'cat-3', name: 'غیرفعال', isPaid: false, isActive: false, maxDaysPerYear: 5, requiresAttachment: false, organizationId: 'org-1' },
   ];
 
   beforeEach(() => {
@@ -48,12 +49,23 @@ describe('LeaveRequestFormComponent', () => {
     });
   });
 
-  it('should initialize with daily leave type default and load categories on init', () => {
+  it('should initialize with daily leave type default and load active categories on init', () => {
     expect(component.selectedLeaveType()).toBe('daily');
     component.ngOnInit();
     expect(leaveCategoryServiceMock.getAll).toHaveBeenCalled();
+    // Only active categories (cat-1 and cat-2) should be retained
     expect(component.categories().length).toBe(2);
+    expect(component.categories().every((c) => c.isActive === true)).toBe(true);
     expect(component.form.get('leaveCategoryId')?.value).toBe('cat-1');
+  });
+
+  it('should display specific Persian error message on HTTP 403 Forbidden category fetch failure', () => {
+    leaveCategoryServiceMock.getAll.mockReturnValue(throwError(() => ({ status: 403 })));
+    component.ngOnInit();
+    expect(component.isLoadingCategories()).toBe(false);
+    expect(component.categoriesError()).toBe(
+      'شما دسترسی لازم برای دریافت دسته‌بندی‌های مرخصی را ندارید. این موضوع نیازمند اصلاح در سمت سرور توسط مدیر سیستم می‌باشد.'
+    );
   });
 
   it('should switch leave type correctly and reset irrelevant fields', () => {

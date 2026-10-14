@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EnvironmentInjector, createEnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { LeaveRequestService } from './leave-request.service';
-import { CreateLeaveRequestDto, LeaveRequestDto, LeaveSummaryDto } from '../models/leave-request.model';
+import { LeaveRequestDto } from '../models/leave-request.model';
 import { environment } from '../../../../environments/environment';
 import { of } from 'rxjs';
 
@@ -27,7 +27,7 @@ describe('LeaveRequestService', () => {
     });
   });
 
-  it('should get leave requests via GET /api/attendance/leaves', () => {
+  it('should get authenticated employee leave requests via GET /api/requests/my', () => {
     const mockData: LeaveRequestDto[] = [
       {
         id: '1',
@@ -45,22 +45,7 @@ describe('LeaveRequestService', () => {
       expect(res).toEqual(mockData);
     });
 
-    expect(httpClientMock.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/attendance/leaves`);
-  });
-
-  it('should get leave summary via GET /api/attendance/leaves/summary', () => {
-    const mockSummary: LeaveSummaryDto = {
-      pendingCount: 2,
-      approvedCount: 5,
-      rejectedCount: 1,
-    };
-    httpClientMock.get.mockReturnValue(of(mockSummary));
-
-    service.getLeaveSummary().subscribe((res) => {
-      expect(res).toEqual(mockSummary);
-    });
-
-    expect(httpClientMock.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/attendance/leaves/summary`);
+    expect(httpClientMock.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/my`);
   });
 
   it('should create a daily leave request via POST /api/requests/leave', () => {

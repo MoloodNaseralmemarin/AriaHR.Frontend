@@ -10,7 +10,7 @@ import { LeaveRequestService } from '../../services/leave-request.service';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { CurrentUserDto, AuthUserDto } from '../../../../core/auth/auth.models';
 import { TodayAttendanceDto } from '../../models/employee-attendance.models';
-import { LeaveRequestDto, LeaveSummaryDto } from '../../models/leave-request.model';
+import { LeaveRequestDto } from '../../models/leave-request.model';
 
 describe('EmployeeDashboardComponent (Isolated Tests)', () => {
   let userDetailsSignal: ReturnType<typeof signal<CurrentUserDto | null>>;
@@ -24,7 +24,6 @@ describe('EmployeeDashboardComponent (Isolated Tests)', () => {
     getTodayAttendance: ReturnType<typeof vi.fn>;
   };
   let mockLeaveRequestService: {
-    getLeaveSummary: ReturnType<typeof vi.fn>;
     getLeaveRequests: ReturnType<typeof vi.fn>;
   };
   let mockPersianDateService: {
@@ -55,11 +54,6 @@ describe('EmployeeDashboardComponent (Isolated Tests)', () => {
     };
 
     mockLeaveRequestService = {
-      getLeaveSummary: vi.fn().mockReturnValue(of({
-        pendingCount: 1,
-        approvedCount: 2,
-        rejectedCount: 0,
-      } as LeaveSummaryDto)),
       getLeaveRequests: vi.fn().mockReturnValue(of([
         {
           id: 'leave-1',
@@ -94,7 +88,6 @@ describe('EmployeeDashboardComponent (Isolated Tests)', () => {
 
       expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
       expect(mockAttendanceService.getTodayAttendance).toHaveBeenCalled();
-      expect(mockLeaveRequestService.getLeaveSummary).toHaveBeenCalled();
       expect(mockLeaveRequestService.getLeaveRequests).toHaveBeenCalled();
       expect(component.isLoadingUser()).toBe(false);
       expect(component.isLoadingAttendance()).toBe(false);
