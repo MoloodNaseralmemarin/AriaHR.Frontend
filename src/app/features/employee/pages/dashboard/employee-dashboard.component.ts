@@ -135,14 +135,20 @@ export class EmployeeDashboardComponent implements OnInit {
   loadLeaveData(): void {
     this.isLoadingLeaves.set(true);
 
-    this.leaveRequestService.getLeaveSummary().subscribe({
-      next: (summary) => this.leaveSummary.set(summary),
-      error: (err) => console.error('Failed to load leave summary:', err),
-    });
-
     this.leaveRequestService.getLeaveRequests().subscribe({
       next: (requests) => {
-        this.recentLeaveRequests.set(requests || []);
+        const list = requests || [];
+        this.recentLeaveRequests.set(list);
+
+        const pending = list.filter((r) => r.status === 'pending').length;
+        const approved = list.filter((r) => r.status === 'approved').length;
+        const rejected = list.filter((r) => r.status === 'rejected').length;
+        this.leaveSummary.set({
+          pendingCount: pending,
+          approvedCount: approved,
+          rejectedCount: rejected,
+        });
+
         this.isLoadingLeaves.set(false);
       },
       error: (err) => {

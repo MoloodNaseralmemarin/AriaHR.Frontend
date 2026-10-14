@@ -82,22 +82,8 @@ export class LeaveRequestsListComponent implements OnInit {
       next: (data) => {
         const list = data || [];
         this.requests.set(list);
-
-        // Attempt to fetch dedicated summary endpoint, fallback to computing from list
-        this.leaveRequestService.getLeaveSummary().subscribe({
-          next: (summaryData) => {
-            if (summaryData) {
-              this.summary.set(summaryData);
-            } else {
-              this.computeSummaryFromList(list);
-            }
-            this.isLoading.set(false);
-          },
-          error: () => {
-            this.computeSummaryFromList(list);
-            this.isLoading.set(false);
-          },
-        });
+        this.computeSummaryFromList(list);
+        this.isLoading.set(false);
       },
       error: () => {
         this.isLoading.set(false);

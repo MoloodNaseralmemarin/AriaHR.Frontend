@@ -14,7 +14,6 @@ describe('LeaveRequestsListComponent', () => {
   beforeEach(() => {
     leaveRequestServiceMock = {
       getLeaveRequests: vi.fn(),
-      getLeaveSummary: vi.fn(),
     };
 
     const parentInjector = {
@@ -31,17 +30,17 @@ describe('LeaveRequestsListComponent', () => {
     });
   });
 
-  it('should load requests and compute summary counts', () => {
+  it('should load requests via getLeaveRequests and compute summary counts from list', () => {
     const mockData: LeaveRequestDto[] = [
       { id: '1', leaveType: 'daily', startDate: '2025-02-10', endDate: '2025-02-12', durationText: '3 روز', status: 'pending', createdAt: '2025-02-09T10:00:00Z' },
       { id: '2', leaveType: 'hourly', date: '2025-02-15', startTime: '08:30', endTime: '12:30', durationText: '4 ساعت', status: 'approved', createdAt: '2025-02-10T12:00:00Z' },
       { id: '3', leaveType: 'daily', startDate: '2025-01-01', endDate: '2025-01-02', durationText: '2 روز', status: 'rejected', createdAt: '2025-01-01T08:00:00Z' },
     ];
     leaveRequestServiceMock.getLeaveRequests.mockReturnValue(of(mockData));
-    leaveRequestServiceMock.getLeaveSummary.mockReturnValue(of({ pendingCount: 1, approvedCount: 1, rejectedCount: 1 }));
 
     component.ngOnInit();
 
+    expect(leaveRequestServiceMock.getLeaveRequests).toHaveBeenCalled();
     expect(component.isLoading()).toBe(false);
     expect(component.requests().length).toBe(3);
     expect(component.summary()).toEqual({
@@ -58,7 +57,6 @@ describe('LeaveRequestsListComponent', () => {
       { id: '3', leaveType: 'daily', startDate: '2025-01-01', endDate: '2025-01-02', durationText: '2 روز', status: 'rejected', createdAt: '2025-01-01T08:00:00Z' },
     ];
     leaveRequestServiceMock.getLeaveRequests.mockReturnValue(of(mockData));
-    leaveRequestServiceMock.getLeaveSummary.mockReturnValue(of({ pendingCount: 1, approvedCount: 1, rejectedCount: 1 }));
 
     component.ngOnInit();
 
