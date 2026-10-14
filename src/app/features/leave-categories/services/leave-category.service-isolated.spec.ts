@@ -55,6 +55,34 @@ describe('LeaveCategoryService (Isolated Unit Tests)', () => {
     expect(mockHttpClient.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/leave-categories`);
   });
 
+  it('getAll() should preserve required fields id, organizationId, name and tolerate additional API fields', () => {
+    const extendedCategoryFromApi = {
+      id: 'cat-10',
+      organizationId: 'org-456',
+      name: 'مرخصی بدون حقوق',
+      maxDaysPerYear: 60,
+      isPaid: false,
+      requiresAttachment: true,
+      isActive: true,
+      customExtraField: 'extra-value',
+      metadata: { key: 'val' },
+    };
+
+    mockHttpClient.get.mockReturnValue(of([extendedCategoryFromApi]));
+    const service = createService();
+
+    service.getAll().subscribe((result) => {
+      expect(result.length).toBe(1);
+      const cat = result[0];
+      expect(cat.id).toBe('cat-10');
+      expect(cat.organizationId).toBe('org-456');
+      expect(cat.name).toBe('مرخصی بدون حقوق');
+      expect((cat as any).customExtraField).toBe('extra-value');
+    });
+
+    expect(mockHttpClient.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/leave-categories`);
+  });
+
   it('getById() should GET category by ID', () => {
     mockHttpClient.get.mockReturnValue(of(mockCategory));
     const service = createService();
