@@ -5,10 +5,14 @@
         <img src="/assets/logo/logo.png" alt="AriaHR" class="h-9 w-auto" width="90" height="36" />
       </a>
       <div class="flex items-center gap-2">
-        <button type="button" class="relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100" aria-label="اعلان‌ها">
-          <span class="text-xl leading-none">♧</span>
-          <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-600 ring-2 ring-white"></span>
-        </button>
+        <a routerLink="/system-admin/notifications" routerLinkActive="bg-slate-100 text-blue-600" class="relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100" aria-label="اعلان‌ها">
+          <span class="text-xl leading-none">🔔</span>
+          @if (unreadCount() > 0) {
+            <span class="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-white">
+              {{ unreadCount() }}
+            </span>
+          }
+        </a>
         <div class="grid h-10 w-10 place-items-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">{{ avatarInitial() }}</div>
         <button type="button" (click)="onLogout()" class="flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50" aria-label="خروج از حساب">
           <span>خروج</span>

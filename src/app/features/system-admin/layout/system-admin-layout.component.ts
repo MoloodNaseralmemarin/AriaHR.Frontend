@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { NotificationService } from '../../notifications/services/notification.service';
 
 @Component({
   selector: 'app-system-admin-layout',
@@ -13,6 +14,9 @@ import { AuthService } from '../../../core/auth/auth.service';
 })
 export class SystemAdminLayoutComponent {
   private readonly authService = inject(AuthService);
+  private readonly notificationService = inject(NotificationService);
+
+  readonly unreadCount = this.notificationService.unreadCount;
 
   readonly avatarInitial = computed(() => {
     const user = this.authService.userDetails();

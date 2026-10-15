@@ -13,6 +13,7 @@ import { SystemAdminCentersComponent } from './features/system-admin/pages/cente
 import { SystemAdminCenterDetailsComponent } from './features/system-admin/pages/center-details/system-admin-center-details.component';
 import { SystemAdminCreateCenterComponent } from './features/system-admin/pages/create-center/system-admin-create-center.component';
 import { SystemAdminManagersComponent } from './features/system-admin/pages/managers/system-admin-managers.component';
+import { SystemAdminNotificationsComponent } from './features/system-admin/pages/notifications/system-admin-notifications.component';
 import { SystemAdminSettingsComponent } from './features/system-admin/pages/settings/system-admin-settings.component';
 
 // Center Manager Components
@@ -57,6 +58,7 @@ export const routes: Routes = [
       { path: 'centers/create', component: SystemAdminCreateCenterComponent },
       { path: 'centers/:id', component: SystemAdminCenterDetailsComponent },
       { path: 'managers', component: SystemAdminManagersComponent },
+      { path: 'notifications', component: SystemAdminNotificationsComponent },
       { path: 'settings', component: SystemAdminSettingsComponent },
     ],
   },
