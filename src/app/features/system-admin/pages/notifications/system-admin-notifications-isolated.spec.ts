@@ -2,7 +2,7 @@ import '@angular/compiler';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { SystemAdminNotificationsComponent } from './system-admin-notifications.component';
 import { NotificationService } from '../../../notifications/services/notification.service';
@@ -35,11 +35,11 @@ describe('SystemAdminNotificationsComponent (Isolated Tests)', () => {
       getThread: vi.fn().mockReturnValue(of([])),
       getRecipientStatuses: vi.fn().mockReturnValue(of([])),
       markAsRead: vi.fn().mockReturnValue(of(undefined)),
-      createMessage: vi.fn().mockReturnValue(
+      createNotification: vi.fn().mockReturnValue(
         of({
           id: 'new-1',
           title: 'جدید',
-          content: 'متن جدید',
+          message: 'متن جدید',
         })
       ),
       replyToMessage: vi.fn().mockReturnValue(
@@ -109,7 +109,7 @@ describe('SystemAdminNotificationsComponent (Isolated Tests)', () => {
     expect(mockNotificationService.markAsRead).toHaveBeenCalledWith('msg-1');
   });
 
-  it('should validate compose form and submit new message', () => {
+  it('should validate compose form and submit new message via createNotification', () => {
     component.ngOnInit();
     component.openCompose();
 
@@ -122,7 +122,41 @@ describe('SystemAdminNotificationsComponent (Isolated Tests)', () => {
     expect(component.composeForm.valid).toBe(true);
 
     component.submitCompose();
-    expect(mockNotificationService.createMessage).toHaveBeenCalled();
+
+    expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'عنوان پیام ارسالی',
+        message: 'متن کامل پیام ارسالی سیستم',
+        recipientUserIds: ['1'],
+        type: 1,
+        priority: 1,
+        requiresAcknowledgment: false,
+      })
+    );
     expect(component.isComposeOpen()).toBe(false);
+    expect(component.activeTab()).toBe('sent');
+    expect(component.toastMessage()).toContain('با موفقیت');
+  });
+
+  it('should handle submission errors gracefully and preserve form data', () => {
+    mockNotificationService.createNotification.mockReturnValue(
+      throwError(() => new Error('Server error'))
+    );
+
+    component.ngOnInit();
+    component.openCompose();
+
+    component.composeForm.patchValue({
+      title: 'عنوان تست خطا',
+      content: 'متن تست خطا که باید حفظ شود',
+      recipientIds: ['1'],
+    });
+
+    component.submitCompose();
+
+    expect(component.isSubmitting()).toBe(false);
+    expect(component.isComposeOpen()).toBe(true);
+    expect(component.composeForm.get('title')?.value).toBe('عنوان تست خطا');
+    expect(component.toastTone()).toBe('error');
   });
 });

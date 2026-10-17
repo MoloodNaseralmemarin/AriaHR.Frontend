@@ -10,7 +10,8 @@ import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe'
 
 import { NotificationService } from '../../../notifications/services/notification.service';
 import { MessagePriorityLabels, MessageTypeLabels, MessagePriority, MessageType } from '../../../notifications/models/message-enums';
-import { CreateMessagePayload, MessageRecipientStatus, MessageReply, NotificationMessage } from '../../../notifications/models/notification.models';
+import { MessageRecipientStatus, MessageReply, NotificationMessage } from '../../../notifications/models/notification.models';
+import { CreateNotificationDto } from '../../../notifications/models/notification.dto';
 import { OrganizationService } from '../../../organizations/services/organization.service';
 import { RecentOrganizationDto } from '../../../organizations/models/recent-organization.dto';
 import { SystemAdminDataService } from '../../services/system-admin-data.service';
@@ -258,24 +259,62 @@ export class SystemAdminNotificationsComponent implements OnInit {
     this.isSubmitting.set(true);
     const val = this.composeForm.value;
 
-    const payload: CreateMessagePayload = {
+    let publishStartAtUtc = new Date().toISOString();
+    if (val.publicationStart) {
+      const parsedDate = new Date(val.publicationStart);
+      if (!isNaN(parsedDate.getTime())) {
+        publishStartAtUtc = parsedDate.toISOString();
+      }
+    }
+
+    let expiresAtUtc: string | null = null;
+    if (val.expiration) {
+      const parsedExp = new Date(val.expiration);
+      if (!isNaN(parsedExp.getTime())) {
+        expiresAtUtc = parsedExp.toISOString();
+      }
+    }
+
+    const rawRecipientIds: string[] = Array.isArray(val.recipientIds) ? val.recipientIds : [];
+    let recipientUserIds: string[] = [];
+    let recipientOrganizationId: string | null = null;
+
+    if (val.recipientType === 'Organization') {
+      recipientOrganizationId = rawRecipientIds.length > 0 ? rawRecipientIds[0] : null;
+      recipientUserIds = [];
+    } else {
+      recipientUserIds = rawRecipientIds;
+      recipientOrganizationId = null;
+    }
+
+    const dto: CreateNotificationDto = {
       title: val.title.trim(),
-      content: val.content.trim(),
-      messageType: Number(val.messageType),
-      messagePriority: Number(val.messagePriority),
-      recipientType: val.recipientType,
-      recipientIds: val.recipientIds,
-      publicationStart: val.publicationStart || undefined,
-      expiration: val.expiration || undefined,
+      message: val.content.trim(),
+      type: Number(val.messageType),
+      priority: Number(val.messagePriority),
       requiresAcknowledgment: !!val.requiresAcknowledgment,
+      publishStartAtUtc,
+      expiresAtUtc,
+      recipientUserIds,
+      recipientOrganizationId,
+      relatedEntityId: null,
+      relatedEntityType: null,
     };
 
-    this.notificationService.createMessage(payload, 'SystemAdmin', 'مدیریت ارشد سیستم').subscribe({
+    this.notificationService.createNotification(dto).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.closeCompose();
+        this.composeForm.reset({
+          messageType: MessageType.Information,
+          messagePriority: MessagePriority.Normal,
+          recipientType: 'Specific',
+          recipientIds: [],
+          requiresAcknowledgment: false,
+        });
+        this.triggerToast('اعلان با موفقیت ایجاد و ارسال شد.', 'success');
+        this.activeTab.set('sent');
         this.loadMessages();
-        this.triggerToast('پیام جدید با موفقیت ارسال شد (ثبت محلی پیش‌نمایش).', 'success');
       },
       error: () => {
         this.isSubmitting.set(false);
