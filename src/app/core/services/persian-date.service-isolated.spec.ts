@@ -18,6 +18,10 @@ describe('PersianDateService (Isolated Unit Tests)', () => {
     expect(service.toJalaliString('2026-10-17T10:25:40.091Z', 'ascii')).toBe('25-07-1405');
     expect(service.toJalaliString('2026-10-17T10:25:40.091Z', 'persian')).toBe('۲۵-۰۷-۱۴۰۵');
 
+    // Pre-formatted YYYY-MM-DD Jalali date string "1405-07-25" -> MUST reformat to "25-07-1405"
+    expect(service.toJalaliString('1405-07-25', 'ascii')).toBe('25-07-1405');
+    expect(service.toJalaliString('۱۴۰۵-۰۷-۲۵', 'persian')).toBe('۲۵-۰۷-۱۴۰۵');
+
     // Single-digit month/day zero padding (2026-05-05 -> 15-02-1405)
     expect(service.toJalaliString('2026-05-05', 'ascii')).toBe('15-02-1405');
 

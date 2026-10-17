@@ -297,32 +297,55 @@ export class PersianDateService {
   ): string {
     if (!gregorianStr) return '';
 
-    const str = String(gregorianStr).trim();
-    if (!str) return '';
+    const asciiInput = normalizePersianDigits(String(gregorianStr).trim());
+    if (!asciiInput) return '';
 
-    // Match YYYY-MM-DD pattern directly from string to avoid timezone shifting
-    const match = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-    let gy: number, gm: number, gd: number;
+    let jy: number, jm: number, jd: number;
 
-    if (match) {
-      gy = parseInt(match[1], 10);
-      gm = parseInt(match[2], 10);
-      gd = parseInt(match[3], 10);
+    // Check if input is ALREADY a Jalali date string in YYYY-MM-DD or YYYY/MM/DD format (e.g. 1405-07-25)
+    const ymdMatch = asciiInput.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (ymdMatch && parseInt(ymdMatch[1], 10) >= 1300 && parseInt(ymdMatch[1], 10) <= 1500) {
+      jy = parseInt(ymdMatch[1], 10);
+      jm = parseInt(ymdMatch[2], 10);
+      jd = parseInt(ymdMatch[3], 10);
     } else {
-      const d = new Date(str);
-      if (isNaN(d.getTime())) return '';
-      // Fallback to UTC components
-      gy = d.getUTCFullYear();
-      gm = d.getUTCMonth() + 1;
-      gd = d.getUTCDate();
+      // Check if input is ALREADY a Jalali date string in DD-MM-YYYY or DD/MM/YYYY format (e.g. 25-07-1405)
+      const dmyMatch = asciiInput.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+      if (dmyMatch && parseInt(dmyMatch[3], 10) >= 1300 && parseInt(dmyMatch[3], 10) <= 1500) {
+        jd = parseInt(dmyMatch[1], 10);
+        jm = parseInt(dmyMatch[2], 10);
+        jy = parseInt(dmyMatch[3], 10);
+      } else {
+        // Parse Gregorian ISO/date string (e.g. 2026-10-17T10:25:40.091Z)
+        const gMatch = asciiInput.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+        let gy: number, gm: number, gd: number;
+
+        if (gMatch) {
+          gy = parseInt(gMatch[1], 10);
+          gm = parseInt(gMatch[2], 10);
+          gd = parseInt(gMatch[3], 10);
+        } else {
+          const d = new Date(asciiInput);
+          if (isNaN(d.getTime())) return '';
+          gy = d.getUTCFullYear();
+          gm = d.getUTCMonth() + 1;
+          gd = d.getUTCDate();
+        }
+
+        if (isNaN(gy) || isNaN(gm) || isNaN(gd)) return '';
+
+        const j = this.gregorianToJalali(gy, gm, gd);
+        jy = j.year;
+        jm = j.month;
+        jd = j.day;
+      }
     }
 
-    if (isNaN(gy) || isNaN(gm) || isNaN(gd)) return '';
+    if (isNaN(jy) || isNaN(jm) || isNaN(jd)) return '';
 
-    const j = this.gregorianToJalali(gy, gm, gd);
-    const dayStr = String(j.day).padStart(2, '0');
-    const monthStr = String(j.month).padStart(2, '0');
-    const yearStr = String(j.year);
+    const dayStr = String(jd).padStart(2, '0');
+    const monthStr = String(jm).padStart(2, '0');
+    const yearStr = String(jy);
 
     const asciiJalali =
       dateFormat === 'YYYY-MM-DD'
