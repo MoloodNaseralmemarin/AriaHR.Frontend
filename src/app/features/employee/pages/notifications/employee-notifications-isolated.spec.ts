@@ -17,6 +17,7 @@ describe('EmployeeNotificationsComponent (Isolated Tests)', () => {
         of([
           {
             id: 'msg-1',
+            senderId: 'sender-usr-1',
             title: 'پیام برای کارمند',
             content: 'متن پیام کارمند',
             messageType: 1,
@@ -84,7 +85,7 @@ describe('EmployeeNotificationsComponent (Isolated Tests)', () => {
     expect(component.selectedMessage()?.acknowledgedAt).toBe('2026-08-25T09:00:00Z');
   });
 
-  it('should submit private thread reply', () => {
+  it('should submit private thread reply using notification senderId', () => {
     component.ngOnInit();
     const msg = component.messages()[0];
     component.openDetails(msg);
@@ -92,7 +93,12 @@ describe('EmployeeNotificationsComponent (Isolated Tests)', () => {
     component.replyControl.setValue('پاسخ اختصاصی کارمند');
     component.sendReply();
 
-    expect(mockNotificationService.replyToMessage).toHaveBeenCalledWith('msg-1', 'پاسخ اختصاصی کارمند', 'من (کارمند)');
+    expect(mockNotificationService.replyToMessage).toHaveBeenCalledWith(
+      'msg-1',
+      'پاسخ اختصاصی کارمند',
+      'من (کارمند)',
+      'sender-usr-1'
+    );
     expect(component.threadReplies().length).toBe(1);
   });
 });

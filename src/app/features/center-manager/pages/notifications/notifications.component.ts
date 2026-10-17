@@ -198,8 +198,9 @@ export class NotificationsComponent implements OnInit {
     const msg = this.selectedMessage();
     if (!msg || this.replyControl.invalid) return;
 
+    const targetUserId = msg.senderId;
     const content = this.replyControl.value!.trim();
-    this.notificationService.replyToMessage(msg.id, content, 'مدیر مرکز').subscribe((newReply) => {
+    this.notificationService.replyToMessage(msg.id, content, 'مدیر مرکز', targetUserId).subscribe((newReply) => {
       this.selectedThread.update((list) => [...list, newReply]);
       this.replyControl.reset();
       this.triggerToast('پاسخ شما با موفقیت ثبت شد.', 'success');

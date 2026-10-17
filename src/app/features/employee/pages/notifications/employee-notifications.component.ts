@@ -389,7 +389,7 @@ export class EmployeeNotificationsComponent implements OnInit {
     this.isReplying.set(true);
     const content = this.replyControl.value!.trim();
 
-    this.notificationService.replyToMessage(msg.id, content, 'من (کارمند)').subscribe({
+    this.notificationService.replyToMessage(msg.id, content, 'من (کارمند)', msg.senderId).subscribe({
       next: (newReply) => {
         this.isReplying.set(false);
         this.threadReplies.update((list) => [...list, newReply]);

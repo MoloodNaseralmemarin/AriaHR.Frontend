@@ -203,8 +203,9 @@ export class SystemAdminNotificationsComponent implements OnInit {
     const msg = this.selectedMessage();
     if (!msg || this.replyControl.invalid) return;
 
+    const targetUserId = msg.senderId;
     const content = this.replyControl.value!.trim();
-    this.notificationService.replyToMessage(msg.id, content, 'مدیر ارشد سیستم').subscribe((newReply) => {
+    this.notificationService.replyToMessage(msg.id, content, 'مدیر ارشد سیستم', targetUserId).subscribe((newReply) => {
       this.selectedThread.update((list) => [...list, newReply]);
       this.replyControl.reset();
       this.triggerToast('پاسخ شما با موفقیت ثبت شد.', 'success');
@@ -275,7 +276,7 @@ export class SystemAdminNotificationsComponent implements OnInit {
         this.isSubmitting.set(false);
         this.closeCompose();
         this.loadMessages();
-        this.triggerToast('پیام جدید با موفقیت ارسال شد (ثبت محلی پیش‌نمایش).', 'success');
+        this.triggerToast('پیام جدید با موفقیت ارسال شد.', 'success');
       },
       error: () => {
         this.isSubmitting.set(false);
