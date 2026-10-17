@@ -2,38 +2,8 @@
 > aria-hr.frontend@0.0.0 start
 > ng serve
 
-❯ Building...
-✔ Building...
-Initial chunk files | Names                         |  Raw size
-main.js             | main                          | 937.74 kB |
-styles.css          | styles                        |  82.81 kB |
-chunk-MB7D5QS5.js   | -                             |  21.76 kB |
-chunk-VQPR4FWJ.js   | -                             |  14.29 kB |
-chunk-XG6EPT3D.js   | -                             |  10.34 kB |
-chunk-5TNX2QI6.js   | -                             |   9.94 kB |
-chunk-D2FYJQRE.js   | -                             |   7.63 kB |
-chunk-GTSA2AU2.js   | -                             |   6.54 kB |
-chunk-IBHFWU3Z.js   | -                             |   4.54 kB |
-chunk-GZZZ5IV2.js   | -                             |   1.96 kB |
-chunk-4HIZUYHI.js   | -                             |   1.86 kB |
-chunk-GOMI4DH3.js   | -                             |   1.42 kB |
-chunk-NYG6OOZM.js   | -                             |   1.23 kB |
+Node.js version v22.22.1 detected.
+The Angular CLI requires a minimum Node.js version of v22.22.3 or v24.15.0 or v26.0.0.
 
-                    | Initial total                 |   1.10 MB
+Please update your Node.js version or visit https://nodejs.org/ for additional instructions.
 
-Lazy chunk files    | Names                         |  Raw size
-chunk-UMQYIOGN.js   | employee-form-component       |  58.19 kB |
-chunk-C2P34KDX.js   | employee-list-component       |  47.75 kB |
-chunk-APHV4ZXM.js   | leave-category-list-component |  45.82 kB |
-chunk-ILO2PSNS.js   | leave-category-form-component |  34.14 kB |
-chunk-5CQQSZ7L.js   | employee-details-component    |  22.91 kB |
-chunk-V7UKUUUU.js   | -                             |   3.10 kB |
-chunk-UU2THJKO.js   | employees-routes              | 754 bytes |
-chunk-ESNC6NSA.js   | leave-categories-routes       | 662 bytes |
-
-Application bundle generation complete. [8.187 seconds] - 2026-10-13T14:03:40.343Z
-
-Watch mode enabled. Watching for file changes...
-NOTE: Raw file sizes do not reflect development server per-request transformations.
-  ➜  Local:   http://localhost:4200/
-2:03:41 PM [vite] (client) [optimizer] bundling dependencies...

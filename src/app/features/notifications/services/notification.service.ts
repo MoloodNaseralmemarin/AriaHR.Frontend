@@ -1,7 +1,10 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, of, tap } from 'rxjs';
 import { delay } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 import { MessagePriority, MessageType } from '../models/message-enums';
+import { CreateNotificationDto, NotificationResponseDto } from '../models/notification.dto';
 import {
   CreateMessagePayload,
   MessageRecipientStatus,
@@ -10,15 +13,16 @@ import {
 } from '../models/notification.models';
 
 /**
- * Temporary Notification Service providing in-memory state and sample Persian data
+ * Notification Service providing API integration and fallback state
  * for UI development across System Admin, Center Manager, and Employee portals.
- *
- * Designed to be easily replaced with live API calls once backend contracts are finalized.
  */
 @Injectable({
   providedIn: 'root',
 })
 export class NotificationService {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/api/notifications`;
+
   private readonly _messages = signal<NotificationMessage[]>([
     {
       id: 'msg-1',
@@ -188,6 +192,38 @@ export class NotificationService {
 
   readonly messages = this._messages.asReadonly();
   readonly unreadCount = computed(() => this._messages().filter((m) => !m.isRead).length);
+
+  /**
+   * Calls POST /api/notifications API endpoint to create a real backend notification.
+   */
+  createNotification(request: CreateNotificationDto): Observable<NotificationResponseDto> {
+    return this.http.post<NotificationResponseDto>(this.apiUrl, request).pipe(
+      tap((res) => {
+        // Optimistically prepend mapped NotificationMessage to local signal for UI immediate updates
+        const newMsg: NotificationMessage = {
+          id: res?.id || `msg-${Date.now()}`,
+          title: request.title,
+          content: request.message,
+          messageType: request.type,
+          messagePriority: request.priority,
+          senderId: res?.senderUserId || 'sys-admin',
+          senderName: res?.senderName || 'مدیریت ارشد سیستم',
+          senderRole: 'SystemAdmin',
+          createdAt: res?.createdAtUtc || res?.createdAt || new Date().toISOString(),
+          publicationStart: request.publishStartAtUtc,
+          expiration: request.expiresAtUtc || undefined,
+          isRead: true,
+          requiresAcknowledgment: request.requiresAcknowledgment,
+          isAcknowledged: false,
+          recipientType: request.recipientOrganizationId ? 'Organization' : 'Specific',
+          recipientCount: request.recipientUserIds?.length || 1,
+          acknowledgedCount: 0,
+          unreadCount: request.recipientUserIds?.length || 1,
+        };
+        this._messages.update((list) => [newMsg, ...list]);
+      })
+    );
+  }
 
   /** Retrieves all inbox messages for active role view. */
   getInbox(filter: 'all' | 'unread' = 'all'): Observable<NotificationMessage[]> {
