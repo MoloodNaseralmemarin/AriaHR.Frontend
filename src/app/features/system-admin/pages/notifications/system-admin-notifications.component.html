@@ -1,0 +1,407 @@
+<div class="space-y-6">
+  <!-- Toast Notification -->
+  <app-toast [message]="toastMessage()" [tone]="toastTone()"></app-toast>
+
+  <!-- Page Header -->
+  <app-page-header
+    title="اعلان‌ها و اطلاع‌رسانی مدیریت"
+    subtitle="مدیریت اطلاعیه‌ها، پیام‌های ارسالی به مراکز و پیگیری تایید دریافتی‌ها"
+  >
+    <button
+      actions
+      type="button"
+      (click)="openCompose()"
+      class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs transition hover:bg-blue-700 cursor-pointer"
+    >
+      <span>✉</span>
+      <span>ارسال پیام جدید</span>
+    </button>
+  </app-page-header>
+
+  <!-- Main Tabs & Filters Bar -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-3">
+    <!-- Inbox / Sent Tabs -->
+    <div class="inline-flex rounded-xl bg-slate-100 p-1">
+      <button
+        type="button"
+        (click)="setActiveTab('inbox')"
+        [class]="
+          activeTab() === 'inbox'
+            ? 'rounded-lg bg-white px-4 py-1.5 text-xs font-bold text-slate-900 shadow-2xs'
+            : 'rounded-lg px-4 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900'
+        "
+      >
+        صندوق ورودی
+      </button>
+      <button
+        type="button"
+        (click)="setActiveTab('sent')"
+        [class]="
+          activeTab() === 'sent'
+            ? 'rounded-lg bg-white px-4 py-1.5 text-xs font-bold text-slate-900 shadow-2xs'
+            : 'rounded-lg px-4 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900'
+        "
+      >
+        پیام‌های ارسالی
+      </button>
+    </div>
+
+    <!-- Read Filters & Search -->
+    <div class="flex items-center gap-2">
+      <!-- Search Input -->
+      <div class="relative min-w-[180px] sm:min-w-[240px]">
+        <input
+          type="text"
+          [value]="searchQuery()"
+          (input)="onSearch($event)"
+          placeholder="جستجو در عنوان یا متن..."
+          class="w-full rounded-xl border border-slate-200 bg-white py-1.5 pr-8 pl-3 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden"
+        />
+        <span class="absolute right-2.5 top-2 text-slate-400 text-xs">🔍</span>
+      </div>
+
+      <!-- Filter Pills (Inbox only) -->
+      @if (activeTab() === 'inbox') {
+        <div class="inline-flex rounded-xl bg-slate-100 p-1">
+          <button
+            type="button"
+            (click)="setReadFilter('all')"
+            [class]="
+              readFilter() === 'all'
+                ? 'rounded-lg bg-white px-3 py-1 text-xs font-semibold text-slate-800 shadow-2xs'
+                : 'px-3 py-1 text-xs font-medium text-slate-500'
+            "
+          >
+            همه
+          </button>
+          <button
+            type="button"
+            (click)="setReadFilter('unread')"
+            [class]="
+              readFilter() === 'unread'
+                ? 'rounded-lg bg-white px-3 py-1 text-xs font-semibold text-blue-700 shadow-2xs'
+                : 'px-3 py-1 text-xs font-medium text-slate-500'
+            "
+          >
+            خوانده نشده
+            @if (unreadCount() > 0) {
+              <span class="mr-1 rounded-full bg-blue-600 px-1.5 py-0.2 text-[10px] text-white">
+                {{ unreadCount() | persianDigits }}
+              </span>
+            }
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Messages List -->
+  @if (isLoading()) {
+    <div class="space-y-3">
+      <div class="h-24 w-full animate-pulse rounded-2xl bg-slate-200"></div>
+      <div class="h-24 w-full animate-pulse rounded-2xl bg-slate-200"></div>
+    </div>
+  } @else if (filteredMessages().length === 0) {
+    <app-empty-state
+      title="هیچ اعلانی یافت نشد"
+      description="در حال حاضر هیچ پیام یا اطلاعیه‌ای بر اساس فیلترهای انتخابی شما ثبت نشده است."
+    ></app-empty-state>
+  } @else {
+    <div class="space-y-3">
+      @for (msg of filteredMessages(); track msg.id) {
+        <div
+          (click)="openMessageDetails(msg)"
+          [class]="
+            !msg.isRead && activeTab() === 'inbox'
+              ? 'relative cursor-pointer rounded-2xl border border-blue-200 bg-blue-50/40 p-4 transition hover:bg-blue-50 sm:p-5 shadow-2xs'
+              : 'relative cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 sm:p-5 shadow-2xs'
+          "
+        >
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div class="space-y-1.5 max-w-2xl">
+              <div class="flex flex-wrap items-center gap-2">
+                @if (!msg.isRead && activeTab() === 'inbox') {
+                  <span class="inline-block h-2.5 w-2.5 rounded-full bg-blue-600" title="خوانده نشده"></span>
+                }
+                <!-- Type Badge -->
+                <span [class]="'rounded-lg border px-2 py-0.5 text-[11px] font-bold ' + getTypeBadgeClass(msg.messageType)">
+                  {{ MessageTypeLabels[msg.messageType] }}
+                </span>
+                <!-- Priority Badge -->
+                <span [class]="'rounded-lg border px-2 py-0.5 text-[11px] font-semibold ' + getPriorityBadgeClass(msg.messagePriority)">
+                  {{ MessagePriorityLabels[msg.messagePriority] }}
+                </span>
+                @if (msg.requiresAcknowledgment) {
+                  <span class="rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                    نیازمند تایید دریافت
+                  </span>
+                }
+              </div>
+
+              <h3 class="text-sm font-bold text-slate-900 sm:text-base leading-snug">
+                {{ msg.title }}
+              </h3>
+              <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                {{ msg.content }}
+              </p>
+            </div>
+
+            <div class="flex sm:flex-col items-center sm:items-end justify-between text-xs text-slate-400 gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
+              <span class="font-medium text-slate-500">
+                {{ msg.createdAt | jalali }}
+              </span>
+              <span class="text-[11px] text-slate-400">
+                فرستنده: {{ msg.senderName }}
+              </span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Message Detail Drawer Modal -->
+  @if (selectedMessage()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-end bg-slate-900/50 backdrop-blur-xs p-2 sm:p-4 animate-in">
+      <div class="flex h-full w-full max-w-2xl flex-col rounded-3xl bg-white shadow-2xl overflow-hidden">
+        <!-- Drawer Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/80">
+          <div class="flex items-center gap-2">
+            <span [class]="'rounded-lg border px-2.5 py-1 text-xs font-bold ' + getTypeBadgeClass(selectedMessage()!.messageType)">
+              {{ MessageTypeLabels[selectedMessage()!.messageType] }}
+            </span>
+            <span [class]="'rounded-lg border px-2.5 py-1 text-xs font-semibold ' + getPriorityBadgeClass(selectedMessage()!.messagePriority)">
+              {{ MessagePriorityLabels[selectedMessage()!.messagePriority] }}
+            </span>
+          </div>
+          <button type="button" (click)="closeDetails()" class="rounded-xl p-2 text-slate-400 hover:bg-slate-200 transition text-lg">
+            ✕
+          </button>
+        </div>
+
+        <!-- Drawer Content Body -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+          <div class="space-y-2">
+            <h2 class="text-lg font-bold text-slate-900 leading-snug">{{ selectedMessage()!.title }}</h2>
+            <div class="flex items-center gap-4 text-xs text-slate-500">
+              <span>ارسال توسط: <strong class="text-slate-700">{{ selectedMessage()!.senderName }}</strong></span>
+              <span>•</span>
+              <span>تاریخ: {{ selectedMessage()!.createdAt | jalali }}</span>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-800 whitespace-pre-line border border-slate-100">
+            {{ selectedMessage()!.content }}
+          </div>
+
+          <!-- Recipient Delivery & Acknowledgment Status Breakdown (For Sent Messages) -->
+          @if (activeTab() === 'sent' && selectedRecipients().length > 0) {
+            <div class="space-y-3 pt-2">
+              <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">وضعیت دریافت و تایید گیرندگان</h4>
+              <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <table class="w-full text-right text-xs">
+                  <thead class="bg-slate-50 text-slate-500">
+                    <tr>
+                      <th class="p-3 font-semibold">مرکز / گیرنده</th>
+                      <th class="p-3 font-semibold">مشاهده</th>
+                      <th class="p-3 font-semibold">تایید دریافت</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 bg-white">
+                    @for (rec of selectedRecipients(); track rec.recipientId) {
+                      <tr>
+                        <td class="p-3 font-medium text-slate-800">{{ rec.recipientName }}</td>
+                        <td class="p-3">
+                          @if (rec.isRead) {
+                            <span class="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                              ✓ خوانده شده ({{ rec.readAt | jalali }})
+                            </span>
+                          } @else {
+                            <span class="text-slate-400">خوانده نشده</span>
+                          }
+                        </td>
+                        <td class="p-3">
+                          @if (rec.isAcknowledged) {
+                            <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                              ✓ تایید شد ({{ rec.acknowledgedAt | jalali }})
+                            </span>
+                          } @else {
+                            <span class="text-amber-600 font-medium">در انتظار تایید</span>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+
+          <!-- Thread Conversation Replies -->
+          <div class="space-y-4 pt-4 border-t border-slate-100">
+            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">تاریخچه گفتگو و پاسخ‌ها</h4>
+
+            <div class="space-y-3">
+              @for (rep of selectedThread(); track rep.id) {
+                <div [class]="rep.isSelf ? 'mr-auto max-w-[85%] rounded-2xl bg-blue-600 p-3.5 text-white text-xs' : 'ml-auto max-w-[85%] rounded-2xl bg-slate-100 p-3.5 text-slate-800 text-xs'">
+                  <div class="flex items-center justify-between gap-3 mb-1 text-[10px] opacity-80">
+                    <span class="font-bold">{{ rep.senderName }}</span>
+                    <span>{{ rep.createdAt | jalali }}</span>
+                  </div>
+                  <p class="leading-relaxed whitespace-pre-line">{{ rep.content }}</p>
+                </div>
+              }
+            </div>
+
+            <!-- Reply Form -->
+            <div class="space-y-2 pt-2">
+              <textarea
+                [formControl]="replyControl"
+                rows="2"
+                placeholder="پاسخ خود را بنویسید..."
+                class="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden"
+              ></textarea>
+              <div class="flex justify-end">
+                <button
+                  type="button"
+                  (click)="sendReply()"
+                  [disabled]="replyControl.invalid"
+                  class="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+                >
+                  ارسال پاسخ
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Compose Message Modal -->
+  @if (isComposeOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in">
+      <div class="w-full max-w-xl rounded-3xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/80">
+          <h2 class="text-base font-bold text-slate-900">ارسال پیام و اطلاعیه جدید</h2>
+          <button type="button" (click)="closeCompose()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-200 transition text-lg">
+            ✕
+          </button>
+        </div>
+
+        <!-- Form Body -->
+        <form [formGroup]="composeForm" (ngSubmit)="submitCompose()" class="flex-1 overflow-y-auto p-6 space-y-4">
+          <!-- Title -->
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-slate-700">عنوان پیام <span class="text-rose-500">*</span></label>
+            <input
+              type="text"
+              formControlName="title"
+              placeholder="مثال: بروزرسانی دستورالعمل‌های جدید"
+              class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden"
+            />
+          </div>
+
+          <!-- Content -->
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-slate-700">متن پیام <span class="text-rose-500">*</span></label>
+            <textarea
+              formControlName="content"
+              rows="4"
+              placeholder="متن کامل اطلاع‌رسانی خود را وارد کنید..."
+              class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden"
+            ></textarea>
+          </div>
+
+          <!-- Type & Priority Row -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">نوع پیام</label>
+              <select
+                formControlName="messageType"
+                class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden"
+              >
+                <option [value]="MessageType.Information">اطلاعیه</option>
+                <option [value]="MessageType.Warning">هشدار</option>
+                <option [value]="MessageType.Critical">فوری / مهم</option>
+                <option [value]="MessageType.Success">موفقیت</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">اولیت پیام</label>
+              <select
+                formControlName="messagePriority"
+                class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden"
+              >
+                <option [value]="MessagePriority.Normal">عادی</option>
+                <option [value]="MessagePriority.High">مهم</option>
+                <option [value]="MessagePriority.Urgent">فوری</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Recipient Selection Table/List -->
+          <div class="space-y-2 pt-2 border-t border-slate-100">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-slate-700">انتخاب مراکز گیرنده <span class="text-rose-500">*</span></label>
+              <div class="flex gap-2 text-[11px]">
+                <button type="button" (click)="selectAllRecipients()" class="text-blue-600 font-semibold hover:underline">انتخاب همه</button>
+                <button type="button" (click)="clearRecipientSelection()" class="text-slate-400 hover:underline">پاکسازی</button>
+              </div>
+            </div>
+
+            <div class="max-h-36 overflow-y-auto rounded-xl border border-slate-200 p-2 space-y-1">
+              @for (target of targetOptions(); track target.id) {
+                <label class="flex items-center justify-between rounded-lg p-2 hover:bg-slate-50 cursor-pointer text-xs">
+                  <span class="font-medium text-slate-800">{{ target.name }} ({{ target.managerName }})</span>
+                  <input
+                    type="checkbox"
+                    [checked]="isRecipientSelected(target.id)"
+                    (change)="toggleRecipientSelection(target.id)"
+                    class="h-4 w-4 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </label>
+              }
+            </div>
+          </div>
+
+          <!-- Acknowledgment Checkbox -->
+          <div class="pt-2">
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
+              <input
+                type="checkbox"
+                formControlName="requiresAcknowledgment"
+                class="h-4 w-4 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>الزام به تایید صریح دریافت توسط گیرنده</span>
+            </label>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              (click)="closeCompose()"
+              class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              انصراف
+            </button>
+            <button
+              type="submit"
+              [disabled]="composeForm.invalid || isSubmitting()"
+              class="rounded-xl bg-blue-600 px-5 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+            >
+              @if (isSubmitting()) {
+                در حال ارسال...
+              } @else {
+                ارسال پیام
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
