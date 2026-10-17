@@ -159,4 +159,49 @@ describe('SystemAdminNotificationsComponent (Isolated Tests)', () => {
     expect(component.composeForm.get('title')?.value).toBe('عنوان تست خطا');
     expect(component.toastTone()).toBe('error');
   });
+
+  it('should handle list error when getSent fails', () => {
+    mockNotificationService.getSent.mockReturnValue(throwError(() => new Error('Network error')));
+    component.ngOnInit();
+    component.setActiveTab('sent');
+
+    expect(component.listError()).toContain('خطا در دریافت پیام‌های ارسالی');
+    expect(component.isLoading()).toBe(false);
+  });
+
+  it('should load recipient details and enrich missing names from target options', () => {
+    mockNotificationService.getRecipientStatuses.mockReturnValue(
+      of([
+        {
+          recipientId: '1',
+          recipientName: '1',
+          isRead: true,
+          readAt: '2026-08-25T10:00:00Z',
+          isAcknowledged: false,
+        },
+      ])
+    );
+
+    component.ngOnInit();
+    component.loadRecipients('msg-1');
+
+    expect(mockNotificationService.getRecipientStatuses).toHaveBeenCalledWith('msg-1');
+    expect(component.selectedRecipients().length).toBe(1);
+    expect(component.selectedRecipients()[0].recipientName).toBe('کلینیک آریا (سارا محمدی)');
+    expect(component.selectedRecipients()[0].isRead).toBe(true);
+    expect(component.selectedRecipients()[0].isAcknowledged).toBe(false);
+  });
+
+  it('should handle recipient status API failure gracefully without breaking state', () => {
+    mockNotificationService.getRecipientStatuses.mockReturnValue(
+      throwError(() => new Error('500 Internal Error'))
+    );
+
+    component.ngOnInit();
+    component.loadRecipients('msg-1');
+
+    expect(component.isLoadingRecipients()).toBe(false);
+    expect(component.recipientsError()).toContain('خطا در دریافت وضعیت دریافت‌کنندگان');
+    expect(component.selectedRecipients().length).toBe(0);
+  });
 });

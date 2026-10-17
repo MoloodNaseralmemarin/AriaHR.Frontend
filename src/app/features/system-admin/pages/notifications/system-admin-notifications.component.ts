@@ -46,10 +46,13 @@ export class SystemAdminNotificationsComponent implements OnInit {
 
   readonly messages = signal<NotificationMessage[]>([]);
   readonly isLoading = signal<boolean>(true);
+  readonly listError = signal<string | null>(null);
 
   readonly selectedMessage = signal<NotificationMessage | null>(null);
   readonly selectedThread = signal<MessageReply[]>([]);
   readonly selectedRecipients = signal<MessageRecipientStatus[]>([]);
+  readonly isLoadingRecipients = signal<boolean>(false);
+  readonly recipientsError = signal<string | null>(null);
 
   readonly isComposeOpen = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
@@ -110,13 +113,18 @@ export class SystemAdminNotificationsComponent implements OnInit {
 
   loadMessages(): void {
     this.isLoading.set(true);
+    this.listError.set(null);
     if (this.activeTab() === 'inbox') {
       this.notificationService.getInbox().subscribe({
         next: (res) => {
           this.messages.set(res);
           this.isLoading.set(false);
         },
-        error: () => this.isLoading.set(false),
+        error: (err) => {
+          console.error('Error loading inbox notifications', err);
+          this.listError.set('خطا در دریافت پیام‌های ورودی. لطفاً دوباره تلاش کنید.');
+          this.isLoading.set(false);
+        },
       });
     } else {
       this.notificationService.getSent().subscribe({
@@ -124,7 +132,11 @@ export class SystemAdminNotificationsComponent implements OnInit {
           this.messages.set(res);
           this.isLoading.set(false);
         },
-        error: () => this.isLoading.set(false),
+        error: (err) => {
+          console.error('Error loading sent notifications', err);
+          this.listError.set('خطا در دریافت پیام‌های ارسالی. لطفاً دوباره تلاش کنید.');
+          this.isLoading.set(false);
+        },
       });
     }
   }
@@ -197,7 +209,41 @@ export class SystemAdminNotificationsComponent implements OnInit {
   }
 
   loadRecipients(id: string): void {
-    this.notificationService.getRecipientStatuses(id).subscribe((res) => this.selectedRecipients.set(res));
+    this.isLoadingRecipients.set(true);
+    this.recipientsError.set(null);
+    this.selectedRecipients.set([]);
+
+    this.notificationService.getRecipientStatuses(id).subscribe({
+      next: (statuses) => {
+        const options = this.targetOptions();
+        const enriched = statuses.map((rec) => {
+          let rName = rec.recipientName?.trim();
+          let oName = rec.organizationName?.trim();
+
+          if (!rName || rName === rec.recipientId) {
+            const matched = options.find((o) => o.id === rec.recipientId);
+            if (matched) {
+              rName = matched.managerName ? `${matched.name} (${matched.managerName})` : matched.name;
+              if (!oName) oName = matched.name;
+            }
+          }
+
+          return {
+            ...rec,
+            recipientName: rName || oName || `گیرنده (${rec.recipientId || 'نامشخص'})`,
+            organizationName: oName || rec.organizationName,
+          };
+        });
+
+        this.selectedRecipients.set(enriched);
+        this.isLoadingRecipients.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load recipient statuses', err);
+        this.recipientsError.set('خطا در دریافت وضعیت دریافت‌کنندگان پیام.');
+        this.isLoadingRecipients.set(false);
+      },
+    });
   }
 
   sendReply(): void {

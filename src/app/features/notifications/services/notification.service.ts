@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, of, tap } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { delay, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { MessagePriority, MessageType } from '../models/message-enums';
-import { CreateNotificationDto, NotificationResponseDto } from '../models/notification.dto';
+import { CreateNotificationDto, NotificationRecipientStatusResponseDto, NotificationResponseDto } from '../models/notification.dto';
 import {
   CreateMessagePayload,
   MessageRecipientStatus,
@@ -227,14 +227,23 @@ export class NotificationService {
 
   /** Retrieves all inbox messages for active role view. */
   getInbox(filter: 'all' | 'unread' = 'all'): Observable<NotificationMessage[]> {
-    const list = this._messages();
-    const filtered = filter === 'unread' ? list.filter((m) => !m.isRead) : list;
-    return of(filtered).pipe(delay(100));
+    return this.http.get<unknown>(`${this.apiUrl}/inbox`).pipe(
+      map((res) => {
+        const items = this.normalizeNotificationListResponse(res);
+        const mapped = items.map((dto) => this.mapDtoToNotificationMessage(dto));
+        return filter === 'unread' ? mapped.filter((m) => !m.isRead) : mapped;
+      })
+    );
   }
 
-  /** Retrieves all sent messages created by current role. */
+  /** Retrieves all sent messages created by current role via real backend API. */
   getSent(): Observable<NotificationMessage[]> {
-    return of(this._messages()).pipe(delay(100));
+    return this.http.get<unknown>(`${this.apiUrl}/sent`).pipe(
+      map((res) => {
+        const items = this.normalizeNotificationListResponse(res);
+        return items.map((dto) => this.mapDtoToNotificationMessage(dto));
+      })
+    );
   }
 
   /** Retrieves a single message by ID. */
@@ -341,9 +350,131 @@ export class NotificationService {
     return of(thread).pipe(delay(50));
   }
 
-  /** Retrieves recipient read and acknowledgment status for sent messages. */
+  /** Retrieves recipient read and acknowledgment status for sent messages via real backend API. */
   getRecipientStatuses(messageId: string): Observable<MessageRecipientStatus[]> {
-    const statuses = this._recipients()[messageId] || [];
-    return of(statuses).pipe(delay(50));
+    return this.http.get<unknown>(`${this.apiUrl}/${messageId}/recipients`).pipe(
+      map((res) => {
+        const items = this.normalizeRecipientListResponse(res);
+        return items.map((dto) => this.mapDtoToRecipientStatus(dto));
+      })
+    );
+  }
+
+  private normalizeNotificationListResponse(raw: unknown): NotificationResponseDto[] {
+    if (Array.isArray(raw)) {
+      return raw as NotificationResponseDto[];
+    }
+    if (raw && typeof raw === 'object') {
+      const obj = raw as Record<string, unknown>;
+      if (Array.isArray(obj['items'])) return obj['items'] as NotificationResponseDto[];
+      if (Array.isArray(obj['Items'])) return obj['Items'] as NotificationResponseDto[];
+      if (Array.isArray(obj['data'])) return obj['data'] as NotificationResponseDto[];
+      if (Array.isArray(obj['Data'])) return obj['Data'] as NotificationResponseDto[];
+      if (Array.isArray(obj['value'])) return obj['value'] as NotificationResponseDto[];
+      if (Array.isArray(obj['Value'])) return obj['Value'] as NotificationResponseDto[];
+    }
+    return [];
+  }
+
+  private normalizeRecipientListResponse(raw: unknown): NotificationRecipientStatusResponseDto[] {
+    if (Array.isArray(raw)) {
+      return raw as NotificationRecipientStatusResponseDto[];
+    }
+    if (raw && typeof raw === 'object') {
+      const obj = raw as Record<string, unknown>;
+      if (Array.isArray(obj['items'])) return obj['items'] as NotificationRecipientStatusResponseDto[];
+      if (Array.isArray(obj['Items'])) return obj['Items'] as NotificationRecipientStatusResponseDto[];
+      if (Array.isArray(obj['data'])) return obj['data'] as NotificationRecipientStatusResponseDto[];
+      if (Array.isArray(obj['Data'])) return obj['Data'] as NotificationRecipientStatusResponseDto[];
+      if (Array.isArray(obj['value'])) return obj['value'] as NotificationRecipientStatusResponseDto[];
+      if (Array.isArray(obj['Value'])) return obj['Value'] as NotificationRecipientStatusResponseDto[];
+    }
+    return [];
+  }
+
+  private mapDtoToNotificationMessage(dto: NotificationResponseDto | Record<string, unknown>): NotificationMessage {
+    const record = dto as Record<string, unknown>;
+    const id = String(record['id'] ?? record['Id'] ?? '');
+    const title = String(record['title'] ?? record['Title'] ?? '');
+    const content = String(
+      record['message'] ?? record['Message'] ?? record['content'] ?? record['Content'] ?? ''
+    );
+    const messageType = Number(
+      record['type'] ?? record['Type'] ?? record['messageType'] ?? record['MessageType'] ?? MessageType.Information
+    );
+    const messagePriority = Number(
+      record['priority'] ?? record['Priority'] ?? record['messagePriority'] ?? record['MessagePriority'] ?? MessagePriority.Normal
+    );
+    const senderId = String(
+      record['senderUserId'] ?? record['SenderUserId'] ?? record['senderId'] ?? record['SenderId'] ?? ''
+    );
+    const senderName = String(
+      record['senderName'] ?? record['SenderName'] ?? 'مدیریت ارشد سیستم'
+    );
+    const createdAt = String(
+      record['createdAtUtc'] ?? record['CreatedAtUtc'] ?? record['createdAt'] ?? record['CreatedAt'] ?? new Date().toISOString()
+    );
+    const publicationStart = record['publishStartAtUtc'] ?? record['PublishStartAtUtc'] ?? record['publicationStart'] ?? record['PublicationStart'];
+    const expiration = record['expiresAtUtc'] ?? record['ExpiresAtUtc'] ?? record['expiration'] ?? record['Expiration'];
+    const isRead = Boolean(record['isRead'] ?? record['IsRead'] ?? false);
+    const readAt = record['readAtUtc'] ?? record['ReadAtUtc'] ?? record['readAt'] ?? record['ReadAt'];
+    const requiresAcknowledgment = Boolean(
+      record['requiresAcknowledgment'] ?? record['RequiresAcknowledgment'] ?? false
+    );
+    const isAcknowledged = Boolean(
+      record['isAcknowledged'] ?? record['IsAcknowledged'] ?? false
+    );
+    const acknowledgedAt = record['acknowledgedAtUtc'] ?? record['AcknowledgedAtUtc'] ?? record['acknowledgedAt'] ?? record['AcknowledgedAt'];
+
+    const rawRecUserIds = record['recipientUserIds'] ?? record['RecipientUserIds'];
+    const recipientCount = Array.isArray(rawRecUserIds) ? rawRecUserIds.length : 1;
+
+    return {
+      id,
+      title,
+      content,
+      messageType,
+      messagePriority,
+      senderId,
+      senderName,
+      senderRole: 'SystemAdmin',
+      createdAt,
+      publicationStart: publicationStart ? String(publicationStart) : undefined,
+      expiration: expiration ? String(expiration) : undefined,
+      isRead,
+      readAt: readAt ? String(readAt) : undefined,
+      requiresAcknowledgment,
+      isAcknowledged,
+      acknowledgedAt: acknowledgedAt ? String(acknowledgedAt) : undefined,
+      recipientType: (record['recipientOrganizationId'] || record['RecipientOrganizationId']) ? 'Organization' : 'Specific',
+      recipientCount,
+    };
+  }
+
+  private mapDtoToRecipientStatus(dto: NotificationRecipientStatusResponseDto | Record<string, unknown>): MessageRecipientStatus {
+    const record = dto as Record<string, unknown>;
+    const recipientId = String(
+      record['recipientId'] ?? record['RecipientId'] ?? record['recipientUserId'] ?? record['RecipientUserId'] ?? record['userId'] ?? record['UserId'] ?? record['id'] ?? record['Id'] ?? ''
+    );
+    const recipientName = String(
+      record['recipientName'] ?? record['RecipientName'] ?? record['recipientUserName'] ?? record['RecipientUserName'] ?? record['userName'] ?? record['UserName'] ?? ''
+    );
+    const organizationName = (record['organizationName'] ?? record['OrganizationName']) ? String(record['organizationName'] ?? record['OrganizationName']) : undefined;
+    const isRead = Boolean(record['isRead'] ?? record['IsRead'] ?? false);
+    const rawReadAt = record['readAtUtc'] ?? record['ReadAtUtc'] ?? record['readAt'] ?? record['ReadAt'];
+    const readAt = rawReadAt ? String(rawReadAt) : undefined;
+    const isAcknowledged = Boolean(record['isAcknowledged'] ?? record['IsAcknowledged'] ?? false);
+    const rawAckAt = record['acknowledgedAtUtc'] ?? record['AcknowledgedAtUtc'] ?? record['acknowledgedAt'] ?? record['AcknowledgedAt'];
+    const acknowledgedAt = rawAckAt ? String(rawAckAt) : undefined;
+
+    return {
+      recipientId,
+      recipientName,
+      organizationName,
+      isRead,
+      readAt,
+      isAcknowledged,
+      acknowledgedAt,
+    };
   }
 }
