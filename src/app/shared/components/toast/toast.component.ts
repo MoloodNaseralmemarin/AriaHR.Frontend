@@ -14,6 +14,7 @@ export type ToastTone = 'success' | 'error' | 'info';
   imports: [CommonModule],
   template: `
     <div
+      *ngIf="message"
       class="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border bg-white p-3.5 shadow-lg"
       [ngClass]="borderClasses()"
       role="status"

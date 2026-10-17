@@ -1,6 +1,8 @@
 <div class="space-y-6">
   <!-- Toast Notification -->
-  <app-toast [message]="toastMessage()" [tone]="toastTone()"></app-toast>
+  @if (toastMessage()) {
+    <app-toast [message]="toastMessage()" [tone]="toastTone()"></app-toast>
+  }
 
   <!-- Page Header -->
   <app-page-header

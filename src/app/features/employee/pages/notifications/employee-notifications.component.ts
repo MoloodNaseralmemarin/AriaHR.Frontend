@@ -29,7 +29,9 @@ type ReadFilter = 'all' | 'unread';
   template: `
     <div class="space-y-6">
       <!-- Toast Component -->
-      <app-toast [message]="toastMessage()" [tone]="toastTone()"></app-toast>
+      @if (toastMessage()) {
+        <app-toast [message]="toastMessage()" [tone]="toastTone()"></app-toast>
+      }
 
       <!-- Page Header -->
       <app-page-header
