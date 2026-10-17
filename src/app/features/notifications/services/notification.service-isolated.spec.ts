@@ -6,21 +6,21 @@ import { firstValueFrom, of } from 'rxjs';
 
 import { NotificationService } from './notification.service';
 import { MessagePriority, MessageType } from '../models/message-enums';
-import { CreateNotificationDto } from '../models/notification.dto';
 
 describe('NotificationService (Isolated Tests)', () => {
   let service: NotificationService;
-  let mockHttpClient: { post: ReturnType<typeof vi.fn> };
+  let mockHttpClient: { get: any; post: any };
 
   beforeEach(() => {
     mockHttpClient = {
+      get: vi.fn(),
       post: vi.fn(),
     };
 
     const injector = Injector.create({
       providers: [
         { provide: HttpClient, useValue: mockHttpClient },
-        { provide: NotificationService, useClass: NotificationService },
+        NotificationService,
       ],
     });
 
@@ -29,94 +29,101 @@ describe('NotificationService (Isolated Tests)', () => {
     });
   });
 
-  it('should initialize with sample messages and unread count', async () => {
-    const messages = await firstValueFrom(service.getInbox());
-    expect(messages.length).toBeGreaterThan(0);
+  it('should call GET /api/notifications/sent and map array response to NotificationMessage[]', async () => {
+    const rawBackendData = [
+      {
+        id: 'sent-101',
+        title: 'اطلاعیه ارسالی سیستم',
+        message: 'متن کامل اطلاعیه ارسالی',
+        type: MessageType.Warning,
+        priority: MessagePriority.High,
+        requiresAcknowledgment: true,
+        publishStartAtUtc: '2026-10-17T10:00:00Z',
+        createdAtUtc: '2026-10-17T10:00:00Z',
+        senderUserId: 'sys-admin-1',
+        senderName: 'مدیر ارشد',
+        recipientOrganizationId: 'org-1',
+      },
+    ];
+
+    mockHttpClient.get.mockReturnValue(of(rawBackendData));
+
+    const messages = await firstValueFrom(service.getSent());
+
+    expect(mockHttpClient.get).toHaveBeenCalledWith(expect.stringContaining('/api/notifications/sent'));
+    expect(messages.length).toBe(1);
+    expect(messages[0].id).toBe('sent-101');
+    expect(messages[0].title).toBe('اطلاعیه ارسالی سیستم');
+    expect(messages[0].content).toBe('متن کامل اطلاعیه ارسالی');
+    expect(messages[0].messageType).toBe(MessageType.Warning);
+    expect(messages[0].messagePriority).toBe(MessagePriority.High);
+    expect(messages[0].requiresAcknowledgment).toBe(true);
+    expect(messages[0].recipientType).toBe('Organization');
   });
 
-  it('should filter unread messages correctly', async () => {
-    const unreadList = await firstValueFrom(service.getInbox('unread'));
-    expect(unreadList.every((m) => !m.isRead)).toBe(true);
-  });
-
-  it('should mark message as read', async () => {
-    await firstValueFrom(service.markAsRead('msg-1'));
-    const msg = await firstValueFrom(service.getMessageById('msg-1'));
-    expect(msg?.isRead).toBe(true);
-    expect(msg?.readAt).toBeDefined();
-  });
-
-  it('should explicitly acknowledge a message with timestamp', async () => {
-    const res = await firstValueFrom(service.acknowledgeMessage('msg-1'));
-    expect(res.acknowledgedAt).toBeDefined();
-    const msg = await firstValueFrom(service.getMessageById('msg-1'));
-    expect(msg?.isAcknowledged).toBe(true);
-    expect(msg?.acknowledgedAt).toBeDefined();
-  });
-
-  it('should call POST /api/notifications when createNotification is invoked', async () => {
-    const dto: CreateNotificationDto = {
-      title: 'عنوان اطلاعیه جدید',
-      message: 'متن اطلاعیه جدید',
-      type: MessageType.Information,
-      priority: MessagePriority.Normal,
-      requiresAcknowledgment: true,
-      publishStartAtUtc: '2026-10-17T08:00:00.000Z',
-      expiresAtUtc: null,
-      recipientUserIds: ['user-123'],
-      recipientOrganizationId: null,
-      relatedEntityId: null,
-      relatedEntityType: null,
+  it('should normalize wrapped paginated response object from GET /api/notifications/sent', async () => {
+    const wrappedResponse = {
+      items: [
+        {
+          Id: 'sent-102',
+          Title: 'پیام پاسکال کیسی',
+          Message: 'محتوای پیام پاسکال',
+          Type: 1,
+          Priority: 1,
+          RequiresAcknowledgment: false,
+          CreatedAtUtc: '2026-10-17T11:00:00Z',
+        },
+      ],
+      totalCount: 1,
+      pageNumber: 1,
     };
 
-    const apiResponse = {
-      id: 'backend-msg-99',
-      title: dto.title,
-      message: dto.message,
-      type: dto.type,
-      priority: dto.priority,
-      requiresAcknowledgment: dto.requiresAcknowledgment,
-      publishStartAtUtc: dto.publishStartAtUtc,
-      expiresAtUtc: null,
-      createdAtUtc: '2026-10-17T08:00:00.000Z',
-      senderUserId: 'sys-admin-1',
-      senderName: 'مدیریت ارشد سیستم',
-    };
+    mockHttpClient.get.mockReturnValue(of(wrappedResponse));
 
-    mockHttpClient.post.mockReturnValue(of(apiResponse));
+    const messages = await firstValueFrom(service.getSent());
 
-    const res = await firstValueFrom(service.createNotification(dto));
-    expect(mockHttpClient.post).toHaveBeenCalledWith(
-      expect.stringContaining('/api/notifications'),
-      dto
-    );
-    expect(res.id).toBe('backend-msg-99');
+    expect(messages.length).toBe(1);
+    expect(messages[0].id).toBe('sent-102');
+    expect(messages[0].title).toBe('پیام پاسکال کیسی');
+    expect(messages[0].content).toBe('محتوای پیام پاسکال');
   });
 
-  it('should create new message in memory and append to list using createMessage', async () => {
-    const payload = {
-      title: 'پیام تست جدید',
-      content: 'متن پیام آزمایش اولیه',
-      messageType: MessageType.Information,
-      messagePriority: MessagePriority.Normal,
-      recipientType: 'Organization' as const,
-      recipientIds: ['c1'],
-      requiresAcknowledgment: false,
-    };
+  it('should call GET /api/notifications/{id}/recipients and map recipient status response', async () => {
+    const rawRecipientsData = [
+      {
+        recipientUserId: 'usr-1',
+        recipientName: 'علی رضایی',
+        organizationName: 'مرکز پارس',
+        isRead: true,
+        readAtUtc: '2026-10-17T10:30:00Z',
+        isAcknowledged: true,
+        acknowledgedAtUtc: '2026-10-17T10:35:00Z',
+      },
+      {
+        recipientUserId: 'usr-2',
+        recipientName: 'مریم حسینی',
+        organizationName: 'مرکز پارس',
+        isRead: true,
+        readAtUtc: '2026-10-17T10:40:00Z',
+        isAcknowledged: false,
+      },
+    ];
 
-    const created = await firstValueFrom(service.createMessage(payload, 'SystemAdmin', 'مدیر ارشد'));
-    expect(created.id).toBeDefined();
-    expect(created.title).toBe('پیام تست جدید');
+    mockHttpClient.get.mockReturnValue(of(rawRecipientsData));
 
-    const list = await firstValueFrom(service.getInbox());
-    expect(list.some((m) => m.id === created.id)).toBe(true);
-  });
+    const statuses = await firstValueFrom(service.getRecipientStatuses('msg-101'));
 
-  it('should submit reply and update thread', async () => {
-    const reply = await firstValueFrom(service.replyToMessage('msg-1', 'پاسخ آزمایشی به اطلاعیه'));
-    expect(reply.content).toBe('پاسخ آزمایشی به اطلاعیه');
+    expect(mockHttpClient.get).toHaveBeenCalledWith(expect.stringContaining('/api/notifications/msg-101/recipients'));
+    expect(statuses.length).toBe(2);
 
-    const thread = await firstValueFrom(service.getThread('msg-1'));
-    expect(thread.some((r) => r.content === 'پاسخ آزمایشی به اطلاعیه')).toBe(true);
+    expect(statuses[0].recipientId).toBe('usr-1');
+    expect(statuses[0].recipientName).toBe('علی رضایی');
+    expect(statuses[0].organizationName).toBe('مرکز پارس');
+    expect(statuses[0].isRead).toBe(true);
+    expect(statuses[0].isAcknowledged).toBe(true);
+
+    expect(statuses[1].recipientId).toBe('usr-2');
+    expect(statuses[1].isRead).toBe(true);
+    expect(statuses[1].isAcknowledged).toBe(false);
   });
 });
