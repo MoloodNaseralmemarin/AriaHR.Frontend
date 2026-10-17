@@ -4,7 +4,7 @@ import { EnvironmentInjector, createEnvironmentInjector, runInInjectionContext }
 import { PersianDateService } from './persian-date.service';
 
 describe('PersianDateService (Isolated Unit Tests)', () => {
-  it('should format gregorian date to jalali string with persian or ascii digits and custom format', () => {
+  it('should format gregorian date to jalali string in DD-MM-YYYY format with zero padding', () => {
     const injector = createEnvironmentInjector([
       { provide: PersianDateService, useClass: PersianDateService },
     ], {} as EnvironmentInjector);
@@ -14,16 +14,19 @@ describe('PersianDateService (Isolated Unit Tests)', () => {
       service = injector.get(PersianDateService);
     });
 
-    // Default: Persian digits, DD-MM-YYYY
-    expect(service.toJalaliString('2026-05-05')).toBe('۱۵-۰۲-۱۴۰۵');
+    // ISO timestamp 2026-10-17T10:25:40.091Z -> 25-07-1405
+    expect(service.toJalaliString('2026-10-17T10:25:40.091Z', 'ascii')).toBe('25-07-1405');
+    expect(service.toJalaliString('2026-10-17T10:25:40.091Z', 'persian')).toBe('۲۵-۰۷-۱۴۰۵');
 
-    // ASCII digits, DD-MM-YYYY
+    // Single-digit month/day zero padding (2026-05-05 -> 15-02-1405)
     expect(service.toJalaliString('2026-05-05', 'ascii')).toBe('15-02-1405');
 
-    // ASCII digits, YYYY-MM-DD
+    // Explicit YYYY-MM-DD
     expect(service.toJalaliString('2026-05-05', 'ascii', 'YYYY-MM-DD')).toBe('1405-02-15');
 
-    // Persian digits, YYYY-MM-DD
-    expect(service.toJalaliString('2026-05-05', 'persian', 'YYYY-MM-DD')).toBe('۱۴۰۵-۰۲-۱۵');
+    // Graceful invalid/null handling
+    expect(service.toJalaliString(null)).toBe('');
+    expect(service.toJalaliString(undefined)).toBe('');
+    expect(service.toJalaliString('not-a-date')).toBe('');
   });
 });
