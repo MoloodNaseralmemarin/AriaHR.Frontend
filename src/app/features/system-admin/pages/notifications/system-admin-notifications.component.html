@@ -194,10 +194,27 @@
         <div class="flex-1 overflow-y-auto p-6 space-y-6">
           <div class="space-y-2">
             <h2 class="text-lg font-bold text-slate-900 leading-snug">{{ selectedMessage()!.title }}</h2>
-            <div class="flex items-center gap-4 text-xs text-slate-500">
+            <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500">
               <span>ارسال توسط: <strong class="text-slate-700">{{ selectedMessage()!.senderName }}</strong></span>
               <span>•</span>
-              <span>تاریخ: {{ selectedMessage()!.createdAt | jalali }}</span>
+              <span>تاریخ انتشار: {{ selectedMessage()!.createdAt | jalali }}</span>
+              @if (getExpirationDate(selectedMessage()!)) {
+                <span>•</span>
+                <span>تاریخ انقضا: <strong class="text-rose-600">{{ getExpirationDate(selectedMessage()!) | jalali }}</strong></span>
+              }
+            </div>
+
+            <!-- Acknowledgment Requirement Badge -->
+            <div class="pt-1">
+              @if (selectedMessage()!.requiresAcknowledgment) {
+                <span class="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                  ⚠️ نیازمند تأیید دریافت
+                </span>
+              } @else {
+                <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                  ℹ️ عدم نیاز به تأیید دریافت
+                </span>
+              }
             </div>
           </div>
 
@@ -264,43 +281,6 @@
               }
             </div>
           }
-
-          <!-- Thread Conversation Replies -->
-          <div class="space-y-4 pt-4 border-t border-slate-100">
-            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">تاریخچه گفتگو و پاسخ‌ها</h4>
-
-            <div class="space-y-3">
-              @for (rep of selectedThread(); track rep.id) {
-                <div [class]="rep.isSelf ? 'mr-auto max-w-[85%] rounded-2xl bg-blue-600 p-3.5 text-white text-xs' : 'ml-auto max-w-[85%] rounded-2xl bg-slate-100 p-3.5 text-slate-800 text-xs'">
-                  <div class="flex items-center justify-between gap-3 mb-1 text-[10px] opacity-80">
-                    <span class="font-bold">{{ rep.senderName }}</span>
-                    <span>{{ rep.createdAt | jalali }}</span>
-                  </div>
-                  <p class="leading-relaxed whitespace-pre-line">{{ rep.content }}</p>
-                </div>
-              }
-            </div>
-
-            <!-- Reply Form -->
-            <div class="space-y-2 pt-2">
-              <textarea
-                [formControl]="replyControl"
-                rows="2"
-                placeholder="پاسخ خود را بنویسید..."
-                class="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden"
-              ></textarea>
-              <div class="flex justify-end">
-                <button
-                  type="button"
-                  (click)="sendReply()"
-                  [disabled]="replyControl.invalid"
-                  class="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
-                >
-                  ارسال پاسخ
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

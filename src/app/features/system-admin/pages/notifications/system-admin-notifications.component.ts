@@ -10,7 +10,7 @@ import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe'
 
 import { NotificationService } from '../../../notifications/services/notification.service';
 import { MessagePriorityLabels, MessageTypeLabels, MessagePriority, MessageType } from '../../../notifications/models/message-enums';
-import { MessageRecipientStatus, MessageReply, NotificationMessage } from '../../../notifications/models/notification.models';
+import { MessageRecipientStatus, NotificationMessage } from '../../../notifications/models/notification.models';
 import { CreateNotificationDto } from '../../../notifications/models/notification.dto';
 import { OrganizationService } from '../../../organizations/services/organization.service';
 import { RecentOrganizationDto } from '../../../organizations/models/recent-organization.dto';
@@ -49,7 +49,6 @@ export class SystemAdminNotificationsComponent implements OnInit {
   readonly listError = signal<string | null>(null);
 
   readonly selectedMessage = signal<NotificationMessage | null>(null);
-  readonly selectedThread = signal<MessageReply[]>([]);
   readonly selectedRecipients = signal<MessageRecipientStatus[]>([]);
   readonly isLoadingRecipients = signal<boolean>(false);
   readonly recipientsError = signal<string | null>(null);
@@ -59,8 +58,6 @@ export class SystemAdminNotificationsComponent implements OnInit {
 
   readonly toastMessage = signal<string>('');
   readonly toastTone = signal<ToastTone>('success');
-
-  readonly replyControl = this.fb.control('', [Validators.required, Validators.minLength(2)]);
 
   composeForm!: FormGroup;
 
@@ -194,18 +191,16 @@ export class SystemAdminNotificationsComponent implements OnInit {
       });
     }
 
-    this.loadThread(msg.id);
     this.loadRecipients(msg.id);
   }
 
   closeDetails(): void {
     this.selectedMessage.set(null);
-    this.selectedThread.set([]);
     this.selectedRecipients.set([]);
   }
 
-  loadThread(id: string): void {
-    this.notificationService.getThread(id).subscribe((res) => this.selectedThread.set(res));
+  getExpirationDate(msg: NotificationMessage): string | null {
+    return msg.expiration || (msg as any).expiresAtUtc || null;
   }
 
   loadRecipients(id: string): void {
@@ -243,18 +238,6 @@ export class SystemAdminNotificationsComponent implements OnInit {
         this.recipientsError.set('خطا در دریافت وضعیت دریافت‌کنندگان پیام.');
         this.isLoadingRecipients.set(false);
       },
-    });
-  }
-
-  sendReply(): void {
-    const msg = this.selectedMessage();
-    if (!msg || this.replyControl.invalid) return;
-
-    const content = this.replyControl.value!.trim();
-    this.notificationService.replyToMessage(msg.id, content, 'مدیر ارشد سیستم').subscribe((newReply) => {
-      this.selectedThread.update((list) => [...list, newReply]);
-      this.replyControl.reset();
-      this.triggerToast('پاسخ شما با موفقیت ثبت شد.', 'success');
     });
   }
 

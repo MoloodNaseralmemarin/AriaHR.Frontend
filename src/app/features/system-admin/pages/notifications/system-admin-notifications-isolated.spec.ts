@@ -28,11 +28,12 @@ describe('SystemAdminNotificationsComponent (Isolated Tests)', () => {
             senderName: 'مدیر ارشد',
             createdAt: '2026-08-25T08:30:00Z',
             isRead: false,
+            requiresAcknowledgment: true,
+            expiration: '2026-09-01T00:00:00Z',
           },
         ])
       ),
       getSent: vi.fn().mockReturnValue(of([])),
-      getThread: vi.fn().mockReturnValue(of([])),
       getRecipientStatuses: vi.fn().mockReturnValue(of([])),
       markAsRead: vi.fn().mockReturnValue(of(undefined)),
       createNotification: vi.fn().mockReturnValue(
@@ -40,12 +41,6 @@ describe('SystemAdminNotificationsComponent (Isolated Tests)', () => {
           id: 'new-1',
           title: 'جدید',
           message: 'متن جدید',
-        })
-      ),
-      replyToMessage: vi.fn().mockReturnValue(
-        of({
-          id: 'rep-1',
-          content: 'پاسخ',
         })
       ),
     };
@@ -107,6 +102,7 @@ describe('SystemAdminNotificationsComponent (Isolated Tests)', () => {
 
     expect(component.selectedMessage()?.id).toBe('msg-1');
     expect(mockNotificationService.markAsRead).toHaveBeenCalledWith('msg-1');
+    expect(component.getExpirationDate(msg)).toBe('2026-09-01T00:00:00Z');
   });
 
   it('should validate compose form and submit new message via createNotification', () => {
