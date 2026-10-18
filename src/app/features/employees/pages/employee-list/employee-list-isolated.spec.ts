@@ -27,6 +27,7 @@ describe('EmployeeListComponent (Isolated Unit Tests)', () => {
     const injector = createEnvironmentInjector([
       { provide: EmployeeService, useValue: {} },
       { provide: AuthService, useValue: {} },
+      { provide: require('@angular/router').Router, useValue: { url: '/center-manager/employees' } },
     ], {} as EnvironmentInjector);
 
     let comp!: EmployeeListComponent;
