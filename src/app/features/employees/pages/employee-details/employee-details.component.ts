@@ -1,6 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { EmployeeService } from '../../services/employee.service';
 import { EmployeeResponseDto } from '../../models/employee-response.dto';
@@ -31,6 +31,13 @@ import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe'
 export class EmployeeDetailsComponent implements OnInit {
   private readonly employeeService = inject(EmployeeService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  readonly basePath = computed<string>(() => {
+    return this.router.url.includes('/system-admin')
+      ? '/system-admin/employees'
+      : '/center-manager/employees';
+  });
 
   readonly employee = signal<EmployeeResponseDto | null>(null);
   readonly isLoading = signal(true);

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -68,6 +68,12 @@ export class EmployeeFormComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  readonly basePath = computed<string>(() => {
+    return this.router.url.includes('/system-admin')
+      ? '/system-admin/employees'
+      : '/center-manager/employees';
+  });
 
   readonly isEditMode = signal(false);
   readonly isSubmitting = signal(false);
@@ -342,7 +348,7 @@ export class EmployeeFormComponent implements OnInit {
           this.toastTone.set('success');
           this.toastMessage.set('اطلاعات کارمند با موفقیت بروزرسانی شد.');
           setTimeout(() => {
-            this.router.navigate(['/center-manager/employees']);
+            this.router.navigate([this.basePath()]);
           }, 1000);
         },
         error: (err) => {
@@ -370,7 +376,7 @@ export class EmployeeFormComponent implements OnInit {
           this.toastTone.set('success');
           this.toastMessage.set('کارمند جدید با موفقیت ثبت شد.');
           setTimeout(() => {
-            this.router.navigate(['/center-manager/employees']);
+            this.router.navigate([this.basePath()]);
           }, 1000);
         },
         error: (err) => {
@@ -382,6 +388,6 @@ export class EmployeeFormComponent implements OnInit {
   }
 
   cancel(): void {
-    this.router.navigate(['/center-manager/employees']);
+    this.router.navigate([this.basePath()]);
   }
 }

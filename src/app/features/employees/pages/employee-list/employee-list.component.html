@@ -8,7 +8,7 @@
   <app-page-header title="مدیریت کارکنان" subtitle="مشاهده، جستجو و مدیریت لیست کارکنان مرکز">
     <a
       actions
-      routerLink="/center-manager/employees/new"
+      [routerLink]="[basePath(), 'new']"
       class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition"
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -78,7 +78,7 @@
       description="با تغییر عبارت جستجو یا فیلتر، دوباره بررسی کنید."
       actionLabel="افزودن کارمند جدید"
       (action)="$event"
-      routerLink="/center-manager/employees/new"
+      [routerLink]="[basePath(), 'new']"
     ></app-empty-state>
 
     <!-- Content Available -->
@@ -127,14 +127,14 @@
               <td class="px-5 py-4 text-left">
                 <div class="flex items-center justify-end gap-2">
                   <a
-                    [routerLink]="['/center-manager/employees', emp.id]"
+                    [routerLink]="[basePath(), emp.id]"
                     class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition"
                     title="مشاهده جزئیات"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </a>
                   <a
-                    [routerLink]="['/center-manager/employees', emp.id, 'edit']"
+                    [routerLink]="[basePath(), emp.id, 'edit']"
                     class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-amber-600 transition"
                     title="ویرایش"
                   >
@@ -200,13 +200,13 @@
 
           <div class="mt-4 flex items-center justify-end gap-3 border-t border-slate-100 pt-3">
             <a
-              [routerLink]="['/center-manager/employees', emp.id]"
+              [routerLink]="[basePath(), emp.id]"
               class="text-xs font-medium text-blue-600 hover:underline"
             >
               مشاهده
             </a>
             <a
-              [routerLink]="['/center-manager/employees', emp.id, 'edit']"
+              [routerLink]="[basePath(), emp.id, 'edit']"
               class="text-xs font-medium text-amber-600 hover:underline"
             >
               ویرایش

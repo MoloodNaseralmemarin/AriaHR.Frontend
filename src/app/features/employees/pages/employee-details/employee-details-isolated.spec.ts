@@ -1,7 +1,7 @@
 import '@angular/compiler';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Injector, runInInjectionContext } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { EmployeeDetailsComponent } from './employee-details.component';
@@ -29,6 +29,7 @@ describe('EmployeeDetailsComponent (Isolated Unit Tests)', () => {
       providers: [
         { provide: EmployeeService, useValue: mockEmployeeService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: Router, useValue: { url: '/center-manager/employees/emp-1' } },
       ],
     });
 

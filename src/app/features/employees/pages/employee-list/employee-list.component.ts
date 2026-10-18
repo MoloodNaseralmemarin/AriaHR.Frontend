@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 import { EmployeeService } from '../../services/employee.service';
@@ -39,8 +39,15 @@ type EmployeeFilter = 'all' | 'active' | 'inactive';
 export class EmployeeListComponent implements OnInit {
   private readonly employeeService = inject(EmployeeService);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly employees = signal<EmployeeResponseDto[]>([]);
+
+  readonly basePath = computed<string>(() => {
+    return this.router.url.includes('/system-admin')
+      ? '/system-admin/employees'
+      : '/center-manager/employees';
+  });
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly searchTerm = signal('');
