@@ -1,2 +1,92 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core'; import { SystemAdminDataService } from '../../services/system-admin-data.service';
-@Component({selector:'app-system-admin-managers',standalone:true,template:`<section class="space-y-5" dir="rtl"><div><p class="eyebrow">مدیریت سامانه</p><h1>مدیران مراکز</h1><p class="subtitle">{{ data.managers().length }} مدیر ثبت شده در سامانه</p></div><div class="manager-list">@for(manager of data.managers(); track manager.id){<article><div class="avatar">{{ manager.name.slice(0,1) }}</div><div class="info"><strong>{{ manager.name }}</strong><span>{{ manager.centerName }}</span><small>{{ manager.mobileNumber }}</small></div><span class="state" [class.off]="!manager.active">{{ manager.active ? 'فعال' : 'غیرفعال' }}</span></article>}</div></section>`,styles:[`.eyebrow{color:#2563eb;font-size:12px}.subtitle{margin-top:5px;color:#64748b;font-size:12px}h1{margin-top:4px;color:#0f172a;font-size:24px;font-weight:700}.manager-list{display:flex;flex-direction:column;gap:10px}.manager-list article{display:flex;align-items:center;gap:11px;border:1px solid #e2e8f0;border-radius:17px;background:white;padding:14px}.avatar{display:grid;width:42px;height:42px;place-items:center;border-radius:13px;background:#eff6ff;color:#2563eb;font-weight:700}.info{min-width:0;flex:1}.info strong,.info span,.info small{display:block}.info strong{color:#1e293b;font-size:12px}.info span{margin-top:4px;color:#64748b;font-size:10px}.info small{margin-top:4px;color:#94a3b8;font-size:10px;direction:ltr;text-align:right}.state{border-radius:99px;background:#ecfdf5;color:#047857;padding:4px 7px;font-size:9px;font-weight:700}.state.off{background:#fef2f2;color:#b91c1c}`],changeDetection:ChangeDetectionStrategy.OnPush}) export class SystemAdminManagersComponent { readonly data=inject(SystemAdminDataService); }
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SystemAdminDataService } from '../../services/system-admin-data.service';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+
+@Component({
+  selector: 'app-system-admin-managers',
+  standalone: true,
+  imports: [
+    CommonModule,
+    PageHeaderComponent,
+    StatusBadgeComponent,
+    PersianDigitsPipe,
+  ],
+  template: `
+    <div dir="rtl" class="space-y-6">
+      <app-page-header
+        title="مدیران مراکز"
+        [subtitle]="(data.managers().length | persianDigits) + ' مدیر ثبت شده در سامانه'"
+      ></app-page-header>
+
+      <!-- Desktop Table View -->
+      <div class="hidden md:block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+        <table class="w-full text-right text-sm text-slate-700">
+          <thead class="border-b border-slate-100 bg-slate-50 text-xs font-semibold text-slate-500">
+            <tr>
+              <th class="px-5 py-3.5">نام مدیر</th>
+              <th class="px-5 py-3.5">مرکز مربوطه</th>
+              <th class="px-5 py-3.5">شماره همراه</th>
+              <th class="px-5 py-3.5">وضعیت</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (manager of data.managers(); track manager.id) {
+              <tr class="hover:bg-slate-50/80 transition-colors">
+                <td class="px-5 py-4 font-bold text-slate-800">
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-sm font-bold text-blue-700">
+                      {{ manager.name.slice(0, 1) }}
+                    </div>
+                    <span>{{ manager.name }}</span>
+                  </div>
+                </td>
+                <td class="px-5 py-4 font-medium text-slate-700">{{ manager.centerName }}</td>
+                <td class="px-5 py-4 text-xs font-semibold text-slate-600">{{ manager.mobileNumber | persianDigits }}</td>
+                <td class="px-5 py-4">
+                  <app-status-badge
+                    [tone]="manager.active ? 'success' : 'neutral'"
+                    [label]="manager.active ? 'فعال' : 'غیرفعال'"
+                  ></app-status-badge>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Cards View -->
+      <div class="grid grid-cols-1 gap-3 md:hidden">
+        @for (manager of data.managers(); track manager.id) {
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-sm font-bold text-blue-700">
+                  {{ manager.name.slice(0, 1) }}
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-800">{{ manager.name }}</h3>
+                  <p class="text-xs text-slate-500">{{ manager.centerName }}</p>
+                </div>
+              </div>
+              <app-status-badge
+                [tone]="manager.active ? 'success' : 'neutral'"
+                [label]="manager.active ? 'فعال' : 'غیرفعال'"
+              ></app-status-badge>
+            </div>
+            <div class="border-t border-slate-100 pt-2 text-xs text-slate-600 flex justify-between">
+              <span class="text-slate-400">شماره تماس:</span>
+              <span class="font-medium text-slate-800">{{ manager.mobileNumber | persianDigits }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class SystemAdminManagersComponent {
+  readonly data = inject(SystemAdminDataService);
+}

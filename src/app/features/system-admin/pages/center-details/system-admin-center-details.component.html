@@ -1,1 +1,53 @@
-<section class="space-y-5"><a routerLink="/system-admin/centers" class="back">→ بازگشت به مراکز</a><div class="hero"><div class="avatar">{{ center.name.slice(0,1) }}</div><h1>{{ center.name }}</h1><span class="status" [class]="'status-' + center.status">{{ getStatusLabel(center.status) }}</span><p>ثبت شده توسط مدیر سیستم</p></div><div class="manager"><span class="label">مدیر مرکز</span><strong>{{ center.managerName }}</strong><button type="button">مشاهده اطلاعات مدیر</button></div><div class="metric-grid"><div><span>کارکنان</span><strong>{{ center.employeeCount }}</strong></div><div><span>حضور امروز</span><strong>{{ center.attendanceToday ? center.attendanceToday + '%' : '—' }}</strong></div><div><span>شیفت‌ها</span><strong>{{ center.shiftCount }}</strong></div><div><span>درخواست‌های در انتظار</span><strong>{{ center.pendingRequests }}</strong></div></div><div class="actions"><button type="button" class="primary">ویرایش مرکز</button><button type="button" class="secondary">{{ center.status === 'active' ? 'غیرفعال کردن مرکز' : 'فعال کردن مرکز' }}</button></div></section>
+<div dir="rtl" class="space-y-6">
+  <div>
+    <a routerLink="/system-admin/centers" class="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline mb-3">
+      → بازگشت به لیست مراکز
+    </a>
+    <app-page-header [title]="center.name" subtitle="شناسنامه و آمار عملکرد مرکز">
+      <div actions class="flex items-center gap-2">
+        <app-status-badge
+          [tone]="center.status === 'active' ? 'success' : (center.status === 'pending' ? 'warning' : 'neutral')"
+          [label]="getStatusLabel(center.status)"
+        ></app-status-badge>
+      </div>
+    </app-page-header>
+  </div>
+
+  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-lg font-bold text-blue-700">
+        {{ center.name.slice(0, 1) }}
+      </div>
+      <div>
+        <p class="text-xs font-medium text-slate-500">مدیر مسئول مرکز</p>
+        <h3 class="text-base font-bold text-slate-800 mt-0.5">{{ center.managerName }}</h3>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+        اطلاعات مدیر
+      </button>
+      <button type="button" class="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs">
+        ویرایش مرکز
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <app-summary-card label="تعداد کارکنان" [value]="(center.employeeCount | persianDigits) + ' نفر'" tone="default">
+      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    </app-summary-card>
+
+    <app-summary-card label="حضور امروز" [value]="center.attendanceToday ? (center.attendanceToday | persianDigits) + '٪' : '—'" tone="success">
+      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+    </app-summary-card>
+
+    <app-summary-card label="تعداد شیفت‌ها" [value]="center.shiftCount | persianDigits" tone="info">
+      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </app-summary-card>
+
+    <app-summary-card label="درخواست‌های معوق" [value]="center.pendingRequests | persianDigits" tone="warning">
+      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </app-summary-card>
+  </div>
+</div>
