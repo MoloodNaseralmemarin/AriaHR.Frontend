@@ -1,40 +1,38 @@
 <main
   dir="rtl"
   lang="fa"
-  class="min-h-dvh w-full bg-gray-50 flex flex-col items-center justify-center px-4 py-10 sm:py-16"
+  class="min-h-dvh w-full bg-slate-100 flex flex-col items-center justify-center px-4 py-10 sm:py-16"
 >
   <div class="w-full max-w-sm mx-auto flex flex-col items-center animate-page-in">
 
     <!-- Logo -->
-    <div class="mb-6">
+    <div class="mb-6 flex items-center justify-center p-3 bg-white rounded-2xl shadow-xs ring-1 ring-slate-200">
       <img
-         src="/assets/logo/logo.png"
+        src="/assets/logo/logo.png"
         alt="AriaHR"
-        class="h-12 w-auto select-none"
-        width="120"
-        height="48"
+        class="h-10 w-auto select-none"
       />
     </div>
 
     <!-- Branding -->
-    <div class="text-center mb-8">
-      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 leading-snug">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-slate-900 leading-snug">
         حضور و غیاب هوشمند
       </h1>
-      <p class="mt-2 text-sm text-gray-500 leading-relaxed">
+      <p class="mt-1 text-sm font-medium text-slate-600 leading-relaxed">
         سامانه هوشمند مدیریت پرسنل
       </p>
     </div>
 
     <!-- Card -->
     <section
-      class="w-full bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-6 sm:p-7 animate-card-in"
+      class="w-full bg-white rounded-2xl shadow-md border border-slate-200 p-6 sm:p-7 animate-card-in"
       aria-label="ورود به سامانه"
     >
       <form (ngSubmit)="onSubmit()" novalidate class="flex flex-col gap-5">
 
-        <div class="flex flex-col gap-1.5">
-          <label for="mobileNumber" class="text-sm font-medium text-gray-700">
+        <div class="flex flex-col gap-2">
+          <label for="mobileNumber" class="text-sm font-semibold text-slate-800">
             شماره موبایل
           </label>
 
@@ -45,20 +43,20 @@
             inputmode="numeric"
             autocomplete="tel"
             dir="rtl"
-            placeholder="شماره موبایل خود را وارد کنید"
+            placeholder="مثال: ۰۹۱۲۳۴۵۶۷۸۹"
             maxlength="11"
             [ngModel]="mobileNumberInput()"
             (ngModelChange)="onMobileInputChange($event)"
             (blur)="onBlur()"
             [attr.aria-invalid]="showValidationError()"
             [attr.aria-describedby]="showValidationError() ? 'mobileNumber-error' : null"
-            class="w-full h-12 px-4 rounded-xl border bg-white text-gray-900 text-base tracking-wide
-                   placeholder:text-gray-400 placeholder:text-sm
+            class="w-full h-12 px-4 rounded-xl border bg-slate-50 text-slate-900 font-medium text-base tracking-wide
+                   placeholder:text-slate-400 placeholder:text-sm
                    transition-colors duration-150
-                   focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500
-                   disabled:bg-gray-50 disabled:text-gray-400"
-            [class.border-gray-200]="!showValidationError()"
-            [class.border-red-400]="showValidationError()"
+                   focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600
+                   disabled:bg-slate-100 disabled:text-slate-400"
+            [class.border-slate-300]="!showValidationError()"
+            [class.border-rose-500]="showValidationError()"
             [disabled]="submitState() === 'loading'"
           />
 
@@ -67,7 +65,7 @@
             <p
               id="mobileNumber-error"
               role="alert"
-              class="text-xs text-red-600 mt-0.5 animate-msg-in"
+              class="text-xs font-medium text-rose-600 mt-0.5 animate-msg-in"
             >
               {{ validationMessage() }}
             </p>
@@ -78,11 +76,11 @@
         <button
           type="submit"
           [disabled]="isSubmitDisabled()"
-          class="relative h-12 w-full rounded-xl font-semibold text-sm text-white
-                 bg-blue-600 transition-all duration-150
+          class="relative h-12 w-full rounded-xl font-bold text-sm text-white
+                 bg-blue-600 shadow-sm transition-all duration-150
                  hover:bg-blue-700 active:bg-blue-800 active:scale-[0.99]
-                 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2
-                 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:active:scale-100"
+                 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2
+                 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed disabled:active:scale-100"
         >
           @if (submitState() === 'loading') {
             <span class="inline-flex items-center justify-center gap-2">
@@ -101,10 +99,10 @@
         @if (submitState() === 'success') {
           <p
             role="status"
-            class="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2.5 animate-msg-in"
+            class="flex items-center gap-2 text-sm font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-2.5 animate-msg-in"
           >
             <span
-              class="flex-shrink-0 h-4 w-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center"
+              class="flex-shrink-0 h-4 w-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-bold"
               aria-hidden="true"
             >✓</span>
             کد تایید با موفقیت ارسال شد.
@@ -115,10 +113,10 @@
         @if (submitState() === 'error') {
           <p
             role="alert"
-            class="flex items-center gap-2 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2.5 animate-msg-in"
+            class="flex items-center gap-2 text-sm font-medium text-rose-800 bg-rose-50 border border-rose-200 rounded-xl px-3.5 py-2.5 animate-msg-in"
           >
             <span
-              class="flex-shrink-0 h-4 w-4 rounded-full bg-red-600 text-white text-[10px] flex items-center justify-center"
+              class="flex-shrink-0 h-4 w-4 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center font-bold"
               aria-hidden="true"
             >!</span>
             ارسال کد تایید با خطا مواجه شد. لطفاً دوباره تلاش کنید.
