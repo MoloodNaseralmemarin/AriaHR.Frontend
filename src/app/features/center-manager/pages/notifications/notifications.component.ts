@@ -51,6 +51,7 @@ export class NotificationsComponent implements OnInit {
 
   readonly isComposeOpen = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
+  readonly isAcknowledging = signal<boolean>(false);
 
   readonly toastMessage = signal<string>('');
   readonly toastTone = signal<ToastTone>('success');
@@ -169,15 +170,50 @@ export class NotificationsComponent implements OnInit {
     this.selectedMessage.set(msg);
 
     if (!msg.isRead) {
-      this.notificationService.markAsRead(msg.id).subscribe(() => {
-        this.messages.update((list) =>
-          list.map((m) => (m.id === msg.id ? { ...m, isRead: true } : m))
-        );
+      this.notificationService.markAsRead(msg.id).subscribe({
+        next: () => {
+          this.messages.update((list) =>
+            list.map((m) => (m.id === msg.id ? { ...m, isRead: true } : m))
+          );
+          if (this.selectedMessage()?.id === msg.id) {
+            this.selectedMessage.update((m) => (m ? { ...m, isRead: true } : null));
+          }
+        },
+        error: () => {
+          // Keep UI consistent on read status failure
+        },
       });
     }
 
     this.loadThread(msg.id);
     this.loadRecipients(msg.id);
+  }
+
+  acknowledgeMessage(msg: NotificationMessage): void {
+    if (this.isAcknowledging() || msg.isAcknowledged) return;
+
+    this.isAcknowledging.set(true);
+    this.notificationService.acknowledgeMessage(msg.id).subscribe({
+      next: (res) => {
+        this.isAcknowledging.set(false);
+        const acknowledgedAt = res.acknowledgedAt;
+        this.messages.update((list) =>
+          list.map((m) =>
+            m.id === msg.id ? { ...m, isRead: true, isAcknowledged: true, acknowledgedAt } : m
+          )
+        );
+        if (this.selectedMessage()?.id === msg.id) {
+          this.selectedMessage.update((m) =>
+            m ? { ...m, isRead: true, isAcknowledged: true, acknowledgedAt } : null
+          );
+        }
+        this.triggerToast('تأیید دریافت پیام با موفقیت ثبت شد.', 'success');
+      },
+      error: () => {
+        this.isAcknowledging.set(false);
+        this.triggerToast('خطا در ثبت تأیید دریافت. لطفاً مجدداً تلاش نمایید.', 'error');
+      },
+    });
   }
 
   closeDetails(): void {

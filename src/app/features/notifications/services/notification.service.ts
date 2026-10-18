@@ -257,38 +257,43 @@ export class NotificationService {
     return of(this.unreadCount()).pipe(delay(50));
   }
 
-  /** Marks a message as read in memory. */
+  /** Calls PATCH /api/notifications/{id}/read to mark a notification as read. */
   markAsRead(id: string): Observable<void> {
-    const nowIso = new Date().toISOString();
-    this._messages.update((list) =>
-      list.map((m) => (m.id === id ? { ...m, isRead: true, readAt: m.readAt || nowIso } : m))
-    );
-    return of(undefined).pipe(delay(50));
-  }
-
-  /** Marks a message as explicitly acknowledged in memory with current timestamp. */
-  acknowledgeMessage(id: string): Observable<{ acknowledgedAt: string }> {
-    const nowIso = new Date().toISOString();
-    let updatedIso = nowIso;
-
-    this._messages.update((list) =>
-      list.map((m) => {
-        if (m.id === id) {
-          updatedIso = nowIso;
-          return {
-            ...m,
-            isRead: true,
-            readAt: m.readAt || nowIso,
-            isAcknowledged: true,
-            acknowledgedAt: nowIso,
-            acknowledgedCount: (m.acknowledgedCount || 0) + 1,
-          };
-        }
-        return m;
+    return this.http.patch<void>(`${this.apiUrl}/${id}/read`, {}).pipe(
+      tap(() => {
+        const nowIso = new Date().toISOString();
+        this._messages.update((list) =>
+          list.map((m) => (m.id === id ? { ...m, isRead: true, readAt: m.readAt || nowIso } : m))
+        );
       })
     );
+  }
 
-    return of({ acknowledgedAt: updatedIso }).pipe(delay(100));
+  /** Calls PATCH /api/notifications/{id}/acknowledge to acknowledge a notification. */
+  acknowledgeMessage(id: string): Observable<{ acknowledgedAt: string }> {
+    return this.http.patch<Record<string, unknown>>(`${this.apiUrl}/${id}/acknowledge`, {}).pipe(
+      map((res) => {
+        const rawIso = res ? (res['acknowledgedAtUtc'] ?? res['AcknowledgedAtUtc'] ?? res['acknowledgedAt'] ?? res['AcknowledgedAt']) : null;
+        const acknowledgedAt = rawIso ? String(rawIso) : new Date().toISOString();
+
+        this._messages.update((list) =>
+          list.map((m) => {
+            if (m.id === id) {
+              return {
+                ...m,
+                isRead: true,
+                isAcknowledged: true,
+                acknowledgedAt,
+                acknowledgedCount: (m.acknowledgedCount || 0) + 1,
+              };
+            }
+            return m;
+          })
+        );
+
+        return { acknowledgedAt };
+      })
+    );
   }
 
   /** Creates and posts a new message in memory. */
