@@ -1,8 +1,13 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
+import { SummaryCardComponent } from '../../../../shared/components/summary-card/summary-card.component';
+import { StatusBadgeComponent, BadgeTone } from '../../../../shared/components/status-badge/status-badge.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { OrganizationService } from '../../../organizations/services/organization.service';
 import { OrganizationDashboardSummaryDto } from '../../../organizations/models/organization-dashboard-summary.dto';
 import { RecentOrganizationDto } from '../../../organizations/models/recent-organization.dto';
@@ -29,7 +34,14 @@ export interface UIRecentActivity {
 @Component({
   selector: 'app-system-admin-dashboard',
   standalone: true,
-  imports: [RouterLink],
+  imports: [
+    CommonModule,
+    RouterLink,
+    SummaryCardComponent,
+    StatusBadgeComponent,
+    EmptyStateComponent,
+    SkeletonLoaderComponent,
+  ],
   templateUrl: './system-admin-dashboard.component.html',
   styleUrl: './system-admin-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -234,12 +246,12 @@ export class SystemAdminDashboardComponent implements OnInit, OnDestroy {
     return status === 'active' ? 'فعال' : status === 'pending' ? 'در انتظار تکمیل' : 'غیرفعال';
   }
 
-  getStatusClass(status: CenterStatus): string {
-    return `status-${status}`;
+  getStatusTone(status: CenterStatus): BadgeTone {
+    return status === 'active' ? 'success' : status === 'pending' ? 'warning' : 'danger';
   }
 
   getActivityClass(activity: UIRecentActivity | SystemActivity): string {
-    return activity.type === 'center_deactivated' ? 'activity-danger' : activity.type === 'manager_created' ? 'activity-info' : 'activity-success';
+    return activity.type === 'center_deactivated' ? 'bg-rose-500 ring-rose-200' : activity.type === 'manager_created' ? 'bg-sky-500 ring-sky-200' : 'bg-emerald-500 ring-emerald-200';
   }
 
   getRelativeTime(timestamp: string): string {

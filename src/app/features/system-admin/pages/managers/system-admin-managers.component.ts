@@ -1,2 +1,85 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core'; import { SystemAdminDataService } from '../../services/system-admin-data.service';
-@Component({selector:'app-system-admin-managers',standalone:true,template:`<section class="space-y-5" dir="rtl"><div><p class="eyebrow">مدیریت سامانه</p><h1>مدیران مراکز</h1><p class="subtitle">{{ data.managers().length }} مدیر ثبت شده در سامانه</p></div><div class="manager-list">@for(manager of data.managers(); track manager.id){<article><div class="avatar">{{ manager.name.slice(0,1) }}</div><div class="info"><strong>{{ manager.name }}</strong><span>{{ manager.centerName }}</span><small>{{ manager.mobileNumber }}</small></div><span class="state" [class.off]="!manager.active">{{ manager.active ? 'فعال' : 'غیرفعال' }}</span></article>}</div></section>`,styles:[`.eyebrow{color:#2563eb;font-size:12px}.subtitle{margin-top:5px;color:#64748b;font-size:12px}h1{margin-top:4px;color:#0f172a;font-size:24px;font-weight:700}.manager-list{display:flex;flex-direction:column;gap:10px}.manager-list article{display:flex;align-items:center;gap:11px;border:1px solid #e2e8f0;border-radius:17px;background:white;padding:14px}.avatar{display:grid;width:42px;height:42px;place-items:center;border-radius:13px;background:#eff6ff;color:#2563eb;font-weight:700}.info{min-width:0;flex:1}.info strong,.info span,.info small{display:block}.info strong{color:#1e293b;font-size:12px}.info span{margin-top:4px;color:#64748b;font-size:10px}.info small{margin-top:4px;color:#94a3b8;font-size:10px;direction:ltr;text-align:right}.state{border-radius:99px;background:#ecfdf5;color:#047857;padding:4px 7px;font-size:9px;font-weight:700}.state.off{background:#fef2f2;color:#b91c1c}`],changeDetection:ChangeDetectionStrategy.OnPush}) export class SystemAdminManagersComponent { readonly data=inject(SystemAdminDataService); }
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+import { SystemAdminDataService } from '../../services/system-admin-data.service';
+import { CenterManager } from '../../models/system-admin.models';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { normalizePersianDigits } from '../../../../shared/utils/mobile-number.util';
+
+type ManagerFilter = 'all' | 'active' | 'inactive';
+
+@Component({
+  selector: 'app-system-admin-managers',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    PageHeaderComponent,
+    StatusBadgeComponent,
+    EmptyStateComponent,
+    PersianDigitsPipe,
+  ],
+  templateUrl: './system-admin-managers.component.html',
+  styleUrl: './system-admin-managers.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class SystemAdminManagersComponent {
+  readonly data = inject(SystemAdminDataService);
+
+  readonly searchTerm = signal('');
+  readonly activeFilter = signal<ManagerFilter>('all');
+
+  readonly filters: { value: ManagerFilter; label: string }[] = [
+    { value: 'all', label: 'همه' },
+    { value: 'active', label: 'فعال' },
+    { value: 'inactive', label: 'غیرفعال' },
+  ];
+
+  readonly managers = this.data.managers;
+
+  readonly filteredManagers = computed<CenterManager[]>(() => {
+    let list = this.managers();
+    const filter = this.activeFilter();
+    const query = this.searchTerm().trim().toLowerCase();
+
+    if (filter === 'active') {
+      list = list.filter((m) => m.active);
+    } else if (filter === 'inactive') {
+      list = list.filter((m) => !m.active);
+    }
+
+    if (query) {
+      const asciiQuery = normalizePersianDigits(query).toLowerCase();
+      list = list.filter((m) => {
+        const name = (m.name ?? '').toLowerCase();
+        const centerName = (m.centerName ?? '').toLowerCase();
+        const mobileNumber = (m.mobileNumber ?? '').toLowerCase();
+
+        return (
+          name.includes(query) ||
+          centerName.includes(query) ||
+          mobileNumber.includes(query) ||
+          (asciiQuery && mobileNumber.includes(asciiQuery))
+        );
+      });
+    }
+
+    return list;
+  });
+
+  onSearchInput(value: string): void {
+    this.searchTerm.set(value);
+  }
+
+  setFilter(filter: ManagerFilter): void {
+    this.activeFilter.set(filter);
+  }
+
+  getAvatarInitial(name: string): string {
+    return name ? name.trim().charAt(0) : 'م';
+  }
+}
