@@ -33,6 +33,7 @@ describe('NotificationsComponent (Center Manager Isolated Tests)', () => {
       getThread: vi.fn().mockReturnValue(of([])),
       getRecipientStatuses: vi.fn().mockReturnValue(of([])),
       markAsRead: vi.fn().mockReturnValue(of(undefined)),
+      acknowledgeMessage: vi.fn().mockReturnValue(of({ acknowledgedAt: '2026-08-25T10:00:00Z' })),
       createMessage: vi.fn().mockReturnValue(
         of({
           id: 'new-1',
@@ -91,6 +92,29 @@ describe('NotificationsComponent (Center Manager Isolated Tests)', () => {
 
     expect(component.selectedMessage()?.id).toBe('msg-1');
     expect(mockNotificationService.markAsRead).toHaveBeenCalledWith('msg-1');
+  });
+
+  it('should acknowledge notification requiring acknowledgment', () => {
+    component.ngOnInit();
+    const msg = {
+      id: 'msg-ack-1',
+      title: 'اطلاعیه مهم',
+      content: 'متن',
+      messageType: 1,
+      messagePriority: 1,
+      senderName: 'فرستنده',
+      createdAt: '2026-08-25T08:30:00Z',
+      isRead: true,
+      requiresAcknowledgment: true,
+      isAcknowledged: false,
+    };
+
+    component.openMessageDetails(msg as any);
+    component.acknowledgeMessage(msg as any);
+
+    expect(mockNotificationService.acknowledgeMessage).toHaveBeenCalledWith('msg-ack-1');
+    expect(component.selectedMessage()?.isAcknowledged).toBe(true);
+    expect(component.selectedMessage()?.acknowledgedAt).toBe('2026-08-25T10:00:00Z');
   });
 
   it('should submit compose message to employees', () => {

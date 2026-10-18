@@ -9,12 +9,13 @@ import { MessagePriority, MessageType } from '../models/message-enums';
 
 describe('NotificationService (Isolated Tests)', () => {
   let service: NotificationService;
-  let mockHttpClient: { get: any; post: any };
+  let mockHttpClient: { get: any; post: any; patch: any };
 
   beforeEach(() => {
     mockHttpClient = {
       get: vi.fn(),
       post: vi.fn(),
+      patch: vi.fn(),
     };
 
     const injector = Injector.create({
@@ -27,6 +28,29 @@ describe('NotificationService (Isolated Tests)', () => {
     runInInjectionContext(injector, () => {
       service = injector.get(NotificationService);
     });
+  });
+
+  it('should call PATCH /api/notifications/{id}/read when marking a notification as read', async () => {
+    mockHttpClient.patch.mockReturnValue(of(undefined));
+
+    await firstValueFrom(service.markAsRead('msg-101'));
+
+    expect(mockHttpClient.patch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/notifications/msg-101/read'),
+      {}
+    );
+  });
+
+  it('should call PATCH /api/notifications/{id}/acknowledge when acknowledging a notification', async () => {
+    mockHttpClient.patch.mockReturnValue(of({ acknowledgedAtUtc: '2026-10-17T12:00:00Z' }));
+
+    const res = await firstValueFrom(service.acknowledgeMessage('msg-101'));
+
+    expect(mockHttpClient.patch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/notifications/msg-101/acknowledge'),
+      {}
+    );
+    expect(res.acknowledgedAt).toBe('2026-10-17T12:00:00Z');
   });
 
   it('should call GET /api/notifications/sent and map array response to NotificationMessage[]', async () => {

@@ -197,6 +197,38 @@
             {{ selectedMessage()!.content }}
           </div>
 
+          <!-- Acknowledgment Section -->
+          @if (selectedMessage()!.requiresAcknowledgment) {
+            <div class="rounded-2xl border p-4 text-xs space-y-2.5 transition"
+              [class]="selectedMessage()!.isAcknowledged ? 'border-emerald-200 bg-emerald-50/60 text-emerald-900' : 'border-amber-200 bg-amber-50/60 text-amber-900'">
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 font-medium">
+                  @if (selectedMessage()!.isAcknowledged) {
+                    <span class="text-base">✓</span>
+                    <span>تأیید دریافت این پیام در تاریخ {{ selectedMessage()!.acknowledgedAt | jalali }} ثبت گردید.</span>
+                  } @else {
+                    <span class="text-base">⚠️</span>
+                    <span>این پیام نیازمند تأیید صریح دریافت می‌باشد.</span>
+                  }
+                </div>
+                @if (!selectedMessage()!.isAcknowledged && activeTab() === 'inbox') {
+                  <button
+                    type="button"
+                    (click)="acknowledgeMessage(selectedMessage()!)"
+                    [disabled]="isAcknowledging()"
+                    class="shrink-0 rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-amber-700 disabled:opacity-50 cursor-pointer"
+                  >
+                    @if (isAcknowledging()) {
+                      در حال ثبت...
+                    } @else {
+                      تأیید دریافت
+                    }
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
           <!-- Recipient Read / Acknowledgment Table (For Sent Messages) -->
           @if (activeTab() === 'sent' && selectedRecipients().length > 0) {
             <div class="space-y-3 pt-2">
