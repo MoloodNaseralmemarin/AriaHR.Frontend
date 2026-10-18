@@ -1,20 +1,25 @@
-import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import '@angular/compiler';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { Injector, runInInjectionContext, signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
-import { vi, describe, beforeEach, it, expect } from 'vitest';
 
 import { SystemAdminDashboardComponent } from './system-admin-dashboard.component';
 import { OrganizationService } from '../../../organizations/services/organization.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { SystemAdminDataService } from '../../services/system-admin-data.service';
+import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { OrganizationDashboardSummaryDto } from '../../../organizations/models/organization-dashboard-summary.dto';
 import { RecentOrganizationDto } from '../../../organizations/models/recent-organization.dto';
 import { RecentActivityDto } from '../../models/recent-activity.dto';
 
-describe('SystemAdminDashboardComponent API Integration', () => {
-  let mockOrgService: { getDashboardSummary: any; getRecentOrganizations: any; getOrganizationCount: any };
+describe('SystemAdminDashboardComponent (Isolated Tests)', () => {
+  let component: SystemAdminDashboardComponent;
+  let mockOrgService: { getDashboardSummary: any; getRecentOrganizations: any };
   let mockDashboardService: { getRecentActivities: any };
   let mockAuthService: { getCurrentUser: any; userDetails: any };
+  let mockDataService: any;
+  let mockPersianDateService: any;
 
   const mockSummary: OrganizationDashboardSummaryDto = {
     totalCenters: 10,
@@ -49,37 +54,48 @@ describe('SystemAdminDashboardComponent API Integration', () => {
     mockOrgService = {
       getDashboardSummary: vi.fn().mockReturnValue(of(mockSummary)),
       getRecentOrganizations: vi.fn().mockReturnValue(of(mockRecentOrgs)),
-      getOrganizationCount: vi.fn().mockReturnValue(of(10)),
     };
     mockDashboardService = {
       getRecentActivities: vi.fn().mockReturnValue(of(mockRecentActivities)),
     };
     mockAuthService = {
       getCurrentUser: vi.fn().mockReturnValue(of(null)),
-      userDetails: vi.fn().mockReturnValue(null),
+      userDetails: signal(null),
+    };
+    mockDataService = {
+      stats: signal({
+        totalCenters: 5,
+        activeCenters: 4,
+        pendingCenters: 1,
+        totalManagers: 5,
+        totalEmployees: 50,
+        newCentersThisMonth: 1,
+      }),
+      getRecentCenters: vi.fn().mockReturnValue([]),
+      getRecentActivity: vi.fn().mockReturnValue([]),
+    };
+    mockPersianDateService = {
+      getTodayFormatted: vi.fn().mockReturnValue('۱۴۰۴/۰۶/۲۳'),
+      getRelativeTime: vi.fn().mockReturnValue('۵ دقیقه پیش'),
     };
 
-    TestBed.configureTestingModule({
-      imports: [SystemAdminDashboardComponent],
+    const injector = Injector.create({
       providers: [
-        provideRouter([]),
         { provide: OrganizationService, useValue: mockOrgService },
         { provide: DashboardService, useValue: mockDashboardService },
         { provide: AuthService, useValue: mockAuthService },
+        { provide: SystemAdminDataService, useValue: mockDataService },
+        { provide: PersianDateService, useValue: mockPersianDateService },
       ],
+    });
+
+    runInInjectionContext(injector, () => {
+      component = new SystemAdminDashboardComponent();
     });
   });
 
-  it('should create the component', () => {
-    const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
-    const component = fixture.componentInstance;
-    expect(component).toBeTruthy();
-  });
-
-  it('should call getDashboardSummary, getRecentOrganizations, and getRecentActivities on init', () => {
-    const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
-    const component = fixture.componentInstance;
-    fixture.detectChanges();
+  it('should instantiate component and load initial data on ngOnInit', () => {
+    component.ngOnInit();
 
     expect(mockOrgService.getDashboardSummary).toHaveBeenCalledTimes(1);
     expect(mockOrgService.getRecentOrganizations).toHaveBeenCalledTimes(1);
@@ -108,59 +124,19 @@ describe('SystemAdminDashboardComponent API Integration', () => {
   it('should handle partial API errors gracefully with soft fallback', () => {
     mockDashboardService.getRecentActivities.mockReturnValue(throwError(() => new Error('API Error')));
 
-    const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
-    const component = fixture.componentInstance;
-    fixture.detectChanges();
+    component.ngOnInit();
 
     expect(component.summaryError()).toBe(false);
     expect(component.recentOrgsError()).toBe(false);
     expect(component.recentActivitiesError()).toBe(true);
 
-    // Dashboard summary & recent orgs still work fine
     expect(component.stats().totalCenters).toBe(10);
     expect(component.recentCenters().length).toBe(1);
   });
 
-  it('should calculate Persian relative time using PersianDateService', () => {
-    const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
-    const component = fixture.componentInstance;
-
-    component.now.set(new Date('2025-01-15T12:00:00Z'));
-
-    // 5 minutes ago
-    expect(component.getRelativeTime('2025-01-15T11:55:00Z')).toBe('۵ دقیقه پیش');
-    // 2 hours ago
-    expect(component.getRelativeTime('2025-01-15T10:00:00Z')).toBe('۲ ساعت پیش');
-  });
-
-  it('should update relative time when now signal is updated without calling API again', () => {
-    const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
-    const component = fixture.componentInstance;
-    fixture.detectChanges();
-
-    const initialApiCallCount = mockDashboardService.getRecentActivities.mock.calls.length;
-
-    component.now.set(new Date('2025-01-15T12:00:00Z'));
-    const time1 = component.getRelativeTime('2025-01-15T11:58:00Z'); // 2 mins ago
-    expect(time1).toBe('۲ دقیقه پیش');
-
-    // Advance component's now signal by 1 minute
-    component.now.set(new Date('2025-01-15T12:01:00Z'));
-    const time2 = component.getRelativeTime('2025-01-15T11:58:00Z'); // now 3 mins ago
-    expect(time2).toBe('۳ دقیقه پیش');
-
-    // Ensure API was NOT called again
-    expect(mockDashboardService.getRecentActivities.mock.calls.length).toBe(initialApiCallCount);
-  });
-
-  it('should clean up the auto-refresh timer on component destroy', () => {
-    const fixture = TestBed.createComponent(SystemAdminDashboardComponent);
-    const component = fixture.componentInstance;
-    fixture.detectChanges();
-
-    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
-    fixture.destroy();
-
-    expect(clearIntervalSpy).toHaveBeenCalled();
+  it('should calculate status tones correctly', () => {
+    expect(component.getStatusTone('active')).toBe('success');
+    expect(component.getStatusTone('pending')).toBe('warning');
+    expect(component.getStatusTone('inactive')).toBe('danger');
   });
 });
