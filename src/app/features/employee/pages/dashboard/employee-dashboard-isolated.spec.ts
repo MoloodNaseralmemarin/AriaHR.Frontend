@@ -153,4 +153,17 @@ describe('EmployeeDashboardComponent (Isolated Tests)', () => {
       expect(component.isLoadingLeaves()).toBe(false);
     });
   });
+
+  it('should return correct badge tones for attendance and leave request status', () => {
+    runInInjectionContext(injector, () => {
+      const component = new EmployeeDashboardComponent();
+      component.ngOnInit();
+
+      expect(component.attendanceStatusTone()).toBe('success');
+      expect(component.getLeaveStatusTone('pending')).toBe('warning');
+      expect(component.getLeaveStatusTone('approved')).toBe('success');
+      expect(component.getLeaveStatusTone('rejected')).toBe('danger');
+      expect(component.getLeaveStatusTone('cancelled')).toBe('neutral');
+    });
+  });
 });

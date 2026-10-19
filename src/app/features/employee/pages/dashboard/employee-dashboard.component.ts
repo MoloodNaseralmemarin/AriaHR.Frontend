@@ -9,11 +9,23 @@ import { LeaveRequestService } from '../../services/leave-request.service';
 import { TodayAttendanceDto } from '../../models/employee-attendance.models';
 import { LeaveRequestDto, LeaveSummaryDto } from '../../models/leave-request.model';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { SummaryCardComponent } from '../../../../shared/components/summary-card/summary-card.component';
+import { StatusBadgeComponent, BadgeTone } from '../../../../shared/components/status-badge/status-badge.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 
 @Component({
   selector: 'app-employee-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, PersianDigitsPipe],
+  imports: [
+    CommonModule,
+    RouterLink,
+    PersianDigitsPipe,
+    SummaryCardComponent,
+    StatusBadgeComponent,
+    EmptyStateComponent,
+    SkeletonLoaderComponent,
+  ],
   templateUrl: './employee-dashboard.component.html',
   styleUrl: './employee-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,6 +89,23 @@ export class EmployeeDashboardComponent implements OnInit {
       case 'notCheckedIn':
       default:
         return 'عدم حضور / هنوز وارد نشده';
+    }
+  });
+
+  readonly attendanceStatusTone = computed<BadgeTone>(() => {
+    const att = this.todayAttendance();
+    if (!att) return 'warning';
+
+    if (att.isCheckedOut) return 'neutral';
+    if (att.isCheckedIn) return 'success';
+
+    switch (att.status) {
+      case 'checkedIn':
+        return 'success';
+      case 'checkedOut':
+        return 'neutral';
+      default:
+        return 'warning';
     }
   });
 
@@ -170,6 +199,20 @@ export class EmployeeDashboardComponent implements OnInit {
         return 'لغو شده';
       default:
         return 'نامشخص';
+    }
+  }
+
+  getLeaveStatusTone(status: string): BadgeTone {
+    switch (status) {
+      case 'pending':
+        return 'warning';
+      case 'approved':
+        return 'success';
+      case 'rejected':
+        return 'danger';
+      case 'cancelled':
+      default:
+        return 'neutral';
     }
   }
 
