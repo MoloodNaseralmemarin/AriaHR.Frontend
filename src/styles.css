@@ -1,4 +1,4 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global styles for AriaHR Frontend */
 
 @import 'tailwindcss';
 
@@ -13,14 +13,27 @@
 }
 
 @theme {
-  --font-sans: 'IRANSans', 'Vazirmatn', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-sans: 'IRANSans', sans-serif;
 }
 
+html,
 body {
-  font-family: var(--font-sans);
+  font-family: 'IRANSans', sans-serif !important;
   background-color: #f8fafc;
   color: #1e293b;
   -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select,
+option,
+optgroup,
+table,
+td,
+th {
+  font-family: 'IRANSans', sans-serif !important;
 }
 
 /* RTL directional focus & table helper styles */
