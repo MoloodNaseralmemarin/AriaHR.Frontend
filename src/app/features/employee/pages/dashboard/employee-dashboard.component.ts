@@ -9,7 +9,8 @@ import { LeaveRequestService } from '../../services/leave-request.service';
 import { TodayAttendanceDto } from '../../models/employee-attendance.models';
 import { LeaveRequestDto, LeaveSummaryDto } from '../../models/leave-request.model';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
-import { SummaryCardComponent } from '../../../../shared/components/summary-card/summary-card.component';
+import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
+import { SummaryCardComponent, SummaryTone } from '../../../../shared/components/summary-card/summary-card.component';
 import { StatusBadgeComponent, BadgeTone } from '../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
@@ -21,6 +22,7 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
     CommonModule,
     RouterLink,
     PersianDigitsPipe,
+    JalaliPipe,
     SummaryCardComponent,
     StatusBadgeComponent,
     EmptyStateComponent,
@@ -50,7 +52,7 @@ export class EmployeeDashboardComponent implements OnInit {
   readonly recentLeaveRequests = signal<LeaveRequestDto[]>([]);
   readonly isLoadingLeaves = signal<boolean>(true);
 
-  readonly employeeName = computed(() => {
+  readonly userGreetingName = computed(() => {
     const details = this.authService.userDetails();
     if (details) {
       const first = details.firstName ? details.firstName.trim() : '';
@@ -69,8 +71,10 @@ export class EmployeeDashboardComponent implements OnInit {
     return 'کارمند';
   });
 
+  readonly employeeName = computed(() => this.userGreetingName());
+
   readonly avatarInitial = computed(() => {
-    const name = this.employeeName();
+    const name = this.userGreetingName();
     return name ? name.charAt(0) : 'ک';
   });
 
@@ -89,6 +93,31 @@ export class EmployeeDashboardComponent implements OnInit {
       case 'notCheckedIn':
       default:
         return 'عدم حضور / هنوز وارد نشده';
+    }
+  });
+
+  readonly attendanceStatusSummaryLabel = computed(() => {
+    const att = this.todayAttendance();
+    if (!att) return 'ثبت‌نشده';
+    if (att.isCheckedOut) return 'خروج ثبت شده';
+    if (att.isCheckedIn) return 'حاضر در محل کار';
+    return 'ثبت‌نشده';
+  });
+
+  readonly attendanceSummaryTone = computed<SummaryTone>(() => {
+    const att = this.todayAttendance();
+    if (!att) return 'warning';
+
+    if (att.isCheckedOut) return 'default';
+    if (att.isCheckedIn) return 'success';
+
+    switch (att.status) {
+      case 'checkedIn':
+        return 'success';
+      case 'checkedOut':
+        return 'default';
+      default:
+        return 'warning';
     }
   });
 
