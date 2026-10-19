@@ -69,8 +69,11 @@
     class="flex items-center justify-between rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-white shadow-sm transition-all hover:opacity-95 active:scale-[0.99]"
   >
     <div class="flex items-center gap-3.5">
-      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 text-xl font-light leading-none backdrop-blur-xs">
-        ⏱
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white backdrop-blur-xs">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
       </div>
       <div>
         <strong class="block text-sm font-bold">ثبت و مدیریت تردد امروز</strong>
@@ -175,10 +178,16 @@
         } @else {
           <div class="space-y-3">
             @for (req of recentLeaveRequests().slice(0, 3); track req.id) {
-              <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
+              <a
+                routerLink="/employee/leave-requests"
+                class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 transition-colors hover:bg-slate-100/80"
+              >
                 <div class="flex min-w-0 items-center gap-3">
-                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-sm font-bold text-amber-700">
-                    🌴
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2"/>
+                      <path d="M16 2v4M8 2v4M3 10h18"/>
+                    </svg>
                   </div>
                   <div class="min-w-0">
                     <p class="truncate text-sm font-semibold text-slate-800">
@@ -194,8 +203,11 @@
                     [label]="getLeaveStatusLabel(req.status)"
                     [tone]="getLeaveStatusTone(req.status)"
                   ></app-status-badge>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rotate-180 text-slate-400">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
                 </div>
-              </div>
+              </a>
             }
           </div>
           <a
@@ -253,33 +265,53 @@
         <div class="grid grid-cols-2 gap-2.5">
           <a
             routerLink="/employee/attendance"
-            class="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-100/80 transition text-center space-y-1.5"
+            class="flex flex-col items-center justify-center p-3.5 rounded-xl border border-slate-100 bg-slate-50/60 transition-colors hover:bg-slate-100/80 text-center space-y-2"
           >
-            <span class="text-xl">⏱</span>
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
             <span class="text-xs font-medium text-slate-800">ثبت حضور و غیاب</span>
           </a>
 
           <a
             routerLink="/employee/leave-requests/new"
-            class="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-100/80 transition text-center space-y-1.5"
+            class="flex flex-col items-center justify-center p-3.5 rounded-xl border border-slate-100 bg-slate-50/60 transition-colors hover:bg-slate-100/80 text-center space-y-2"
           >
-            <span class="text-xl">➕</span>
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </div>
             <span class="text-xs font-medium text-slate-800">ثبت مرخصی</span>
           </a>
 
           <a
             routerLink="/employee/leave-requests"
-            class="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-100/80 transition text-center space-y-1.5"
+            class="flex flex-col items-center justify-center p-3.5 rounded-xl border border-slate-100 bg-slate-50/60 transition-colors hover:bg-slate-100/80 text-center space-y-2"
           >
-            <span class="text-xl">🌴</span>
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <path d="M16 2v4M8 2v4M3 10h18"/>
+              </svg>
+            </div>
             <span class="text-xs font-medium text-slate-800">سوابق مرخصی</span>
           </a>
 
           <a
             routerLink="/employee/profile"
-            class="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-100/80 transition text-center space-y-1.5"
+            class="flex flex-col items-center justify-center p-3.5 rounded-xl border border-slate-100 bg-slate-50/60 transition-colors hover:bg-slate-100/80 text-center space-y-2"
           >
-            <span class="text-xl">👤</span>
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
             <span class="text-xs font-medium text-slate-800">پروفایل من</span>
           </a>
         </div>
