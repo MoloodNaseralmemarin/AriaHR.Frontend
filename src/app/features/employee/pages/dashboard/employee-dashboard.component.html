@@ -2,7 +2,7 @@
   <!-- Header Card -->
   <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
     <p class="text-lg font-bold text-slate-800">
-      سلام، {{ employeeName() }}
+      سلام، {{ userGreetingName() }}
     </p>
     <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
       <span class="inline-flex items-center gap-1.5">
@@ -10,7 +10,7 @@
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
-        پنل پرسنلی AriaHR
+        پنل کارمند AriaHR
       </span>
       <span class="inline-flex items-center gap-1.5">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -24,39 +24,39 @@
 
   <!-- Summary KPI Section -->
   <section>
-    <h2 class="mb-3 text-sm font-semibold text-slate-500">خلاصه وضعیت مرخصی و کارکرد</h2>
-    @if (isLoadingAttendance() || isLoadingLeaves()) {
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="در حال دریافت آمار">
+    <h2 class="mb-3 text-sm font-semibold text-slate-500">خلاصه وضعیت مرخصی و تردد</h2>
+    @if (isLoadingLeaves() || isLoadingAttendance()) {
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" aria-label="در حال دریافت اطلاعات">
         <app-skeleton-loader variant="card" [count]="4"></app-skeleton-loader>
       </div>
     } @else {
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <app-summary-card label="مرخصی‌های در انتظار" [value]="(leaveSummary()?.pendingCount ?? 0) | persianDigits" tone="warning">
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <app-summary-card label="وضعیت تردد امروز" [value]="attendanceStatusSummaryLabel()" [tone]="attendanceSummaryTone()">
+          <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v5l3 3"/>
+          </svg>
+        </app-summary-card>
+
+        <app-summary-card label="مرخصی در انتظار" [value]="leaveSummary()?.pendingCount ?? 0" tone="warning">
           <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <polyline points="12 6 12 12 16 14"/>
           </svg>
         </app-summary-card>
 
-        <app-summary-card label="مرخصی‌های تایید شده" [value]="(leaveSummary()?.approvedCount ?? 0) | persianDigits" tone="success">
+        <app-summary-card label="مرخصی تایید شده" [value]="leaveSummary()?.approvedCount ?? 0" tone="success">
           <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
             <polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
         </app-summary-card>
 
-        <app-summary-card label="کارکرد امروز" [value]="((todayAttendance()?.workDuration || '--') | persianDigits)" tone="info">
+        <app-summary-card label="مرخصی رد شده" [value]="leaveSummary()?.rejectedCount ?? 0" tone="danger">
           <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-        </app-summary-card>
-
-        <app-summary-card label="وضعیت تردد" [value]="attendanceStatusLabel()" tone="default">
-          <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-            <polyline points="10 17 15 12 10 7"/>
-            <line x1="15" y1="12" x2="3" y2="12"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
           </svg>
         </app-summary-card>
       </div>
@@ -70,11 +70,16 @@
   >
     <div class="flex items-center gap-3.5">
       <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 text-xl font-light leading-none backdrop-blur-xs">
-        ⏱
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+        </svg>
       </div>
       <div>
-        <strong class="block text-sm font-bold">ثبت و مدیریت تردد امروز</strong>
-        <p class="mt-0.5 text-xs text-blue-100">جهت اسکن بارکد QR و ثبت ورود یا خروج کلیک کنید</p>
+        <strong class="block text-sm font-bold">ثبت تردد جدید (ورود/خروج با QR)</strong>
+        <p class="mt-0.5 text-xs text-blue-100">اسکن QR کد محل کار جهت ثبت ورود یا خروج روزانه</p>
       </div>
     </div>
     <div class="flex items-center gap-1 text-sm font-semibold text-white/90">
@@ -86,79 +91,70 @@
     </div>
   </a>
 
-  <!-- Two Column Grid (2:1 split) -->
+  <!-- Two Column Grid (2:1 split matching system-admin/dashboard) -->
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-    <!-- Main Column (2 cols) -->
+    <!-- Main Column: Today's Attendance & Recent Leave Requests (2 cols) -->
     <div class="space-y-6 lg:col-span-2">
-      <!-- Today's Attendance & Shift Card -->
+      <!-- Today's Attendance Card -->
       <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="mb-4 flex items-center justify-between">
           <div>
-            <h2 class="text-sm font-semibold text-slate-700">وضعیت تردد و شیفت کاری امروز</h2>
-            <p class="mt-0.5 text-xs text-slate-400">اطلاعات برنامه کاری و زمان‌بندی تردد امروز</p>
+            <h2 class="text-sm font-semibold text-slate-700">تردد و شیفت امروز</h2>
+            <p class="mt-0.5 text-xs text-slate-400">اطلاعات شیفت کاری و زمان ورود/خروج ثبت شده</p>
           </div>
           <a routerLink="/employee/attendance" class="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline">
-            جزئیات تردد
+            ثبت تردد
           </a>
         </div>
 
         @if (isLoadingAttendance()) {
-          <app-skeleton-loader variant="card" [count]="2"></app-skeleton-loader>
-        } @else {
-          <div class="space-y-4">
-            <!-- Attendance status overview row -->
-            <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
-              <span class="text-xs font-semibold text-slate-700">وضعیت حضور امروز:</span>
+          <app-skeleton-loader variant="row" [count]="2"></app-skeleton-loader>
+        } @else if (todayAttendance(); as att) {
+          <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-200/60 pb-3">
+              <span class="text-xs font-medium text-slate-500">وضعیت ثبت‌شده</span>
               <app-status-badge
                 [label]="attendanceStatusLabel()"
                 [tone]="attendanceStatusTone()"
               ></app-status-badge>
             </div>
 
-            <!-- Checkin / Checkout times -->
-            <div class="grid grid-cols-2 gap-3 text-center">
-              <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
-                <span class="block text-xs text-slate-500">زمان ورود</span>
-                <strong class="mt-1 block text-sm font-bold text-slate-800">
-                  {{ (todayAttendance()?.checkInTime || '--:--') | persianDigits }}
-                </strong>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 pt-1 text-xs text-slate-600">
+              <div class="flex items-center justify-between rounded-lg bg-white p-2.5 border border-slate-200/60">
+                <span class="text-slate-400">زمان ورود:</span>
+                <span class="font-semibold text-slate-800 dir-ltr font-mono">
+                  {{ att.checkInTime ? (att.checkInTime | persianDigits) : 'ثبت نشده' }}
+                </span>
               </div>
-              <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
-                <span class="block text-xs text-slate-500">زمان خروج</span>
-                <strong class="mt-1 block text-sm font-bold text-slate-800">
-                  {{ (todayAttendance()?.checkOutTime || '--:--') | persianDigits }}
-                </strong>
+              <div class="flex items-center justify-between rounded-lg bg-white p-2.5 border border-slate-200/60">
+                <span class="text-slate-400">زمان خروج:</span>
+                <span class="font-semibold text-slate-800 dir-ltr font-mono">
+                  {{ att.checkOutTime ? (att.checkOutTime | persianDigits) : 'ثبت نشده' }}
+                </span>
               </div>
             </div>
 
-            <!-- Today's shift info -->
-            @if (todayAttendance()?.shift; as s) {
-              <div class="rounded-xl border border-blue-100 bg-blue-50/50 p-3.5 text-xs text-slate-700">
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-slate-800">شیفت کاری: {{ s.name }}</span>
-                  <span class="rounded-full bg-blue-100 px-2.5 py-0.5 font-semibold text-blue-700">
-                    {{ (s.startTime || '--:--') | persianDigits }} تا {{ (s.endTime || '--:--') | persianDigits }}
-                  </span>
-                </div>
-                @if (todayAttendance()?.workLocationName) {
-                  <p class="mt-1.5 text-slate-500">محل خدمت: {{ todayAttendance()?.workLocationName }}</p>
-                }
-              </div>
-            } @else {
-              <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 text-center text-xs text-slate-500">
-                شیفت کاری خاصی برای امروز تعیین نشده است.
+            @if (att.shift) {
+              <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
+                <span>شیفت کاری: {{ att.shift.name }}</span>
+                <span dir="ltr" class="font-mono">({{ att.shift.startTime | persianDigits }} - {{ att.shift.endTime | persianDigits }})</span>
               </div>
             }
           </div>
+        } @else {
+          <app-empty-state
+            title="اطلاعات ترددی یافت نشد"
+            description="امروز هنوز ورودی برای شما ثبت نشده است."
+          ></app-empty-state>
         }
       </section>
 
-      <!-- Recent Leave Requests -->
+      <!-- Recent Leave Requests Card -->
       <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="mb-4 flex items-center justify-between">
           <div>
             <h2 class="text-sm font-semibold text-slate-700">آخرین درخواست‌های مرخصی</h2>
-            <p class="mt-0.5 text-xs text-slate-400">خلاصه آخرین وضعیت درخواست‌های مرخصی شما</p>
+            <p class="mt-0.5 text-xs text-slate-400">درخواست‌های اخیر ثبت شده در سیستم</p>
           </div>
           <a routerLink="/employee/leave-requests" class="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline">
             مشاهده همه
@@ -170,29 +166,29 @@
         } @else if (recentLeaveRequests().length === 0) {
           <app-empty-state
             title="درخواستی ثبت نشده است"
-            description="هنوز هیچ درخواست مرخصی در سامانه ثبت نکرده‌اید."
+            description="هنوز درخواست مرخصی در سیستم ثبت نکرده‌اید."
           ></app-empty-state>
         } @else {
           <div class="space-y-3">
-            @for (req of recentLeaveRequests().slice(0, 3); track req.id) {
+            @for (request of recentLeaveRequests().slice(0, 4); track request.id) {
               <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
                 <div class="flex min-w-0 items-center gap-3">
-                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-sm font-bold text-amber-700">
-                    🌴
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-sm font-bold text-blue-700">
+                    {{ request.leaveType === 'hourly' ? 'س' : 'ر' }}
                   </div>
                   <div class="min-w-0">
                     <p class="truncate text-sm font-semibold text-slate-800">
-                      {{ req.leaveType === 'daily' ? 'مرخصی روزانه' : 'مرخصی ساعتی' }} • {{ req.durationText }}
+                      مرخصی {{ request.leaveType === 'hourly' ? 'ساعتی' : 'روزانه' }}
                     </p>
                     <p class="mt-0.5 truncate text-xs text-slate-500">
-                      تاریخ: {{ ((req.startDate || req.date) || '') | persianDigits }} {{ req.reason ? '• ' + req.reason : '' }}
+                      تاریخ: {{ request.startDate | jalali:'persian':'YYYY-MM-DD' }}
                     </p>
                   </div>
                 </div>
                 <div class="flex shrink-0 items-center gap-2">
                   <app-status-badge
-                    [label]="getLeaveStatusLabel(req.status)"
-                    [tone]="getLeaveStatusTone(req.status)"
+                    [label]="getLeaveStatusLabel(request.status)"
+                    [tone]="getLeaveStatusTone(request.status)"
                   ></app-status-badge>
                 </div>
               </div>
@@ -202,88 +198,74 @@
             routerLink="/employee/leave-requests"
             class="mt-4 flex w-full items-center justify-center rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
           >
-            مشاهده همه درخواست‌ها
+            مشاهده کلیه درخواست‌ها
           </a>
         }
       </section>
     </div>
 
-    <!-- Side Column (1 col) -->
-    <div class="space-y-6">
-      <!-- Monthly Summary Card -->
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-4">
-          <h2 class="text-sm font-semibold text-slate-700">خلاصه کارکرد ماه جاری</h2>
-          <p class="mt-0.5 text-xs text-slate-400">گزارش عملکرد ماهانه</p>
-        </div>
+    <!-- Side Column: Recent Activity & Quick Navigation (1 col) -->
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="mb-4">
+        <h2 class="text-sm font-semibold text-slate-700">دسترسی‌های سریع</h2>
+        <p class="mt-0.5 text-xs text-slate-400">عملیات و امکانات پرکاربرد پنل کارمند</p>
+      </div>
 
-        <div class="space-y-3">
-          <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-600">ساعت کار این ماه</span>
-            <span class="text-xs font-bold text-slate-400">--</span>
-          </div>
-          <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-600">روزهای حضور</span>
-            <span class="text-xs font-bold text-slate-400">--</span>
-          </div>
-          <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-600">روزهای غیبت</span>
-            <span class="text-xs font-bold text-slate-400">--</span>
-          </div>
-          <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-600">درخواست‌های فعال</span>
-            <span class="text-xs font-bold text-blue-600">
-              {{ (leaveSummary()?.pendingCount ?? 0) | persianDigits }}
+      <div class="space-y-3">
+        <a
+          routerLink="/employee/leave-requests/new"
+          class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3.5 transition-colors hover:bg-slate-100"
+        >
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 font-bold">
+              +
             </span>
+            <div>
+              <p class="text-xs font-semibold text-slate-800">ثبت درخواست مرخصی</p>
+              <p class="text-[11px] text-slate-400">ثبت مرخصی روزانه یا ساعتی جدید</p>
+            </div>
           </div>
-        </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rotate-180 text-slate-400">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </a>
 
-        <p class="mt-3 text-[11px] text-amber-700 bg-amber-50 rounded-lg p-2.5 border border-amber-200/80">
-          ℹ️ آمار تجمیعی ماهانه در حال حاضر توسط سرور ارائه نمی‌شود.
-        </p>
-      </section>
+        <a
+          routerLink="/employee/profile"
+          class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3.5 transition-colors hover:bg-slate-100"
+        >
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </span>
+            <div>
+              <p class="text-xs font-semibold text-slate-800">پروفایل پرسنلی</p>
+              <p class="text-[11px] text-slate-400">مشاهده مشخصات و اطلاعات شغلی</p>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rotate-180 text-slate-400">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </a>
 
-      <!-- Quick Shortcuts Card -->
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-4">
-          <h2 class="text-sm font-semibold text-slate-700">دسترسی‌های سریع</h2>
-          <p class="mt-0.5 text-xs text-slate-400">میانبر بخش‌های اصلی پنل</p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2.5">
-          <a
-            routerLink="/employee/attendance"
-            class="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-100/80 transition text-center space-y-1.5"
-          >
-            <span class="text-xl">⏱</span>
-            <span class="text-xs font-medium text-slate-800">ثبت حضور و غیاب</span>
-          </a>
-
-          <a
-            routerLink="/employee/leave-requests/new"
-            class="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-100/80 transition text-center space-y-1.5"
-          >
-            <span class="text-xl">➕</span>
-            <span class="text-xs font-medium text-slate-800">ثبت مرخصی</span>
-          </a>
-
-          <a
-            routerLink="/employee/leave-requests"
-            class="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-100/80 transition text-center space-y-1.5"
-          >
-            <span class="text-xl">🌴</span>
-            <span class="text-xs font-medium text-slate-800">سوابق مرخصی</span>
-          </a>
-
-          <a
-            routerLink="/employee/profile"
-            class="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-100/80 transition text-center space-y-1.5"
-          >
-            <span class="text-xl">👤</span>
-            <span class="text-xs font-medium text-slate-800">پروفایل من</span>
-          </a>
-        </div>
-      </section>
-    </div>
+        <a
+          routerLink="/employee/notifications"
+          class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3.5 transition-colors hover:bg-slate-100"
+        >
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </span>
+            <div>
+              <p class="text-xs font-semibold text-slate-800">صندوق اعلان‌ها</p>
+              <p class="text-[11px] text-slate-400">پیام‌های دریافتی از مدیران</p>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rotate-180 text-slate-400">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </a>
+      </div>
+    </section>
   </div>
 </div>
