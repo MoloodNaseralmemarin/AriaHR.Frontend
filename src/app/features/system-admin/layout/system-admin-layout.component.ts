@@ -9,7 +9,7 @@ import { SystemAdminBottomNavComponent } from '../components/system-admin-bottom
   standalone: true,
   imports: [CommonModule, RouterOutlet, SystemAdminSidebarNavComponent, SystemAdminBottomNavComponent],
   template: `
-    <div dir="rtl" class="flex min-h-screen bg-slate-50 text-slate-800" style="font-family: 'IRANSans', 'Vazirmatn', sans-serif;">
+    <div dir="rtl" class="flex min-h-screen bg-slate-50 text-slate-800" style="font-family: 'IRANSans', sans-serif;">
       <app-system-admin-sidebar-nav></app-system-admin-sidebar-nav>
 
       <div class="flex min-h-screen w-full flex-1 flex-col">

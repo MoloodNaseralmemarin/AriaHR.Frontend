@@ -9,7 +9,7 @@ import { BottomNavComponent } from '../components/bottom-nav/bottom-nav.componen
   standalone: true,
   imports: [CommonModule, RouterOutlet, SidebarNavComponent, BottomNavComponent],
   template: `
-    <div dir="rtl" class="flex min-h-screen bg-slate-50 text-slate-800" style="font-family: 'IRANSans', 'Vazirmatn', sans-serif;">
+    <div dir="rtl" class="flex min-h-screen bg-slate-50 text-slate-800" style="font-family: 'IRANSans', sans-serif;">
       <app-sidebar-nav></app-sidebar-nav>
 
       <div class="flex min-h-screen w-full flex-1 flex-col">
