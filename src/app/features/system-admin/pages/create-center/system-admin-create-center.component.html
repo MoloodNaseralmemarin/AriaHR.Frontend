@@ -48,9 +48,9 @@
         نوع مرکز *
         <select formControlName="centerType" [class.invalid]="isControlInvalid('centerType')">
           <option value="">انتخاب کنید</option>
-          <option value="کلینیک">کلینیک</option>
-          <option value="مرکز درمانی">مرکز درمانی</option>
-          <option value="مرکز تصویربرداری">مرکز تصویربرداری</option>
+          @for (opt of organizationTypeOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
         </select>
         @if (getControlError('centerType')) {
           <span class="error-msg">{{ getControlError('centerType') }}</span>

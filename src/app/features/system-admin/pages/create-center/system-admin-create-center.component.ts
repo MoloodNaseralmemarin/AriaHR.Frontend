@@ -5,15 +5,13 @@ import { finalize } from 'rxjs';
 
 import { OrganizationService } from '../../../organizations/services/organization.service';
 import { CreateOrganizationDto } from '../../../organizations/models/create-organization.dto';
+import {
+  ORGANIZATION_TYPE_OPTIONS,
+  OrganizationType,
+} from '../../../organizations/models/organization-type.enum';
 
 const IRAN_LANDLINE_PATTERN = /^0\d{2,3}[-\s]?\d{7,8}$/;
 const IRAN_MOBILE_PATTERN = /^09\d{9}$/;
-
-const CENTER_TYPE_MAP: Record<string, number> = {
-  'کلینیک': 1,
-  'مرکز درمانی': 2,
-  'مرکز تصویربرداری': 3,
-};
 
 @Component({
   selector: 'app-system-admin-create-center',
@@ -31,6 +29,8 @@ export class SystemAdminCreateCenterComponent {
   readonly step = signal<1 | 2>(1);
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
+
+  readonly organizationTypeOptions = ORGANIZATION_TYPE_OPTIONS;
 
   readonly form = this.fb.group({
     centerName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
@@ -152,10 +152,14 @@ export class SystemAdminCreateCenterComponent {
 
     const formValues = this.form.getRawValue();
 
+    const numericType = Number(formValues.centerType);
+    const typeValue: OrganizationType =
+      numericType in OrganizationType ? (numericType as OrganizationType) : OrganizationType.Clinic;
+
     const requestDto: CreateOrganizationDto = {
       name: formValues.centerName,
       code: formValues.centerCode ? formValues.centerCode.trim() : '',
-      type: CENTER_TYPE_MAP[formValues.centerType] ?? 1,
+      type: typeValue,
       nationalIdentifier: null,
       phone: formValues.phone ? formValues.phone : null,
       address: formValues.address ? formValues.address : null,
