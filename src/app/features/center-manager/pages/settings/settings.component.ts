@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
+import { ORGANIZATION_TYPE_OPTIONS } from '../../../organizations/models/organization-type.enum';
 
 /**
  * /center/settings
@@ -21,7 +22,7 @@ import { ToastComponent } from '../../../../shared/components/toast/toast.compon
 export class SettingsComponent {
   // Center information
   centerName = signal('مرکز سلامت بهار');
-  centerType = signal('کلینیک سرپایی');
+  centerType = signal<number | string>('1');
   phoneNumber = signal('021-88991234');
   address = signal('تهران، خیابان ولیعصر، پلاک ۱۲۴');
 
@@ -38,7 +39,7 @@ export class SettingsComponent {
 
   showSavedToast = signal(false);
 
-  centerTypeOptions = ['کلینیک سرپایی', 'مرکز توانبخشی', 'مرکز مراقبت سالمندان', 'مرکز خدمات پرستاری'];
+  readonly centerTypeOptions = ORGANIZATION_TYPE_OPTIONS;
 
   toggle(field: 'notifyRequests' | 'notifyAbsence' | 'notifyLate'): void {
     this[field].update((v) => !v);

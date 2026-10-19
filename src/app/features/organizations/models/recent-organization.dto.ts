@@ -1,8 +1,10 @@
+import { OrganizationType } from './organization-type.enum';
+
 export interface RecentOrganizationDto {
   id: string | number;
   name: string;
   code?: string;
-  type?: number;
+  type?: OrganizationType | number;
   isActive?: boolean;
   managerFirstName?: string | null;
   managerLastName?: string | null;
@@ -12,7 +14,7 @@ export interface RecentOrganizationDto {
   Id?: string | number;
   Name?: string;
   Code?: string;
-  Type?: number;
+  Type?: OrganizationType | number;
   IsActive?: boolean;
   ManagerFirstName?: string | null;
   ManagerLastName?: string | null;

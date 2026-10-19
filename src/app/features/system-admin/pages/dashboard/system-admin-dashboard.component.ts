@@ -11,6 +11,7 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
 import { OrganizationService } from '../../../organizations/services/organization.service';
 import { OrganizationDashboardSummaryDto } from '../../../organizations/models/organization-dashboard-summary.dto';
 import { RecentOrganizationDto } from '../../../organizations/models/recent-organization.dto';
+import { getOrganizationTypeLabel } from '../../../organizations/models/organization-type.enum';
 import { DashboardService } from '../../services/dashboard.service';
 import { RecentActivityDto } from '../../models/recent-activity.dto';
 import { SystemAdminDataService } from '../../services/system-admin-data.service';
@@ -19,6 +20,7 @@ import { CenterStatus, SystemActivity } from '../../models/system-admin.models';
 export interface UIRecentOrganization {
   id: string | number;
   name: string;
+  typeLabel: string;
   managerName: string;
   status: CenterStatus;
 }
@@ -93,13 +95,15 @@ export class SystemAdminDashboardComponent implements OnInit, OnDestroy {
       return rawList.map((item) => {
         const id = item.id ?? item.Id ?? '';
         const name = item.name ?? item.Name ?? '';
+        const typeNum = item.type ?? item.Type;
+        const typeLabel = getOrganizationTypeLabel(typeNum);
         const firstName = item.managerFirstName ?? item.ManagerFirstName ?? '';
         const lastName = item.managerLastName ?? item.ManagerLastName ?? '';
         const managerName = `${firstName} ${lastName}`.trim() || 'نامشخص';
         const isActive = item.isActive ?? item.IsActive ?? true;
         const status: CenterStatus = isActive ? 'active' : 'inactive';
 
-        return { id, name, managerName, status };
+        return { id, name, typeLabel, managerName, status };
       });
     }
 
@@ -108,6 +112,7 @@ export class SystemAdminDashboardComponent implements OnInit, OnDestroy {
       return this.data.getRecentCenters(3).map((c) => ({
         id: c.id,
         name: c.name,
+        typeLabel: 'کلینیک',
         managerName: c.managerName,
         status: c.status,
       }));

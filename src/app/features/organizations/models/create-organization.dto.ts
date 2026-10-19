@@ -1,7 +1,9 @@
+import { OrganizationType } from './organization-type.enum';
+
 export interface CreateOrganizationDto {
   name: string;
   code: string;
-  type: number;
+  type: OrganizationType | number;
   nationalIdentifier: string | null;
   phone: string | null;
   address: string | null;
