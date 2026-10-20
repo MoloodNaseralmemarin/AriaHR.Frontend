@@ -12,9 +12,12 @@ export type SummaryTone = 'default' | 'success' | 'warning' | 'danger' | 'info';
   selector: 'app-summary-card',
   standalone: true,
   imports: [CommonModule],
+  host: {
+    class: 'block h-full min-w-0',
+  },
   template: `
     <div
-      class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+      class="flex h-full w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
     >
       <div
         class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
@@ -22,9 +25,9 @@ export type SummaryTone = 'default' | 'success' | 'warning' | 'danger' | 'info';
       >
         <ng-content select="[icon]"></ng-content>
       </div>
-      <div class="min-w-0">
-        <p class="text-sm text-slate-500">{{ label }}</p>
-        <p class="mt-0.5 text-xl font-bold text-slate-800">{{ value }}</p>
+      <div class="min-w-0 flex-1 flex flex-col justify-center">
+        <p class="text-xs sm:text-sm text-slate-500 leading-snug line-clamp-2 min-h-[2.25rem] flex items-center">{{ label }}</p>
+        <p class="mt-0.5 text-lg sm:text-xl font-bold text-slate-800">{{ value }}</p>
       </div>
     </div>
   `,
