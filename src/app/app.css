@@ -5,8 +5,14 @@
     --font-sans: 'IRANSans', sans-serif;
   }
 
-  body {
-    font-family: var(--font-sans);
+  body,
+  button,
+  input,
+  textarea,
+  select,
+  option,
+  optgroup {
+    font-family: var(--font-sans) !important;
     background-color: #f8fafc;
     color: #0f172a;
     -webkit-font-smoothing: antialiased;
