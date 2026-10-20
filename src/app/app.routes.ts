@@ -58,11 +58,6 @@ export const routes: Routes = [
       { path: 'centers/create', component: SystemAdminCreateCenterComponent },
       { path: 'centers/:id', component: SystemAdminCenterDetailsComponent },
       { path: 'managers', component: SystemAdminManagersComponent },
-      {
-        path: 'employees',
-        loadChildren: () =>
-          import('./features/employees/employees.routes').then((m) => m.EMPLOYEE_ROUTES),
-      },
       { path: 'notifications', component: SystemAdminNotificationsComponent },
       { path: 'settings', component: SystemAdminSettingsComponent },
     ],

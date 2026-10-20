@@ -43,11 +43,7 @@ export class EmployeeListComponent implements OnInit {
 
   readonly employees = signal<EmployeeResponseDto[]>([]);
 
-  readonly basePath = computed<string>(() => {
-    return this.router.url.includes('/system-admin')
-      ? '/system-admin/employees'
-      : '/center-manager/employees';
-  });
+  readonly basePath = signal<string>('/center-manager/employees');
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly searchTerm = signal('');
