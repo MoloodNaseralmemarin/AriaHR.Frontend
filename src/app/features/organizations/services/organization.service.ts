@@ -23,6 +23,14 @@ export class OrganizationService {
   private readonly apiUrl = `${environment.apiUrl}/api/organizations`;
 
   /**
+   * Fetches list of organizations.
+   * Endpoint: GET /api/organizations
+   */
+  getOrganizations(): Observable<OrganizationResponseDto[]> {
+    return this.http.get<OrganizationResponseDto[]>(this.apiUrl);
+  }
+
+  /**
    * Sends a POST request to create a new organization.
    * Endpoint: POST /api/organizations
    */
