@@ -69,11 +69,7 @@ export class EmployeeFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  readonly basePath = computed<string>(() => {
-    return this.router.url.includes('/system-admin')
-      ? '/system-admin/employees'
-      : '/center-manager/employees';
-  });
+  readonly basePath = signal<string>('/center-manager/employees');
 
   readonly isEditMode = signal(false);
   readonly isSubmitting = signal(false);
