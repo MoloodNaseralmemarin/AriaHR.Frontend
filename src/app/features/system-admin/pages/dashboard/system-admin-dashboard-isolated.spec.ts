@@ -9,25 +9,31 @@ import { DashboardService } from '../../services/dashboard.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { SystemAdminDataService } from '../../services/system-admin-data.service';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
-import { OrganizationDashboardSummaryDto } from '../../../organizations/models/organization-dashboard-summary.dto';
+import { DashboardOverviewResponse } from '../../models/dashboard-overview.dto';
 import { RecentOrganizationDto } from '../../../organizations/models/recent-organization.dto';
 import { RecentActivityDto } from '../../models/recent-activity.dto';
 
 describe('SystemAdminDashboardComponent (Isolated Tests)', () => {
   let component: SystemAdminDashboardComponent;
-  let mockOrgService: { getDashboardSummary: any; getRecentOrganizations: any };
-  let mockDashboardService: { getRecentActivities: any };
+  let mockOrgService: { getRecentOrganizations: any };
+  let mockDashboardService: { getOverview: any; getRecentActivities: any };
   let mockAuthService: { getCurrentUser: any; userDetails: any };
   let mockDataService: any;
   let mockPersianDateService: any;
 
-  const mockSummary: OrganizationDashboardSummaryDto = {
-    totalCenters: 10,
-    activeCenters: 8,
-    pendingCenters: 2,
-    totalManagers: 12,
-    totalEmployees: 150,
-    newCentersThisMonth: 3,
+  const mockOverview: DashboardOverviewResponse = {
+    centers: {
+      totalCount: 15,
+      activeCount: 12,
+      awaitingCompletionCount: 3,
+    },
+    centerManagers: {
+      totalCount: 10,
+    },
+    employees: {
+      totalCount: 200,
+      createdThisMonth: 25,
+    },
   };
 
   const mockRecentOrgs: RecentOrganizationDto[] = [
@@ -52,10 +58,10 @@ describe('SystemAdminDashboardComponent (Isolated Tests)', () => {
 
   beforeEach(() => {
     mockOrgService = {
-      getDashboardSummary: vi.fn().mockReturnValue(of(mockSummary)),
       getRecentOrganizations: vi.fn().mockReturnValue(of(mockRecentOrgs)),
     };
     mockDashboardService = {
+      getOverview: vi.fn().mockReturnValue(of(mockOverview)),
       getRecentActivities: vi.fn().mockReturnValue(of(mockRecentActivities)),
     };
     mockAuthService = {
@@ -94,25 +100,16 @@ describe('SystemAdminDashboardComponent (Isolated Tests)', () => {
     });
   });
 
-  it('should instantiate component and load initial data on ngOnInit', () => {
+  it('should instantiate component and load overview statistics on ngOnInit', () => {
     component.ngOnInit();
 
-    expect(mockOrgService.getDashboardSummary).toHaveBeenCalledTimes(1);
+    expect(mockDashboardService.getOverview).toHaveBeenCalledTimes(1);
     expect(mockOrgService.getRecentOrganizations).toHaveBeenCalledTimes(1);
     expect(mockDashboardService.getRecentActivities).toHaveBeenCalledTimes(1);
 
-    expect(component.isLoadingSummary()).toBe(false);
-    expect(component.isLoadingRecentOrgs()).toBe(false);
-    expect(component.isLoadingRecentActivities()).toBe(false);
-
-    expect(component.stats()).toEqual({
-      totalCenters: 10,
-      activeCenters: 8,
-      pendingCenters: 2,
-      totalManagers: 12,
-      totalEmployees: 150,
-      newCentersThisMonth: 3,
-    });
+    expect(component.isLoadingOverview()).toBe(false);
+    expect(component.overviewError()).toBe(false);
+    expect(component.overviewData()).toEqual(mockOverview);
 
     expect(component.recentCenters().length).toBe(1);
     expect(component.recentCenters()[0].managerName).toBe('علی رضایی');
@@ -121,17 +118,22 @@ describe('SystemAdminDashboardComponent (Isolated Tests)', () => {
     expect(component.recentActivity()[0].label).toBe('ثبت مرکز جدید');
   });
 
-  it('should handle partial API errors gracefully with soft fallback', () => {
-    mockDashboardService.getRecentActivities.mockReturnValue(throwError(() => new Error('API Error')));
+  it('should handle API errors when fetching overview data and support retry', () => {
+    mockDashboardService.getOverview.mockReturnValue(throwError(() => new Error('API Error')));
 
     component.ngOnInit();
 
-    expect(component.summaryError()).toBe(false);
-    expect(component.recentOrgsError()).toBe(false);
-    expect(component.recentActivitiesError()).toBe(true);
+    expect(component.isLoadingOverview()).toBe(false);
+    expect(component.overviewError()).toBe(true);
+    expect(component.overviewData()).toBeNull();
 
-    expect(component.stats().totalCenters).toBe(10);
-    expect(component.recentCenters().length).toBe(1);
+    // Test retry action
+    mockDashboardService.getOverview.mockReturnValue(of(mockOverview));
+    component.loadDashboardOverview();
+
+    expect(component.isLoadingOverview()).toBe(false);
+    expect(component.overviewError()).toBe(false);
+    expect(component.overviewData()).toEqual(mockOverview);
   });
 
   it('should calculate status tones correctly', () => {

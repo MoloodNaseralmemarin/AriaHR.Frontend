@@ -9,10 +9,10 @@ import { StatusBadgeComponent, BadgeTone } from '../../../../shared/components/s
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { OrganizationService } from '../../../organizations/services/organization.service';
-import { OrganizationDashboardSummaryDto } from '../../../organizations/models/organization-dashboard-summary.dto';
 import { RecentOrganizationDto } from '../../../organizations/models/recent-organization.dto';
 import { getOrganizationTypeLabel } from '../../../organizations/models/organization-type.enum';
 import { DashboardService } from '../../services/dashboard.service';
+import { DashboardOverviewResponse } from '../../models/dashboard-overview.dto';
 import { RecentActivityDto } from '../../models/recent-activity.dto';
 import { SystemAdminDataService } from '../../services/system-admin-data.service';
 import { CenterStatus, SystemActivity } from '../../models/system-admin.models';
@@ -62,9 +62,9 @@ export class SystemAdminDashboardComponent implements OnInit, OnDestroy {
   readonly now = signal<Date>(new Date());
   private timerId: ReturnType<typeof setInterval> | null = null;
 
-  readonly summaryData = signal<OrganizationDashboardSummaryDto | null>(null);
-  readonly isLoadingSummary = signal<boolean>(true);
-  readonly summaryError = signal<boolean>(false);
+  readonly overviewData = signal<DashboardOverviewResponse | null>(null);
+  readonly isLoadingOverview = signal<boolean>(true);
+  readonly overviewError = signal<boolean>(false);
 
   readonly recentOrgsRaw = signal<RecentOrganizationDto[] | null>(null);
   readonly isLoadingRecentOrgs = signal<boolean>(true);
@@ -73,21 +73,6 @@ export class SystemAdminDashboardComponent implements OnInit, OnDestroy {
   readonly recentActivitiesRaw = signal<RecentActivityDto[] | null>(null);
   readonly isLoadingRecentActivities = signal<boolean>(true);
   readonly recentActivitiesError = signal<boolean>(false);
-
-  readonly stats = computed(() => {
-    const summary = this.summaryData();
-    if (summary) {
-      return {
-        totalCenters: summary.totalCenters ?? summary.TotalCenters ?? 0,
-        activeCenters: summary.activeCenters ?? summary.ActiveCenters ?? 0,
-        pendingCenters: summary.pendingCenters ?? summary.PendingCenters ?? 0,
-        totalManagers: summary.totalManagers ?? summary.TotalManagers ?? 0,
-        totalEmployees: summary.totalEmployees ?? summary.TotalEmployees ?? 0,
-        newCentersThisMonth: summary.newCentersThisMonth ?? summary.NewCentersThisMonth ?? 0,
-      };
-    }
-    return this.data.stats();
-  });
 
   readonly recentCenters = computed<UIRecentOrganization[]>(() => {
     const rawList = this.recentOrgsRaw();
@@ -172,7 +157,7 @@ export class SystemAdminDashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.authService.getCurrentUser().subscribe();
-    this.loadDashboardSummary();
+    this.loadDashboardOverview();
     this.loadRecentOrganizations();
     this.loadRecentActivities();
 
@@ -196,19 +181,19 @@ export class SystemAdminDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadDashboardSummary(): void {
-    this.isLoadingSummary.set(true);
-    this.summaryError.set(false);
+  loadDashboardOverview(): void {
+    this.isLoadingOverview.set(true);
+    this.overviewError.set(false);
 
-    this.organizationService.getDashboardSummary().subscribe({
+    this.dashboardService.getOverview().subscribe({
       next: (data) => {
-        this.summaryData.set(data);
-        this.isLoadingSummary.set(false);
+        this.overviewData.set(data);
+        this.isLoadingOverview.set(false);
       },
       error: (err) => {
-        console.error('Failed to load organization dashboard summary:', err);
-        this.summaryError.set(true);
-        this.isLoadingSummary.set(false);
+        console.error('Failed to load dashboard overview:', err);
+        this.overviewError.set(true);
+        this.isLoadingOverview.set(false);
       },
     });
   }
