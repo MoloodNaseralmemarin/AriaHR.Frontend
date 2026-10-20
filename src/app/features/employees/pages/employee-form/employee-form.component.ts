@@ -12,6 +12,7 @@ import { isValidIranianMobile, normalizeMobileNumber, normalizePersianDigits, to
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
 import { JalaliDatePickerComponent } from '../../../../shared/components/jalali-date-picker/jalali-date-picker.component';
+import { CustomSelectComponent } from '../../../../shared/components/custom-select/custom-select.component';
 
 export function iranianMobileValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return null;
@@ -58,6 +59,7 @@ const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
     PageHeaderComponent,
     ToastComponent,
     JalaliDatePickerComponent,
+    CustomSelectComponent,
   ],
   templateUrl: './employee-form.component.html',
   styleUrls: ['./employee-form.component.css'],

@@ -9,6 +9,7 @@ import {
   ORGANIZATION_TYPE_OPTIONS,
   OrganizationType,
 } from '../../../organizations/models/organization-type.enum';
+import { CustomSelectComponent } from '../../../../shared/components/custom-select/custom-select.component';
 
 const IRAN_LANDLINE_PATTERN = /^0\d{2,3}[-\s]?\d{7,8}$/;
 const IRAN_MOBILE_PATTERN = /^09\d{9}$/;
@@ -16,7 +17,7 @@ const IRAN_MOBILE_PATTERN = /^09\d{9}$/;
 @Component({
   selector: 'app-system-admin-create-center',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, CustomSelectComponent],
   templateUrl: './system-admin-create-center.component.html',
   styleUrl: './system-admin-create-center.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../../organizations/models/organization-type.enum';
+import { CustomSelectComponent } from '../../../../shared/components/custom-select/custom-select.component';
 
 /**
  * /center/settings
@@ -15,7 +16,7 @@ import { ORGANIZATION_TYPE_OPTIONS } from '../../../organizations/models/organiz
 @Component({
   selector: 'app-center-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageHeaderComponent, ToastComponent],
+  imports: [CommonModule, FormsModule, PageHeaderComponent, ToastComponent, CustomSelectComponent],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.css'],
 })

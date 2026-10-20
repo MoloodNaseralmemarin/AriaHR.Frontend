@@ -11,6 +11,7 @@ import { LeaveCategoryService } from '../../../leave-categories/services/leave-c
 import { LeaveCategoryDto } from '../../../leave-categories/models/leave-category.dto';
 import { CreateLeaveRequestApiDto, LeaveType } from '../../models/leave-request.model';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { CustomSelectComponent } from '../../../../shared/components/custom-select/custom-select.component';
 
 @Component({
   selector: 'app-leave-request-form',
@@ -23,6 +24,7 @@ import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe'
     TimeInputComponent,
     ToastComponent,
     PersianDigitsPipe,
+    CustomSelectComponent,
   ],
   templateUrl: './leave-request-form.component.html',
   styleUrls: ['./leave-request-form.component.scss'],
@@ -43,6 +45,13 @@ export class LeaveRequestFormComponent implements OnInit {
   readonly categories = signal<LeaveCategoryDto[]>([]);
   readonly isLoadingCategories = signal<boolean>(false);
   readonly categoriesError = signal<string | null>(null);
+
+  readonly categoryOptions = computed(() =>
+    this.categories().map((cat) => ({
+      value: cat.id,
+      label: `${cat.name} (حداکثر ${cat.maxDaysPerYear} روز در سال - ${cat.isPaid ? 'با حقوق' : 'بدون حقوق'})`,
+    }))
+  );
 
   // Toast state
   readonly showToast = signal<boolean>(false);

@@ -326,27 +326,20 @@
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
               <label class="text-xs font-bold text-slate-700">نوع پیام</label>
-              <select
+              <app-custom-select
                 formControlName="messageType"
-                class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden"
-              >
-                <option [value]="MessageType.Information">اطلاعیه</option>
-                <option [value]="MessageType.Warning">هشدار</option>
-                <option [value]="MessageType.Critical">فوری / مهم</option>
-                <option [value]="MessageType.Success">موفقیت</option>
-              </select>
+                [options]="messageTypeOptions"
+                placeholder="انتخاب نوع پیام"
+              ></app-custom-select>
             </div>
 
             <div class="space-y-1">
-              <label class="text-xs font-bold text-slate-700">اولیت پیام</label>
-              <select
+              <label class="text-xs font-bold text-slate-700">اولویت پیام</label>
+              <app-custom-select
                 formControlName="messagePriority"
-                class="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden"
-              >
-                <option [value]="MessagePriority.Normal">عادی</option>
-                <option [value]="MessagePriority.High">مهم</option>
-                <option [value]="MessagePriority.Urgent">فوری</option>
-              </select>
+                [options]="messagePriorityOptions"
+                placeholder="انتخاب اولویت پیام"
+              ></app-custom-select>
             </div>
           </div>
 

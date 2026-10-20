@@ -20,6 +20,7 @@ import {
 } from '@angular/forms';
 import { PersianDateService } from '../../../core/services/persian-date.service';
 import { toPersianDigits, normalizePersianDigits, normalizeMobileNumber } from '../../utils/mobile-number.util';
+import { CustomSelectComponent } from '../custom-select/custom-select.component';
 
 const PERSIAN_MONTH_NAMES = [
   { value: 1, label: 'فروردین' },
@@ -39,7 +40,7 @@ const PERSIAN_MONTH_NAMES = [
 @Component({
   selector: 'app-jalali-date-picker',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CustomSelectComponent],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -79,18 +80,13 @@ const PERSIAN_MONTH_NAMES = [
           <label class="block text-[11px] font-medium text-slate-500 mb-1">
             ماه
           </label>
-          <select
+          <app-custom-select
             [disabled]="disabled"
-            [value]="monthSelect()"
-            (change)="onSegmentSelect('month', $event)"
-            (blur)="onBlur()"
-            class="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-center text-xs font-medium text-slate-800 transition duration-200 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-slate-100 disabled:text-slate-400"
-          >
-            <option value="">انتخاب ماه</option>
-            <option *ngFor="let m of monthOptions" [value]="m.value">
-              {{ m.value | number }} - {{ m.label }}
-            </option>
-          </select>
+            [options]="monthSelectOptions"
+            [ngModel]="monthSelect()"
+            (selectionChange)="onCustomMonthSelect($event)"
+            placeholder="انتخاب ماه"
+          ></app-custom-select>
         </div>
 
         <!-- Year Input (سال) -->
@@ -144,6 +140,10 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
   @Input() dateFormat: 'DD-MM-YYYY' | 'YYYY-MM-DD' = 'DD-MM-YYYY';
 
   readonly monthOptions = PERSIAN_MONTH_NAMES;
+  readonly monthSelectOptions = PERSIAN_MONTH_NAMES.map((m) => ({
+    value: String(m.value),
+    label: `${toPersianDigits(m.value)} - ${m.label}`,
+  }));
 
   disabled = false;
 
@@ -237,6 +237,11 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
   onSegmentSelect(type: 'month', event: Event): void {
     const val = (event.target as HTMLSelectElement).value;
     this.monthSelect.set(val);
+    this.rebuildJalaliFromSegments();
+  }
+
+  onCustomMonthSelect(val: any): void {
+    this.monthSelect.set(val ? String(val) : '');
     this.rebuildJalaliFromSegments();
   }
 

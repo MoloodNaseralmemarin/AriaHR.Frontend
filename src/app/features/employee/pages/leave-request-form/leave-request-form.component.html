@@ -55,16 +55,11 @@
 
       <!-- Category Select -->
       <div *ngIf="!isLoadingCategories() && !categoriesError()">
-        <select
-          id="leaveCategoryId"
+        <app-custom-select
           formControlName="leaveCategoryId"
-          class="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 transition focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20"
-        >
-          <option value="" disabled>انتخاب کنید...</option>
-          <option *ngFor="let cat of categories()" [value]="cat.id">
-            {{ cat.name }} {{ cat.isPaid ? '(با حقوق)' : '(بدون حقوق)' }}
-          </option>
-        </select>
+          [options]="categoryOptions()"
+          placeholder="انتخاب کنید..."
+        ></app-custom-select>
         <p *ngIf="categories().length === 0" class="mt-2 text-xs text-amber-600">
           هیچ دسته‌بندی مرخصی فعال یافت نشد.
         </p>

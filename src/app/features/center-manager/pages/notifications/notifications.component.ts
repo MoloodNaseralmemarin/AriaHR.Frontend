@@ -7,6 +7,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
 import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { CustomSelectComponent } from '../../../../shared/components/custom-select/custom-select.component';
 
 import { NotificationService } from '../../../notifications/services/notification.service';
 import { MessagePriorityLabels, MessageTypeLabels, MessagePriority, MessageType } from '../../../notifications/models/message-enums';
@@ -28,6 +29,7 @@ type ReadFilter = 'all' | 'unread';
     ToastComponent,
     JalaliPipe,
     PersianDigitsPipe,
+    CustomSelectComponent,
   ],
   templateUrl: './notifications.component.html',
   styleUrls: ['./notifications.component.css'],
@@ -64,6 +66,19 @@ export class NotificationsComponent implements OnInit {
   readonly MessagePriority = MessagePriority;
   readonly MessageTypeLabels = MessageTypeLabels;
   readonly MessagePriorityLabels = MessagePriorityLabels;
+
+  readonly messageTypeOptions = [
+    { value: MessageType.Information, label: 'اطلاعیه' },
+    { value: MessageType.Warning, label: 'هشدار' },
+    { value: MessageType.Critical, label: 'فوری / مهم' },
+    { value: MessageType.Success, label: 'موفقیت' },
+  ];
+
+  readonly messagePriorityOptions = [
+    { value: MessagePriority.Normal, label: 'عادی' },
+    { value: MessagePriority.High, label: 'مهم' },
+    { value: MessagePriority.Urgent, label: 'فوری' },
+  ];
 
   readonly employeeOptions = signal<{ id: string; name: string; personnelCode: string }[]>([]);
 

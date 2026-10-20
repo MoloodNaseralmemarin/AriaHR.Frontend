@@ -27,13 +27,12 @@
 
         <label class="block">
           <span class="mb-1.5 block text-xs font-medium text-slate-500">نوع مرکز</span>
-          <select
+          <app-custom-select
             [ngModel]="centerType()"
-            (ngModelChange)="centerType.set($event)"
-            class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-          >
-            <option *ngFor="let opt of centerTypeOptions" [value]="opt.value">{{ opt.label }}</option>
-          </select>
+            (selectionChange)="centerType.set($event)"
+            [options]="centerTypeOptions"
+            placeholder="انتخاب نوع مرکز"
+          ></app-custom-select>
         </label>
 
         <label class="block">

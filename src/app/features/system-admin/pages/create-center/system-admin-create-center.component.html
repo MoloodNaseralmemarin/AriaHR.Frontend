@@ -46,12 +46,12 @@
 
       <label>
         نوع مرکز *
-        <select formControlName="centerType" [class.invalid]="isControlInvalid('centerType')">
-          <option value="">انتخاب کنید</option>
-          @for (opt of organizationTypeOptions; track opt.value) {
-            <option [value]="opt.value">{{ opt.label }}</option>
-          }
-        </select>
+        <app-custom-select
+          formControlName="centerType"
+          [options]="organizationTypeOptions"
+          [invalid]="isControlInvalid('centerType')"
+          placeholder="انتخاب کنید"
+        ></app-custom-select>
         @if (getControlError('centerType')) {
           <span class="error-msg">{{ getControlError('centerType') }}</span>
         }
