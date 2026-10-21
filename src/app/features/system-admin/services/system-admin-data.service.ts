@@ -3,7 +3,6 @@ import { Observable, of, delay } from 'rxjs';
 
 import {
   Center,
-  CenterManager,
   CreateCenterPayload,
   SystemActivity,
   SystemAdminStats,
@@ -85,49 +84,6 @@ export class SystemAdminDataService {
     },
   ]);
 
-  private readonly _managers = signal<CenterManager[]>([
-    {
-      id: 'm1',
-      name: 'دکتر احمدی',
-      centerName: 'مرکز تصویربرداری پارس',
-      mobileNumber: '09121234567',
-      createdAt: '2026-08-20T08:30:00Z',
-      active: true,
-    },
-    {
-      id: 'm2',
-      name: 'سارا محمدی',
-      centerName: 'کلینیک آریا',
-      mobileNumber: '09127654321',
-      createdAt: '2026-08-24T06:00:00Z',
-      active: true,
-    },
-    {
-      id: 'm3',
-      name: 'علی رضایی',
-      centerName: 'مرکز پزشکی نوین',
-      mobileNumber: '09131112233',
-      createdAt: '2026-08-23T10:15:00Z',
-      active: false,
-    },
-    {
-      id: 'm4',
-      name: 'دکتر کریمی',
-      centerName: 'مرکز تصویربرداری X',
-      mobileNumber: '09144445566',
-      createdAt: '2026-07-15T09:00:00Z',
-      active: false,
-    },
-    {
-      id: 'm5',
-      name: 'دکتر موسوی',
-      centerName: 'کلینیک تخصصی شفا',
-      mobileNumber: '09157778899',
-      createdAt: '2026-08-21T07:45:00Z',
-      active: true,
-    },
-  ]);
-
   private readonly _activity = signal<SystemActivity[]>([
     {
       id: 'a1',
@@ -161,7 +117,6 @@ export class SystemAdminDataService {
 
   readonly stats = this._stats.asReadonly();
   readonly centers = this._centers.asReadonly();
-  readonly managers = this._managers.asReadonly();
   readonly activity = this._activity.asReadonly();
 
   getCenterById(id: string): Center | undefined {
