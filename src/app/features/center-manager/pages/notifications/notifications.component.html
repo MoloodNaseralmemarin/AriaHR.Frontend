@@ -200,7 +200,7 @@
           <!-- Acknowledgment Section -->
           @if (selectedMessage()!.requiresAcknowledgment) {
             <div class="rounded-2xl border p-4 text-xs space-y-2.5 transition"
-              [class]="selectedMessage()!.isAcknowledged ? 'border-emerald-200 bg-emerald-50/60 text-emerald-900' : 'border-amber-200 bg-amber-50/60 text-amber-900'">
+              [class]="selectedMessage()!.isAcknowledged ? 'border-slate-200 bg-emerald-50/60 text-emerald-900' : 'border-amber-200 bg-amber-50/60 text-amber-900'">
               <div class="flex items-center justify-between gap-3">
                 <div class="flex items-center gap-2 font-medium">
                   @if (selectedMessage()!.isAcknowledged) {

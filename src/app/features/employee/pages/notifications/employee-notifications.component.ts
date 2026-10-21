@@ -119,7 +119,7 @@ type ReadFilter = 'all' | 'unread';
                     </span>
                     @if (msg.requiresAcknowledgment) {
                       @if (msg.isAcknowledged) {
-                        <span class="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                        <span class="rounded-lg border border-slate-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
                           ✓ تایید شده
                         </span>
                       } @else {
@@ -415,7 +415,7 @@ export class EmployeeNotificationsComponent implements OnInit {
       case MessageType.Warning:
         return 'bg-amber-100 text-amber-700 border-amber-200';
       case MessageType.Success:
-        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+        return 'bg-emerald-100 text-emerald-700 border-slate-200';
       default:
         return 'bg-blue-100 text-blue-700 border-blue-200';
     }
