@@ -28,16 +28,38 @@ export const ORGANIZATION_TYPE_OPTIONS: OrganizationTypeOption[] = [
 ];
 
 /**
- * Returns the Persian display label for a given organization type.
- * Handles missing, null, or unsupported numeric values gracefully.
+ * Maps string Enum names to numeric OrganizationType values.
  */
-export function getOrganizationTypeLabel(type: OrganizationType | number | null | undefined): string {
-  if (type === null || type === undefined) {
+export const ORGANIZATION_TYPE_NAME_MAP: Record<string, OrganizationType> = {
+  Clinic: OrganizationType.Clinic,
+  ImagingCenter: OrganizationType.ImagingCenter,
+  MedicalOffice: OrganizationType.MedicalOffice,
+  Laboratory: OrganizationType.Laboratory,
+  Pharmacy: OrganizationType.Pharmacy,
+};
+
+/**
+ * Returns the Persian display label for a given organization type.
+ * Handles string Enum names (e.g. 'Clinic'), numeric values, Enum instances, and missing/null values gracefully.
+ */
+export function getOrganizationTypeLabel(
+  type: OrganizationType | number | string | null | undefined
+): string {
+  if (type === null || type === undefined || type === '') {
     return 'تعیین نشده';
   }
+
+  // Handle string Enum name (e.g. "Clinic", "ImagingCenter")
+  if (typeof type === 'string' && type in ORGANIZATION_TYPE_NAME_MAP) {
+    const enumVal = ORGANIZATION_TYPE_NAME_MAP[type];
+    return ORGANIZATION_TYPE_LABELS[enumVal];
+  }
+
+  // Handle numeric value or numeric string / Enum instance
   const numericType = Number(type);
-  if (numericType in ORGANIZATION_TYPE_LABELS) {
+  if (!isNaN(numericType) && numericType in ORGANIZATION_TYPE_LABELS) {
     return ORGANIZATION_TYPE_LABELS[numericType as OrganizationType];
   }
+
   return 'نامشخص';
 }

@@ -4,7 +4,7 @@ export interface RecentOrganizationDto {
   id: string | number;
   name: string;
   code?: string;
-  type?: OrganizationType | number;
+  type?: OrganizationType | string | number;
   isActive?: boolean;
   managerFirstName?: string | null;
   managerLastName?: string | null;
@@ -14,7 +14,7 @@ export interface RecentOrganizationDto {
   Id?: string | number;
   Name?: string;
   Code?: string;
-  Type?: OrganizationType | number;
+  Type?: OrganizationType | string | number;
   IsActive?: boolean;
   ManagerFirstName?: string | null;
   ManagerLastName?: string | null;

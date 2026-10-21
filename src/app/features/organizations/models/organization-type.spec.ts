@@ -35,6 +35,14 @@ describe('OrganizationType Enum and Helpers', () => {
   });
 
   describe('getOrganizationTypeLabel', () => {
+    it('should return correct Persian labels for string Enum names', () => {
+      expect(getOrganizationTypeLabel('Clinic')).toBe('کلینیک');
+      expect(getOrganizationTypeLabel('ImagingCenter')).toBe('مرکز تصویربرداری');
+      expect(getOrganizationTypeLabel('MedicalOffice')).toBe('مطب');
+      expect(getOrganizationTypeLabel('Laboratory')).toBe('آزمایشگاه');
+      expect(getOrganizationTypeLabel('Pharmacy')).toBe('داروخانه');
+    });
+
     it('should return correct Persian labels for valid numeric values', () => {
       expect(getOrganizationTypeLabel(1)).toBe('کلینیک');
       expect(getOrganizationTypeLabel(2)).toBe('مرکز تصویربرداری');
@@ -43,19 +51,26 @@ describe('OrganizationType Enum and Helpers', () => {
       expect(getOrganizationTypeLabel(5)).toBe('داروخانه');
     });
 
+    it('should return correct Persian labels for string numbers', () => {
+      expect(getOrganizationTypeLabel('1')).toBe('کلینیک');
+      expect(getOrganizationTypeLabel('4')).toBe('آزمایشگاه');
+    });
+
     it('should return correct Persian labels for enum member inputs', () => {
       expect(getOrganizationTypeLabel(OrganizationType.Clinic)).toBe('کلینیک');
       expect(getOrganizationTypeLabel(OrganizationType.Laboratory)).toBe('آزمایشگاه');
     });
 
-    it('should handle null or undefined gracefully', () => {
+    it('should handle null, undefined, or empty string gracefully', () => {
       expect(getOrganizationTypeLabel(null)).toBe('تعیین نشده');
       expect(getOrganizationTypeLabel(undefined)).toBe('تعیین نشده');
+      expect(getOrganizationTypeLabel('')).toBe('تعیین نشده');
     });
 
-    it('should return fallback label for unknown or unsupported numeric values', () => {
+    it('should return fallback label for unknown or unsupported values', () => {
       expect(getOrganizationTypeLabel(99)).toBe('نامشخص');
       expect(getOrganizationTypeLabel(-1)).toBe('نامشخص');
+      expect(getOrganizationTypeLabel('UnknownType')).toBe('نامشخص');
     });
   });
 });
