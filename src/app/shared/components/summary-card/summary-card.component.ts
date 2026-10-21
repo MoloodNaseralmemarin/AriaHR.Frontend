@@ -5,26 +5,38 @@ export type SummaryTone = 'default' | 'success' | 'warning' | 'danger' | 'info';
 
 /**
  * Compact stat card: label + big number + optional icon + tone accent.
- * Used for the four "Today's Overview" cards on the dashboard and on
- * the Reports page.
+ * Redesigned with a balanced flex-col layout: top header containing icon + label,
+ * and bottom area displaying the statistic value for equal height alignment.
  */
 @Component({
   selector: 'app-summary-card',
   standalone: true,
   imports: [CommonModule],
+  host: {
+    class: 'block h-full min-w-0',
+  },
   template: `
     <div
-      class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+      class="flex h-full w-full flex-col justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
     >
-      <div
-        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-        [ngClass]="iconWrapClasses()"
-      >
-        <ng-content select="[icon]"></ng-content>
+      <!-- Top Section: Header with Icon and Label -->
+      <div class="flex items-start justify-between gap-2 min-w-0">
+        <p class="text-xs sm:text-sm font-medium text-slate-500 leading-snug min-w-0 flex-1">
+          {{ label }}
+        </p>
+        <div
+          class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl"
+          [ngClass]="iconWrapClasses()"
+        >
+          <ng-content select="[icon]"></ng-content>
+        </div>
       </div>
-      <div class="min-w-0">
-        <p class="text-sm text-slate-500">{{ label }}</p>
-        <p class="mt-0.5 text-xl font-bold text-slate-800">{{ value }}</p>
+
+      <!-- Bottom Section: Statistic Value -->
+      <div class="pt-1">
+        <p class="text-xl sm:text-2xl font-bold tracking-tight text-slate-800">
+          {{ value }}
+        </p>
       </div>
     </div>
   `,
