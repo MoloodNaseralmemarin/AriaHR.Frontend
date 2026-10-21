@@ -4,8 +4,8 @@ export interface OrganizationResponseDto {
   id: string | number;
   name: string;
   code?: string | null;
-  organizationType?: OrganizationType | number;
-  type?: OrganizationType | number;
+  organizationType?: OrganizationType | string | number;
+  type?: OrganizationType | string | number;
   managerFullName?: string | null;
   managerFirstName?: string | null;
   managerLastName?: string | null;
