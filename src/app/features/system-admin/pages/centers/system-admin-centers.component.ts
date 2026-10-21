@@ -11,6 +11,7 @@ import { StatusBadgeComponent } from '../../../../shared/components/status-badge
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
 
 @Component({
   selector: 'app-system-admin-centers',
@@ -24,6 +25,7 @@ import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe'
     EmptyStateComponent,
     SkeletonLoaderComponent,
     PersianDigitsPipe,
+    JalaliPipe,
   ],
   templateUrl: './system-admin-centers.component.html',
   styleUrl: './system-admin-centers.component.css',
@@ -44,8 +46,9 @@ export class SystemAdminCentersComponent implements OnInit {
     const currentFilter = this.filter();
 
     return this.organizations().filter((org) => {
-      const managerName = `${org.managerFirstName ?? ''} ${org.managerLastName ?? ''}`.trim();
-      const searchHaystack = `${org.name ?? ''} ${org.code ?? ''} ${managerName} ${org.phone ?? ''} ${org.managerMobile ?? ''}`.toLowerCase();
+      const managerName = this.getManagerFullName(org);
+      const phone = this.getCenterPhone(org);
+      const searchHaystack = `${org.name ?? ''} ${org.code ?? ''} ${managerName} ${phone} ${org.managerMobile ?? ''}`.toLowerCase();
 
       const matchesText = !text || searchHaystack.includes(text);
       const matchesFilter =
@@ -81,13 +84,21 @@ export class SystemAdminCentersComponent implements OnInit {
     });
   }
 
-  getTypeLabel(type: any): string {
-    return getOrganizationTypeLabel(type);
+  getTypeLabel(org: OrganizationResponseDto): string {
+    return getOrganizationTypeLabel(org.organizationType ?? org.type);
   }
 
   getManagerFullName(org: OrganizationResponseDto): string {
-    const fullName = `${org.managerFirstName ?? ''} ${org.managerLastName ?? ''}`.trim();
-    return fullName || 'تعیین نشده';
+    const fullName = org.managerFullName?.trim() || `${org.managerFirstName ?? ''} ${org.managerLastName ?? ''}`.trim();
+    return fullName || '—';
+  }
+
+  getCenterPhone(org: OrganizationResponseDto): string {
+    return org.centerPhone || org.phone || '—';
+  }
+
+  getCreatedAtUtc(org: OrganizationResponseDto): string | null {
+    return org.createdAtUtc || org.createdAt || null;
   }
 
   getStatusLabel(isActive: boolean): string {

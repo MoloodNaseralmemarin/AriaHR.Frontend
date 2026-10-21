@@ -14,20 +14,18 @@ describe('SystemAdminCentersComponent (Isolated Tests)', () => {
 
   const mockOrgs: OrganizationResponseDto[] = [
     {
-      id: '1',
+      id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'کلینیک پارس',
       code: 'ORG-001',
-      type: OrganizationType.Clinic,
-      nationalIdentifier: '1234567890',
-      phone: '02188888888',
-      address: 'تهران',
-      managerFirstName: 'علی',
-      managerLastName: 'رضایی',
+      organizationType: OrganizationType.Clinic,
+      managerFullName: 'علی رضایی',
       managerMobile: '09121112233',
+      centerPhone: '02188888888',
       isActive: true,
+      createdAtUtc: '2026-10-21T09:25:16.108Z',
     },
     {
-      id: '2',
+      id: '123e4567-e89b-12d3-a456-426614174001',
       name: 'مرکز تصویربرداری شیراز',
       code: 'ORG-002',
       type: OrganizationType.ImagingCenter,
@@ -38,6 +36,7 @@ describe('SystemAdminCentersComponent (Isolated Tests)', () => {
       managerLastName: 'احمدی',
       managerMobile: '09173334455',
       isActive: false,
+      createdAt: '2026-05-10T10:00:00Z',
     },
   ];
 
@@ -85,7 +84,7 @@ describe('SystemAdminCentersComponent (Isolated Tests)', () => {
     // Match by phone/mobile
     component.query.set('09173334455');
     expect(component.filteredOrganizations().length).toBe(1);
-    expect(component.filteredOrganizations()[0].id).toBe('2');
+    expect(component.filteredOrganizations()[0].id).toBe('123e4567-e89b-12d3-a456-426614174001');
   });
 
   it('should filter organizations by isActive status', () => {
@@ -121,20 +120,28 @@ describe('SystemAdminCentersComponent (Isolated Tests)', () => {
     expect(component.organizations().length).toBe(2);
   });
 
-  it('should format labels correctly via helper methods', () => {
-    expect(component.getTypeLabel(OrganizationType.Clinic)).toBe('کلینیک');
-    expect(component.getTypeLabel(OrganizationType.ImagingCenter)).toBe('مرکز تصویربرداری');
+  it('should format labels, phones, dates, and managers correctly via helper methods', () => {
+    expect(component.getTypeLabel(mockOrgs[0])).toBe('کلینیک');
+    expect(component.getTypeLabel(mockOrgs[1])).toBe('مرکز تصویربرداری');
     expect(component.getStatusLabel(true)).toBe('فعال');
     expect(component.getStatusLabel(false)).toBe('غیرفعال');
 
-    const sampleOrg = mockOrgs[0];
-    expect(component.getManagerFullName(sampleOrg)).toBe('علی رضایی');
+    expect(component.getManagerFullName(mockOrgs[0])).toBe('علی رضایی');
+    expect(component.getManagerFullName(mockOrgs[1])).toBe('مریم احمدی');
 
-    const emptyManagerOrg: OrganizationResponseDto = {
-      ...sampleOrg,
-      managerFirstName: null,
-      managerLastName: null,
+    expect(component.getCenterPhone(mockOrgs[0])).toBe('02188888888');
+    expect(component.getCenterPhone(mockOrgs[1])).toBe('07133333333');
+
+    expect(component.getCreatedAtUtc(mockOrgs[0])).toBe('2026-10-21T09:25:16.108Z');
+    expect(component.getCreatedAtUtc(mockOrgs[1])).toBe('2026-05-10T10:00:00Z');
+
+    const emptyOrg: OrganizationResponseDto = {
+      id: '99',
+      name: 'مرکز بدون مشخصات',
+      isActive: true,
     };
-    expect(component.getManagerFullName(emptyManagerOrg)).toBe('تعیین نشده');
+    expect(component.getManagerFullName(emptyOrg)).toBe('—');
+    expect(component.getCenterPhone(emptyOrg)).toBe('—');
+    expect(component.getCreatedAtUtc(emptyOrg)).toBeNull();
   });
 });
