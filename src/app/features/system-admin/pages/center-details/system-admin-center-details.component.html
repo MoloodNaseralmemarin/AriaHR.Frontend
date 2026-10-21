@@ -1,1 +1,133 @@
-<section class="space-y-5"><a routerLink="/system-admin/centers" class="back">→ بازگشت به مراکز</a><div class="hero"><div class="avatar">{{ center.name.slice(0,1) }}</div><h1>{{ center.name }}</h1><span class="status" [class]="'status-' + center.status">{{ getStatusLabel(center.status) }}</span><p>ثبت شده توسط مدیر سیستم</p></div><div class="manager"><span class="label">مدیر مرکز</span><strong>{{ center.managerName }}</strong><button type="button">مشاهده اطلاعات مدیر</button></div><div class="metric-grid"><div><span>کارکنان</span><strong>{{ center.employeeCount }}</strong></div><div><span>حضور امروز</span><strong>{{ center.attendanceToday ? center.attendanceToday + '%' : '—' }}</strong></div><div><span>شیفت‌ها</span><strong>{{ center.shiftCount }}</strong></div><div><span>درخواست‌های در انتظار</span><strong>{{ center.pendingRequests }}</strong></div></div><div class="actions"><button type="button" class="primary">ویرایش مرکز</button><button type="button" class="secondary">{{ center.status === 'active' ? 'غیرفعال کردن مرکز' : 'فعال کردن مرکز' }}</button></div></section>
+<div dir="rtl" class="space-y-6">
+  <app-page-header title="جزئیات مرکز" subtitle="مشاهده مشخصات کامل و اطلاعات مرکز درمانی">
+    <a
+      actions
+      routerLink="/system-admin/centers"
+      class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l7-7-7-7"/></svg>
+      بازگشت به لیست مراکز
+    </a>
+  </app-page-header>
+
+  @if (loading()) {
+    <app-skeleton-loader variant="card" [count]="1"></app-skeleton-loader>
+  } @else if (error()) {
+    <div class="rounded-2xl border border-rose-200 bg-rose-50/70 p-6 text-center text-rose-700 space-y-3">
+      <p class="text-sm font-medium">{{ error() }}</p>
+      <button
+        type="button"
+        (click)="loadCenterDetails()"
+        class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-rose-700 transition"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6"/><path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M22 12.5a10 10 0 0 1-18.8 4.3L2.5 16"/></svg>
+        تلاش مجدد
+      </button>
+    </div>
+  } @else if (!center()) {
+    <app-empty-state
+      title="مرکز مورد نظر یافت نشد"
+      description="ممکن است مرکز حذف شده باشد یا اطلاعات آن در دسترس نباشد."
+    ></app-empty-state>
+  } @else {
+    @let c = center()!;
+    <!-- Center Overview Banner Card -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-4">
+          <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-blue-700">
+            {{ c.name ? c.name.slice(0, 1) : 'م' }}
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">{{ c.name }}</h2>
+            <p class="text-xs text-slate-500 font-mono mt-0.5">
+              کد مرکز: {{ c.code ? (c.code | persianDigits) : 'ثبت نشده' }}
+            </p>
+          </div>
+        </div>
+        <div>
+          <app-status-badge
+            [tone]="c.isActive ? 'success' : 'neutral'"
+            [label]="getStatusLabel(c.isActive)"
+          ></app-status-badge>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Details Grid Card -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-6">
+      <h3 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-3">اطلاعات شناسه و تماس</h3>
+
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Center ID -->
+        <div class="space-y-1">
+          <span class="text-xs font-medium text-slate-400">شناسه مرکز (ID)</span>
+          <p class="text-sm font-semibold font-mono text-slate-800 select-all"><bdi>{{ c.id }}</bdi></p>
+        </div>
+
+        <!-- Organization ID -->
+        <div class="space-y-1">
+          <span class="text-xs font-medium text-slate-400">شناسه سازمان (Organization ID)</span>
+          <p class="text-sm font-semibold font-mono text-slate-800 select-all"><bdi>{{ c.organizationId }}</bdi></p>
+        </div>
+
+        <!-- Center Name -->
+        <div class="space-y-1">
+          <span class="text-xs font-medium text-slate-400">نام مرکز</span>
+          <p class="text-sm font-semibold text-slate-800">{{ c.name }}</p>
+        </div>
+
+        <!-- Center Code -->
+        <div class="space-y-1">
+          <span class="text-xs font-medium text-slate-400">کد مرکز</span>
+          <p class="text-sm font-semibold font-mono text-slate-800">
+            @if (c.code) {
+              <bdi>{{ c.code | persianDigits }}</bdi>
+            } @else {
+              ثبت نشده
+            }
+          </p>
+        </div>
+
+        <!-- Phone -->
+        <div class="space-y-1">
+          <span class="text-xs font-medium text-slate-400">شماره تماس</span>
+          <p class="text-sm font-semibold font-mono text-slate-800">
+            @if (c.phone) {
+              <bdi>{{ c.phone | persianDigits }}</bdi>
+            } @else {
+              ثبت نشده
+            }
+          </p>
+        </div>
+
+        <!-- Email -->
+        <div class="space-y-1">
+          <span class="text-xs font-medium text-slate-400">پست الکترونیکی (ایمیل)</span>
+          <p class="text-sm font-semibold text-slate-800 dir-ltr text-right">
+            {{ getDisplayValue(c.email) }}
+          </p>
+        </div>
+
+        <!-- Status -->
+        <div class="space-y-1">
+          <span class="text-xs font-medium text-slate-400">وضعیت</span>
+          <div>
+            <app-status-badge
+              [tone]="c.isActive ? 'success' : 'neutral'"
+              [label]="getStatusLabel(c.isActive)"
+            ></app-status-badge>
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="space-y-1 sm:col-span-2 lg:col-span-3">
+          <span class="text-xs font-medium text-slate-400">آدرس</span>
+          <p class="text-sm font-semibold text-slate-800">
+            {{ getDisplayValue(c.address) }}
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+</div>

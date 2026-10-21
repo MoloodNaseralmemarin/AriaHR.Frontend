@@ -105,7 +105,7 @@
                 ></app-status-badge>
               </td>
               <td class="px-5 py-4 text-left">
-                <a [routerLink]="['/system-admin/centers', center.id]" class="rounded-lg px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 transition">مشاهده</a>
+                <a [routerLink]="['/system-admin/centers', center.id]" [queryParams]="{ organizationId: center.organizationId ?? center.id }" class="rounded-lg px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 transition">مشاهده</a>
               </td>
             </tr>
           }
@@ -116,7 +116,7 @@
     <!-- Mobile Card Grid View -->
     <div class="grid grid-cols-1 gap-3 md:hidden">
       @for (center of filteredOrganizations(); track center.id) {
-        <a [routerLink]="['/system-admin/centers', center.id]" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs hover:border-blue-300 transition block">
+        <a [routerLink]="['/system-admin/centers', center.id]" [queryParams]="{ organizationId: center.organizationId ?? center.id }" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs hover:border-blue-300 transition block">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-sm font-bold text-blue-700">

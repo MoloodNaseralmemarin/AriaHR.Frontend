@@ -7,6 +7,7 @@ import { CreateOrganizationDto } from '../models/create-organization.dto';
 import { OrganizationDashboardSummaryDto } from '../models/organization-dashboard-summary.dto';
 import { OrganizationResponseDto } from '../models/organization-response.dto';
 import { RecentOrganizationDto } from '../models/recent-organization.dto';
+import { CenterResponseDto } from '../models/center-response.dto';
 
 export interface OrganizationCountDto {
   count?: number;
@@ -28,6 +29,14 @@ export class OrganizationService {
    */
   getOrganizations(): Observable<OrganizationResponseDto[]> {
     return this.http.get<OrganizationResponseDto[]>(this.apiUrl);
+  }
+
+  /**
+   * Fetches centers for a specific organization.
+   * Endpoint: GET /api/organizations/{organizationId}/centers
+   */
+  getOrganizationCenters(organizationId: string): Observable<CenterResponseDto[]> {
+    return this.http.get<CenterResponseDto[]>(`${this.apiUrl}/${organizationId}/centers`);
   }
 
   /**

@@ -2,6 +2,7 @@ import { OrganizationType } from './organization-type.enum';
 
 export interface OrganizationResponseDto {
   id: string | number;
+  organizationId?: string | number | null;
   name: string;
   code?: string | null;
   organizationType?: OrganizationType | string | number;
@@ -12,6 +13,7 @@ export interface OrganizationResponseDto {
   managerMobile?: string | null;
   centerPhone?: string | null;
   phone?: string | null;
+  email?: string | null;
   isActive: boolean;
   createdAtUtc?: string | null;
   createdAt?: string | null;
