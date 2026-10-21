@@ -84,11 +84,9 @@ export class QrCodeModalComponent implements OnChanges {
         return;
       }
 
-      // Format Jalali Date & Time in Persian digits
+      // Format Jalali Date in ASCII digits DD-MM-YYYY
       const jalaliDateStr = this.persianDateService.toJalaliString(
-        date.toISOString(),
-        'persian',
-        'DD-MM-YYYY'
+        date.toISOString()
       );
 
       const hours = String(date.getHours()).padStart(2, '0');

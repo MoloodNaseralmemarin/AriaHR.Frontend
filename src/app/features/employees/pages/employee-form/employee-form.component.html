@@ -144,10 +144,10 @@
           <app-jalali-date-picker
             id="birthDateInput"
             formControlName="birthDate"
-            placeholder="روز-ماه-سال (مثال: ۱۵-۰۲-۱۴۰۵)"
+            placeholder="روز-ماه-سال (مثال: 15-02-1405)"
           ></app-jalali-date-picker>
           <p *ngIf="isControlInvalid('birthDate')" class="mt-1 text-xs text-rose-600">
-            تاریخ تولد معتبر الزامی است (مثال: ۱۵-۰۲-۱۴۰۵).
+            تاریخ تولد معتبر الزامی است (مثال: 15-02-1405).
           </p>
         </div>
 
@@ -158,12 +158,10 @@
           <app-jalali-date-picker
             id="hireDateInput"
             formControlName="hireDate"
-            digitsFormat="ascii"
-            dateFormat="YYYY-MM-DD"
-            placeholder="سال-ماه-روز (مثال: ۱۴۰۵-۰۲-۱۵)"
+            placeholder="روز-ماه-سال (مثال: 15-02-1405)"
           ></app-jalali-date-picker>
           <p *ngIf="isControlInvalid('hireDate')" class="mt-1 text-xs text-rose-600">
-            تاریخ استخدام معتبر الزامی است (مثال: ۱۴۰۵-۰۲-۱۵).
+            تاریخ استخدام معتبر الزامی است (مثال: 15-02-1405).
           </p>
         </div>
       </div>

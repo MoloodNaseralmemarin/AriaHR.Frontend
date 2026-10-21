@@ -14,7 +14,7 @@ export class JalaliPipe implements PipeTransform {
    */
   transform(
     value: string | null | undefined,
-    digitsFormat: 'persian' | 'ascii' = 'persian',
+    digitsFormat: 'persian' | 'ascii' = 'ascii',
     dateFormat: 'DD-MM-YYYY' | 'YYYY-MM-DD' = 'DD-MM-YYYY'
   ): string {
     if (!value) return '';

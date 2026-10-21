@@ -292,7 +292,7 @@ export class PersianDateService {
    */
   toJalaliString(
     gregorianStr: string | null | undefined,
-    usePersianDigits: boolean | 'persian' | 'ascii' = true,
+    usePersianDigits: boolean | 'persian' | 'ascii' = false,
     dateFormat: 'DD-MM-YYYY' | 'YYYY-MM-DD' = 'DD-MM-YYYY'
   ): string {
     if (!gregorianStr) return '';
