@@ -113,16 +113,16 @@ export class LeaveRequestFormComponent implements OnInit {
     const type = this.selectedLeaveType();
     if (type === 'hourly') {
       const dateVal = this.form.get('date')?.value;
-      return dateVal ? this.persianDateService.toJalaliString(dateVal, true, 'DD-MM-YYYY') : '---';
+      return dateVal ? this.persianDateService.toJalaliString(dateVal) : '---';
     } else {
       const startVal = this.form.get('startDate')?.value;
-      return startVal ? this.persianDateService.toJalaliString(startVal, true, 'DD-MM-YYYY') : '---';
+      return startVal ? this.persianDateService.toJalaliString(startVal) : '---';
     }
   });
 
   readonly formattedSummaryEndDate = computed(() => {
     const endVal = this.form.get('endDate')?.value;
-    return endVal ? this.persianDateService.toJalaliString(endVal, true, 'DD-MM-YYYY') : '---';
+    return endVal ? this.persianDateService.toJalaliString(endVal) : '---';
   });
 
   ngOnInit(): void {

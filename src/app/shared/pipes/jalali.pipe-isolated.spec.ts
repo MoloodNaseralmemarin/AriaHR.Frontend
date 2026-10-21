@@ -15,8 +15,8 @@ describe('JalaliPipe (Isolated Unit Tests)', () => {
       pipe = new JalaliPipe();
     });
 
-    expect(pipe.transform('2026-05-05')).toBe('۱۵-۰۲-۱۴۰۵');
-    expect(pipe.transform('2026-05-05', 'ascii')).toBe('15-02-1405');
+    expect(pipe.transform('2026-05-05')).toBe('15-02-1405');
+    expect(pipe.transform('2026-05-05', 'persian')).toBe('۱۵-۰۲-۱۴۰۵');
     expect(pipe.transform('2026-05-05', 'ascii', 'YYYY-MM-DD')).toBe('1405-02-15');
     expect(pipe.transform('2026-05-05', 'persian', 'YYYY-MM-DD')).toBe('۱۴۰۵-۰۲-۱۵');
   });
