@@ -72,7 +72,6 @@ The Angular router is configured in `src/app/app.routes.ts`, with sub-route modu
 | **System Admin** | `/system-admin/centers` | `features/system-admin/pages/centers/system-admin-centers.component.ts` | `PageHeaderComponent`, `StatusBadgeComponent`, `EmptyStateComponent` | **Production Ready** |
 | **System Admin** | `/system-admin/centers/create` | `features/system-admin/pages/create-center/system-admin-create-center.component.ts` | Step wizard, ReactiveFormsModule, `SystemAdminDataService` | **Production Ready** |
 | **System Admin** | `/system-admin/centers/:id` | `features/system-admin/pages/center-details/system-admin-center-details.component.ts` | None | **Stub Page (Inline TS Template)** |
-| **System Admin** | `/system-admin/managers` | `features/system-admin/pages/managers/system-admin-managers.component.ts` | None | **Stub Page (Inline TS Template)** |
 | **System Admin** | `/system-admin/notifications` | `features/system-admin/pages/notifications/system-admin-notifications.component.ts` | `PageHeaderComponent`, `EmptyStateComponent`, `ToastComponent` | **Production Ready** |
 | **System Admin** | `/system-admin/settings` | `features/system-admin/pages/settings/system-admin-settings.component.ts` | None | **Stub Page (Inline TS Template)** |
 | **Center Manager** | `/center-manager/dashboard` | `features/center-manager/pages/dashboard/dashboard.component.ts` | `SummaryCardComponent`, `StatusBadgeComponent`, `EmptyStateComponent` | **Production Ready** |
@@ -115,7 +114,7 @@ The Angular router is configured in `src/app/app.routes.ts`, with sub-route modu
   - *Negatives:* Significant design inconsistency. 3 of the 7 routes (`center-details`, `managers`, `settings`) are implemented as raw inline TS templates with custom embedded CSS (`.eyebrow`, `.subtitle`, `.avatar`, `.state`), bypassing standard Tailwind CSS utilities and global components.
 - **User Experience (UX): 5.0 / 10**
   - *Positives:* Center creation wizard (`system-admin-create-center.component.ts`) is well-designed with clear 3-step navigation.
-  - *Negatives:* Incomplete navigation links on detail pages. Sub-routes like `/system-admin/managers` present static lists without filter controls, pagination, or actionable edit drawers.
+  - *Negatives:* Incomplete navigation links on detail pages.
 - **Responsive Design: 4.0 / 10**
   - *Positives:* Main dashboard grid adjusts from `grid-cols-1` to `lg:grid-cols-3`.
   - *Negatives:* The system admin layout (`system-admin-layout.component.html`) provides no mobile navigation drawer or hamburger menu. Top bar links hide on small screens without a mobile fallback menu.
@@ -212,7 +211,6 @@ To achieve visual harmony across AriaHR, future refactoring should establish the
 ### Issue 1: Incomplete Stub Pages in System Admin Portal
 - **File Paths:**
   - `src/app/features/system-admin/pages/center-details/system-admin-center-details.component.ts`
-  - `src/app/features/system-admin/pages/managers/system-admin-managers.component.ts`
   - `src/app/features/system-admin/pages/settings/system-admin-settings.component.ts`
 - **Evidence:**
   These components contain inline string templates (1 to 3 lines long) with custom embedded CSS (`styles: [...]`). They do not import shared components like `PageHeaderComponent` or `StatusBadgeComponent` and offer zero responsive layout adaptation.

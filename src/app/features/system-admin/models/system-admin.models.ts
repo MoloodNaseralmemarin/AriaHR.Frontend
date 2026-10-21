@@ -12,15 +12,6 @@ export interface Center {
   pendingRequests: number;
 }
 
-export interface CenterManager {
-  id: string;
-  name: string;
-  centerName: string;
-  mobileNumber: string;
-  createdAt: string;
-  active: boolean;
-}
-
 export interface SystemActivity {
   id: string;
   type: 'center_created' | 'manager_created' | 'center_deactivated' | 'center_activated';
