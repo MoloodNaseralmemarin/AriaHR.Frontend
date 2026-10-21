@@ -58,6 +58,7 @@
             <th class="px-5 py-3.5">نوع مرکز</th>
             <th class="px-5 py-3.5">مدیر مرکز</th>
             <th class="px-5 py-3.5">شماره تماس</th>
+            <th class="px-5 py-3.5">تاریخ ایجاد</th>
             <th class="px-5 py-3.5">وضعیت</th>
             <th class="px-5 py-3.5 text-left">عملیات</th>
           </tr>
@@ -78,17 +79,24 @@
               </td>
               <td class="px-5 py-4 text-xs font-medium text-slate-700">
                 <span class="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-slate-700">
-                  {{ getTypeLabel(center.type) }}
+                  {{ getTypeLabel(center) }}
                 </span>
               </td>
               <td class="px-5 py-4 text-xs text-slate-700">
                 <div class="font-medium text-slate-800">{{ getManagerFullName(center) }}</div>
                 @if (center.managerMobile) {
-                  <div class="text-[11px] text-slate-400 font-mono">{{ center.managerMobile | persianDigits }}</div>
+                  <div class="text-[11px] text-slate-400 font-mono"><bdi>{{ center.managerMobile | persianDigits }}</bdi></div>
                 }
               </td>
               <td class="px-5 py-4 text-xs font-medium text-slate-700">
-                {{ center.phone ? (center.phone | persianDigits) : '—' }}
+                {{ getCenterPhone(center) !== '—' ? (getCenterPhone(center) | persianDigits) : '—' }}
+              </td>
+              <td class="px-5 py-4 text-xs text-slate-600 font-mono">
+                @if (getCreatedAtUtc(center)) {
+                  <bdi>{{ getCreatedAtUtc(center) | jalali }}</bdi>
+                } @else {
+                  —
+                }
               </td>
               <td class="px-5 py-4">
                 <app-status-badge
@@ -116,7 +124,12 @@
               </div>
               <div>
                 <h3 class="text-sm font-bold text-slate-800">{{ center.name }}</h3>
-                <p class="text-xs text-slate-500">مدیر: {{ getManagerFullName(center) }}</p>
+                <p class="text-xs text-slate-500">
+                  مدیر: {{ getManagerFullName(center) }}
+                  @if (center.managerMobile) {
+                    (<bdi>{{ center.managerMobile | persianDigits }}</bdi>)
+                  }
+                </p>
               </div>
             </div>
             <app-status-badge
@@ -124,9 +137,18 @@
               [label]="getStatusLabel(center.isActive)"
             ></app-status-badge>
           </div>
-          <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-600">
-            <span>نوع: {{ getTypeLabel(center.type) }}</span>
+          <div class="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
+            <span>نوع: {{ getTypeLabel(center) }}</span>
             <span>کد: {{ center.code || '—' }}</span>
+            <span>تلفن: {{ getCenterPhone(center) !== '—' ? (getCenterPhone(center) | persianDigits) : '—' }}</span>
+            <span>
+              تاریخ ایجاد:
+              @if (getCreatedAtUtc(center)) {
+                <bdi>{{ getCreatedAtUtc(center) | jalali }}</bdi>
+              } @else {
+                —
+              }
+            </span>
           </div>
         </a>
       }
