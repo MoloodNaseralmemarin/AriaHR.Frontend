@@ -1,0 +1,4 @@
+/* Minimal layout styles if needed; main layout powered by Tailwind CSS v4 */
+:host {
+  display: block;
+}

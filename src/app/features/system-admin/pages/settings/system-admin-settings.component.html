@@ -1,0 +1,180 @@
+<div class="space-y-6">
+  <!-- Page Header -->
+  <app-page-header
+    title="تنظیمات سیستم"
+    subtitle="مدیریت حساب کاربری مدیر سیستم و مشخصات فنی سامانه"
+  >
+  </app-page-header>
+
+  <!-- Loading Skeleton State -->
+  <div *ngIf="isLoading()" class="space-y-4">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <app-skeleton-loader width="180px" height="24px"></app-skeleton-loader>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <app-skeleton-loader width="100%" height="60px"></app-skeleton-loader>
+        <app-skeleton-loader width="100%" height="60px"></app-skeleton-loader>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Alert State -->
+  <div *ngIf="!isLoading() && hasError()" class="rounded-2xl border border-rose-200 bg-rose-50 p-5 shadow-xs">
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600 font-bold">
+          !
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-rose-900">خطا در بارگذاری اطلاعات</h3>
+          <p class="text-xs text-rose-700 mt-0.5">{{ errorMessage() }}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="loadProfile()"
+        class="px-4 py-2 text-xs font-bold text-rose-700 bg-rose-100 rounded-xl hover:bg-rose-200 transition cursor-pointer"
+      >
+        تلاش مجدد
+      </button>
+    </div>
+  </div>
+
+  <!-- Settings Content -->
+  <div *ngIf="!isLoading() && !hasError()" class="space-y-5">
+    <!-- Account & Security Section -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-5">
+      <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold text-lg">
+          👤
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-slate-900">حساب کاربری و امنیت</h2>
+          <p class="text-xs text-slate-500 mt-0.5">مشخصات مدیر سیستم فعال و نحوه دسترسی به سامانه</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
+          <span class="block text-slate-500 mb-1 font-medium">نام و نام خانوادگی مدیر</span>
+          <strong class="font-bold text-slate-900 text-sm">{{ adminName() }}</strong>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
+          <span class="block text-slate-500 mb-1 font-medium">شماره همراه همراه تایید شده</span>
+          <strong class="font-bold text-slate-900 text-sm text-right dir-ltr block">
+            {{ adminPhone() | persianDigits }}
+          </strong>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
+          <span class="block text-slate-500 mb-1 font-medium">سطح دسترسی و نقش</span>
+          <strong class="font-bold text-blue-700 text-xs bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 inline-block mt-0.5">
+            {{ adminRole() }}
+          </strong>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
+          <span class="block text-slate-500 mb-1 font-medium">کد ملی ثبت شده</span>
+          <strong class="font-bold text-slate-900 text-sm dir-ltr text-right block">
+            {{ nationalCode() !== '—' ? (nationalCode() | persianDigits) : 'ثبت نشده' }}
+          </strong>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
+          <span class="block text-slate-500 mb-1 font-medium">روش احراز هویت</span>
+          <strong class="font-bold text-emerald-700 text-xs bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 inline-block mt-0.5">
+            رمز یکبار مصرف پیامکی (OTP)
+          </strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Technical & Operational System Info Section -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-5">
+      <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 font-bold text-lg">
+          ⚙️
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-slate-900">مشخصات فنی و سلامت سامانه</h2>
+          <p class="text-xs text-slate-500 mt-0.5">اطلاعات عملیاتی، وضعیت سرویس‌ها و تنظیمات منطقه‌ای</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
+          <span class="block text-slate-500 mb-1 font-medium">نسخه اپلیکیشن</span>
+          <strong class="font-mono font-bold text-slate-800 text-sm">AriaHR v1.0.0</strong>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
+          <span class="block text-slate-500 mb-1 font-medium">زبان و جهت رابط کاربری</span>
+          <strong class="font-bold text-slate-900 text-sm">فارسی (راست به چپ - RTL)</strong>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
+          <span class="block text-slate-500 mb-1 font-medium">وضعیت ارتباط با سرور (API)</span>
+          <span class="inline-flex items-center gap-1.5 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 mt-0.5">
+            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+            فعال و متصل
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Session Action Container -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs flex items-center justify-between gap-4">
+      <div>
+        <h3 class="text-sm font-bold text-slate-900">خروج از حساب مدیریت سیستم</h3>
+        <p class="text-xs text-slate-500 mt-1">پایان نشست کاری فعلی در این مرورگر</p>
+      </div>
+
+      <button
+        type="button"
+        (click)="promptLogout()"
+        class="px-5 py-2.5 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 transition cursor-pointer"
+      >
+        خروج از حساب
+      </button>
+    </div>
+  </div>
+
+  <!-- Logout Confirmation Modal -->
+  <div
+    *ngIf="showLogoutModal()"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs"
+  >
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
+      <div class="flex items-center gap-3 text-rose-600">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 font-bold text-xl">
+          ⚠️
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900">تأیید خروج از سیستم</h3>
+          <p class="text-xs text-slate-500">خروج از نشست کاربری مدیر سیستم</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-600 leading-relaxed">
+        آیا از خروج از حساب کاربری مدیر سیستم اطمینان دارید؟ با خروج، جهت دسترسی مجدد باید مجدداً وارد سامانه شوید.
+      </p>
+
+      <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+        <button
+          type="button"
+          (click)="cancelLogout()"
+          class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition cursor-pointer"
+        >
+          انصراف
+        </button>
+        <button
+          type="button"
+          (click)="confirmLogout()"
+          class="px-4 py-2 text-xs font-bold text-white bg-rose-600 rounded-xl hover:bg-rose-700 transition cursor-pointer"
+        >
+          تأیید و خروج
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
