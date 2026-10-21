@@ -14,7 +14,6 @@ import { MessageRecipientStatus, NotificationMessage } from '../../../notificati
 import { CreateNotificationDto } from '../../../notifications/models/notification.dto';
 import { OrganizationService } from '../../../organizations/services/organization.service';
 import { RecentOrganizationDto } from '../../../organizations/models/recent-organization.dto';
-import { SystemAdminDataService } from '../../services/system-admin-data.service';
 
 type ActiveTab = 'inbox' | 'sent';
 type ReadFilter = 'all' | 'unread';
@@ -38,7 +37,6 @@ export class SystemAdminNotificationsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly notificationService = inject(NotificationService);
   private readonly organizationService = inject(OrganizationService);
-  private readonly adminDataService = inject(SystemAdminDataService);
 
   readonly activeTab = signal<ActiveTab>('inbox');
   readonly readFilter = signal<ReadFilter>('all');
@@ -141,29 +139,15 @@ export class SystemAdminNotificationsComponent implements OnInit {
   loadRecipientOptions(): void {
     this.organizationService.getRecentOrganizations().subscribe({
       next: (orgs: RecentOrganizationDto[]) => {
-        if (orgs && orgs.length > 0) {
-          const mapped = orgs.map((o) => ({
-            id: String(o.id ?? o.Id ?? ''),
-            name: o.name ?? o.Name ?? 'مرکز بدون نام',
-            managerName: `${o.managerFirstName || ''} ${o.managerLastName || ''}`.trim() || 'مدیر مرکز',
-          }));
-          this.targetOptions.set(mapped);
-        } else {
-          this.fallbackRecipients();
-        }
+        const mapped = (orgs || []).map((o) => ({
+          id: String(o.id ?? o.Id ?? ''),
+          name: o.name ?? o.Name ?? 'مرکز بدون نام',
+          managerName: `${o.managerFirstName || ''} ${o.managerLastName || ''}`.trim() || 'مدیر مرکز',
+        }));
+        this.targetOptions.set(mapped);
       },
-      error: () => this.fallbackRecipients(),
+      error: () => this.targetOptions.set([]),
     });
-  }
-
-  private fallbackRecipients(): void {
-    const managers = this.adminDataService.managers();
-    const mapped = managers.map((m) => ({
-      id: m.id,
-      name: m.centerName,
-      managerName: m.name,
-    }));
-    this.targetOptions.set(mapped);
   }
 
   setActiveTab(tab: ActiveTab): void {

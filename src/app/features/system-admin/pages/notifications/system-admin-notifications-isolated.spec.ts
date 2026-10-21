@@ -7,13 +7,11 @@ import { of, throwError } from 'rxjs';
 import { SystemAdminNotificationsComponent } from './system-admin-notifications.component';
 import { NotificationService } from '../../../notifications/services/notification.service';
 import { OrganizationService } from '../../../organizations/services/organization.service';
-import { SystemAdminDataService } from '../../services/system-admin-data.service';
 
 describe('SystemAdminNotificationsComponent (Isolated Tests)', () => {
   let component: SystemAdminNotificationsComponent;
   let mockNotificationService: any;
   let mockOrganizationService: any;
-  let mockAdminDataService: any;
 
   beforeEach(() => {
     mockNotificationService = {
@@ -53,16 +51,11 @@ describe('SystemAdminNotificationsComponent (Isolated Tests)', () => {
       ),
     };
 
-    mockAdminDataService = {
-      managers: vi.fn().mockReturnValue([]),
-    };
-
     const injector = Injector.create({
       providers: [
         FormBuilder,
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: OrganizationService, useValue: mockOrganizationService },
-        { provide: SystemAdminDataService, useValue: mockAdminDataService },
         SystemAdminNotificationsComponent,
       ],
     });
