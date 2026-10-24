@@ -41,7 +41,7 @@ export class SystemAdminCreateCenterComponent {
     managerFirstName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
     managerLastName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
     managerMobile: ['', [Validators.required, Validators.pattern(IRAN_MOBILE_PATTERN)]],
-    managerEmail: ['', [Validators.email]],
+    managerEmail: ['', [Validators.required, Validators.email]],
   });
 
   private step1ControlNames = ['centerName', 'centerCode', 'centerType', 'address', 'phone'];
@@ -73,6 +73,8 @@ export class SystemAdminCreateCenterComponent {
           return 'نام خانوادگی مدیر الزامی است.';
         case 'managerMobile':
           return 'شماره موبایل مدیر الزامی است.';
+        case 'managerEmail':
+          return 'ایمیل مدیر الزامی است.';
         default:
           return 'این فیلد الزامی است.';
       }
@@ -166,6 +168,7 @@ export class SystemAdminCreateCenterComponent {
       managerFirstName: formValues.managerFirstName ? formValues.managerFirstName : null,
       managerLastName: formValues.managerLastName ? formValues.managerLastName : null,
       managerMobile: formValues.managerMobile ? formValues.managerMobile : null,
+      managerEmail: formValues.managerEmail.trim(),
       isActive: true,
     };
 

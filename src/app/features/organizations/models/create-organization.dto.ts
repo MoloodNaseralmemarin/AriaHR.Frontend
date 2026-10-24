@@ -10,5 +10,6 @@ export interface CreateOrganizationDto {
   managerFirstName: string | null;
   managerLastName: string | null;
   managerMobile: string | null;
+  managerEmail: string;
   isActive: boolean;
 }

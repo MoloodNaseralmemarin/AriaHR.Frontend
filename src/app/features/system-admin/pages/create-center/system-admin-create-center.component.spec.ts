@@ -181,7 +181,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'مریم',
       managerLastName: 'حسینی',
       managerMobile: '09129876543',
-      managerEmail: 'hosseini@example.com',
+      managerEmail: '  hosseini@example.com  ',
     });
 
     comp.nextStep();
@@ -197,11 +197,52 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'مریم',
       managerLastName: 'حسینی',
       managerMobile: '09129876543',
+      managerEmail: 'hosseini@example.com',
       isActive: true,
     });
 
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/system-admin/centers']);
     expect(comp.saving()).toBe(false);
+  });
+
+  it('empty managerEmail prevents submission and returns Persian validation error message', () => {
+    const comp = createComponent();
+    comp.form.patchValue({
+      centerName: 'کلینیک سلامت',
+      centerCode: 'C-101',
+      centerType: '1',
+      managerFirstName: 'مریم',
+      managerLastName: 'حسینی',
+      managerMobile: '09129876543',
+      managerEmail: '',
+    });
+
+    comp.nextStep();
+    comp.onSubmit();
+
+    expect(mockOrganizationService.createOrganization).not.toHaveBeenCalled();
+    expect(comp.form.get('managerEmail')?.invalid).toBe(true);
+    expect(comp.getControlError('managerEmail')).toBe('ایمیل مدیر الزامی است.');
+  });
+
+  it('invalid managerEmail format prevents submission', () => {
+    const comp = createComponent();
+    comp.form.patchValue({
+      centerName: 'کلینیک سلامت',
+      centerCode: 'C-101',
+      centerType: '1',
+      managerFirstName: 'مریم',
+      managerLastName: 'حسینی',
+      managerMobile: '09129876543',
+      managerEmail: 'not-an-email',
+    });
+
+    comp.nextStep();
+    comp.onSubmit();
+
+    expect(mockOrganizationService.createOrganization).not.toHaveBeenCalled();
+    expect(comp.form.get('managerEmail')?.invalid).toBe(true);
+    expect(comp.getControlError('managerEmail')).toBe('فرمت ایمیل وارد شده معتبر نیست.');
   });
 
   it('submits laboratory type (4) correctly in payload', () => {
@@ -213,6 +254,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'علی',
       managerLastName: 'رضایی',
       managerMobile: '09121234567',
+      managerEmail: 'ali@example.com',
     });
 
     comp.nextStep();
@@ -222,6 +264,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       expect.objectContaining({
         code: 'LAB-404',
         type: OrganizationType.Laboratory,
+        managerEmail: 'ali@example.com',
       })
     );
   });
@@ -235,6 +278,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'رضا',
       managerLastName: 'کمالی',
       managerMobile: '09121234567',
+      managerEmail: 'reza@example.com',
     });
 
     comp.nextStep();
@@ -244,6 +288,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       expect.objectContaining({
         code: 'PHARM-505',
         type: OrganizationType.Pharmacy,
+        managerEmail: 'reza@example.com',
       })
     );
   });
@@ -260,6 +305,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'مریم',
       managerLastName: 'حسینی',
       managerMobile: '09129876543',
+      managerEmail: 'maryam@example.com',
     });
 
     comp.nextStep();
@@ -288,6 +334,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'مریم',
       managerLastName: 'حسینی',
       managerMobile: '09129876543',
+      managerEmail: 'maryam@example.com',
     });
 
     comp.nextStep();
