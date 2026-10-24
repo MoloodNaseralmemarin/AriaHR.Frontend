@@ -15,10 +15,9 @@ describe('SystemAdminSettingsComponent', () => {
     id: 'user-123',
     firstName: 'امیر',
     lastName: 'رضایی',
-    fullName: 'امیر رضایی',
     phoneNumber: '09123456789',
     roles: ['SystemAdmin'],
-    nationalCode: '0012345678',
+    organizationId: null,
   };
 
   beforeEach(() => {
