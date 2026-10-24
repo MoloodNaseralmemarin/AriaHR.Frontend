@@ -12,7 +12,6 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
-import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
 
 @Component({
@@ -22,7 +21,6 @@ import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe'
     CommonModule,
     PageHeaderComponent,
     SkeletonLoaderComponent,
-    ToastComponent,
     PersianDigitsPipe,
   ],
   templateUrl: './system-admin-settings.component.html',
@@ -42,8 +40,7 @@ export class SystemAdminSettingsComponent implements OnInit {
   readonly adminName = computed(() => {
     const u = this.user();
     if (!u) return '—';
-    if (u.fullName) return u.fullName;
-    const name = [u.firstName, u.lastName].filter(Boolean).join(' ');
+    const name = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
     return name || 'مدیر سیستم';
   });
 
@@ -62,7 +59,7 @@ export class SystemAdminSettingsComponent implements OnInit {
   });
 
   readonly nationalCode = computed(() => {
-    return this.user()?.nationalCode || '—';
+    return '—';
   });
 
   ngOnInit(): void {
