@@ -129,14 +129,14 @@ export class LeaveRequestsListComponent implements OnInit {
 
   getDisplayDate(req: LeaveRequestDto): string {
     if (req.leaveType === 'daily') {
-      const start = this.persianDateService.toJalaliString(req.startDate, true, 'DD-MM-YYYY');
-      const end = this.persianDateService.toJalaliString(req.endDate, true, 'DD-MM-YYYY');
+      const start = this.persianDateService.toJalaliString(req.startDate);
+      const end = this.persianDateService.toJalaliString(req.endDate);
       if (start && end && start !== end) {
         return `${start} تا ${end}`;
       }
       return start || '---';
     } else {
-      return this.persianDateService.toJalaliString(req.date, true, 'DD-MM-YYYY') || '---';
+      return this.persianDateService.toJalaliString(req.date) || '---';
     }
   }
 

@@ -15,21 +15,21 @@ describe('JalaliDatePickerComponent (Isolated Unit Tests)', () => {
       picker = new JalaliDatePickerComponent();
     });
 
-    // Default: Persian digits, DD-MM-YYYY
+    // Default: ASCII digits, DD-MM-YYYY
     picker.writeValue('2026-05-05');
-    expect(picker.displayValue()).toBe('۱۵-۰۲-۱۴۰۵');
-    expect(picker.dayInput()).toBe('۱۵');
-    expect(picker.monthSelect()).toBe('2');
-    expect(picker.yearInput()).toBe('۱۴۰۵');
-
-    // Custom: ASCII digits, YYYY-MM-DD
-    picker.digitsFormat = 'ascii';
-    picker.dateFormat = 'YYYY-MM-DD';
-    picker.writeValue('2026-05-05');
-    expect(picker.displayValue()).toBe('1405-02-15');
+    expect(picker.displayValue()).toBe('15-02-1405');
     expect(picker.dayInput()).toBe('15');
     expect(picker.monthSelect()).toBe('2');
     expect(picker.yearInput()).toBe('1405');
+
+    // Custom: Persian digits, YYYY-MM-DD
+    picker.digitsFormat = 'persian';
+    picker.dateFormat = 'YYYY-MM-DD';
+    picker.writeValue('2026-05-05');
+    expect(picker.displayValue()).toBe('۱۴۰۵-۰۲-۱۵');
+    expect(picker.dayInput()).toBe('۱۵');
+    expect(picker.monthSelect()).toBe('2');
+    expect(picker.yearInput()).toBe('۱۴۰۵');
   });
 
   it('should format continuous user input in YYYY-MM-DD format with ASCII digits', () => {
@@ -79,7 +79,7 @@ describe('JalaliDatePickerComponent (Isolated Unit Tests)', () => {
     picker.onSegmentSelect('month', { target: { value: '2' } } as unknown as Event);
     picker.onSegmentInput('year', { target: { value: '1405' } } as unknown as Event);
 
-    expect(picker.displayValue()).toBe('۱۵-۰۲-۱۴۰۵');
+    expect(picker.displayValue()).toBe('15-02-1405');
     expect(lastOutput).toBe('2026-05-05');
   });
 

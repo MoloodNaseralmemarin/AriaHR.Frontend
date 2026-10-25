@@ -14,11 +14,11 @@ describe('PersianDateService (Isolated Unit Tests)', () => {
       service = injector.get(PersianDateService);
     });
 
-    // Default: Persian digits, DD-MM-YYYY
-    expect(service.toJalaliString('2026-05-05')).toBe('۱۵-۰۲-۱۴۰۵');
+    // Default: ASCII digits, DD-MM-YYYY
+    expect(service.toJalaliString('2026-05-05')).toBe('15-02-1405');
 
-    // ASCII digits, DD-MM-YYYY
-    expect(service.toJalaliString('2026-05-05', 'ascii')).toBe('15-02-1405');
+    // Persian digits, DD-MM-YYYY
+    expect(service.toJalaliString('2026-05-05', 'persian')).toBe('۱۵-۰۲-۱۴۰۵');
 
     // ASCII digits, YYYY-MM-DD
     expect(service.toJalaliString('2026-05-05', 'ascii', 'YYYY-MM-DD')).toBe('1405-02-15');

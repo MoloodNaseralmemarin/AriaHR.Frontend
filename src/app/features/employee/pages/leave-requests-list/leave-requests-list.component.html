@@ -332,13 +332,13 @@
               <div>
                 <span class="text-xs font-medium text-slate-500 block mb-1">از تاریخ</span>
                 <span dir="ltr" class="font-semibold text-slate-800 inline-block">
-                  {{ persianDateService.toJalaliString(selectedRequest()?.startDate, true, 'DD-MM-YYYY') }}
+                  {{ persianDateService.toJalaliString(selectedRequest()?.startDate) }}
                 </span>
               </div>
               <div>
                 <span class="text-xs font-medium text-slate-500 block mb-1">تا تاریخ</span>
                 <span dir="ltr" class="font-semibold text-slate-800 inline-block">
-                  {{ persianDateService.toJalaliString(selectedRequest()?.endDate, true, 'DD-MM-YYYY') }}
+                  {{ persianDateService.toJalaliString(selectedRequest()?.endDate) }}
                 </span>
               </div>
             </div>
@@ -347,7 +347,7 @@
               <div>
                 <span class="text-xs font-medium text-slate-500 block mb-1">تاریخ</span>
                 <span dir="ltr" class="font-semibold text-slate-800 inline-block">
-                  {{ persianDateService.toJalaliString(selectedRequest()?.date, true, 'DD-MM-YYYY') }}
+                  {{ persianDateService.toJalaliString(selectedRequest()?.date) }}
                 </span>
               </div>
               <div>
@@ -370,7 +370,7 @@
           <div>
             <span class="text-xs font-medium text-slate-500 block mb-1">تاریخ ثبت درخواست</span>
             <span dir="ltr" class="font-semibold text-slate-700 inline-block">
-              {{ selectedRequest()?.createdAt | jalali:'persian':'DD-MM-YYYY' }}
+              {{ selectedRequest()?.createdAt | jalali }}
             </span>
           </div>
 

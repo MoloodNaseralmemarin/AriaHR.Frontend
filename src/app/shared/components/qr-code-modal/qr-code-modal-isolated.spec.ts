@@ -7,7 +7,7 @@ import { PersianDateService } from '../../../core/services/persian-date.service'
 
 describe('QrCodeModalComponent (Isolated Unit Tests)', () => {
   const mockPersianDateService = {
-    toJalaliString: vi.fn().mockReturnValue('۱۵-۰۲-۱۴۰۵'),
+    toJalaliString: vi.fn().mockReturnValue('15-02-1405'),
   };
 
   function createComponent(): QrCodeModalComponent {
@@ -43,7 +43,7 @@ describe('QrCodeModalComponent (Isolated Unit Tests)', () => {
 
     expect(comp.isGenerating()).toBe(false);
     expect(comp.qrDataUrl()).toContain('data:image/png;base64,');
-    expect(comp.formattedExpiration()).toContain('۱۵-۰۲-۱۴۰۵');
+    expect(comp.formattedExpiration()).toContain('15-02-1405');
   });
 
   it('should emit closeModal event when onClose is called', () => {

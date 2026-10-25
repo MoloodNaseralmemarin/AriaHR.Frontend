@@ -1,21 +1,26 @@
+import '@angular/compiler';
 import { describe, it, expect, vi } from 'vitest';
+import { EnvironmentInjector, createEnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { JalaliDatePickerComponent } from './jalali-date-picker.component';
 import { PersianDateService } from '../../../core/services/persian-date.service';
 
 describe('JalaliDatePickerComponent', () => {
   function createComponent(): JalaliDatePickerComponent {
-    const component = new JalaliDatePickerComponent();
-    const service = new PersianDateService();
-    // Inject service directly
-    // @ts-ignore
-    component['persianDateService'] = service;
+    const injector = createEnvironmentInjector([
+      { provide: PersianDateService, useClass: PersianDateService },
+    ], {} as EnvironmentInjector);
+
+    let component!: JalaliDatePickerComponent;
+    runInInjectionContext(injector, () => {
+      component = new JalaliDatePickerComponent();
+    });
     return component;
   }
 
-  it('should write value in Gregorian and set display value in Jalali Persian digits', () => {
+  it('should write value in Gregorian and set display value in Jalali ASCII digits', () => {
     const comp = createComponent();
     comp.writeValue('2026-05-05');
-    expect(comp.displayValue()).toBe('۱۵-۰۲-۱۴۰۵');
+    expect(comp.displayValue()).toBe('15-02-1405');
   });
 
   it('should write null/empty value and clear display value', () => {
@@ -35,11 +40,11 @@ describe('JalaliDatePickerComponent', () => {
 
     comp.onInputChange(event);
 
-    expect(comp.displayValue()).toBe('۱۵-۰۲-۱۴۰۵');
+    expect(comp.displayValue()).toBe('15-02-1405');
     expect(onChangeSpy).toHaveBeenCalledWith('2026-05-05');
   });
 
-  it('should handle continuous digit typing (e.g. "15021405") and format it as DD-MM-YYYY in Persian digits', () => {
+  it('should handle continuous digit typing (e.g. "15021405") and format it as DD-MM-YYYY in ASCII digits', () => {
     const comp = createComponent();
     const onChangeSpy = vi.fn();
     comp.registerOnChange(onChangeSpy);
@@ -50,7 +55,7 @@ describe('JalaliDatePickerComponent', () => {
 
     comp.onInputChange(event);
 
-    expect(comp.displayValue()).toBe('۱۵-۰۲-۱۴۰۵');
+    expect(comp.displayValue()).toBe('15-02-1405');
     expect(onChangeSpy).toHaveBeenCalledWith('2026-05-05');
   });
 
