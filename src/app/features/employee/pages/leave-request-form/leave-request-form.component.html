@@ -34,7 +34,7 @@
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
     <!-- Leave Category Selector -->
     <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-      <label for="leaveCategoryId" class="block text-sm font-semibold text-slate-700 mb-2">دسته‌بندی مرخصی</label>
+      <label class="block text-sm font-semibold text-slate-700 mb-2">دسته‌بندی مرخصی</label>
 
       <!-- Loading state -->
       <div *ngIf="isLoadingCategories()" class="flex items-center gap-2 text-sm text-slate-500 py-2">
@@ -53,18 +53,14 @@
         </button>
       </div>
 
-      <!-- Category Select -->
+      <!-- Category Custom Select -->
       <div *ngIf="!isLoadingCategories() && !categoriesError()">
-        <select
-          id="leaveCategoryId"
+        <app-custom-select
           formControlName="leaveCategoryId"
-          class="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 transition focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20"
-        >
-          <option value="" disabled>انتخاب کنید...</option>
-          <option *ngFor="let cat of categories()" [value]="cat.id">
-            {{ cat.name }} {{ cat.isPaid ? '(با حقوق)' : '(بدون حقوق)' }}
-          </option>
-        </select>
+          [options]="categoryOptions()"
+          placeholder="انتخاب کنید..."
+          [invalid]="!!(form.get('leaveCategoryId')?.invalid && form.get('leaveCategoryId')?.touched)"
+        ></app-custom-select>
         <p *ngIf="categories().length === 0" class="mt-2 text-xs text-amber-600">
           هیچ دسته‌بندی مرخصی فعال یافت نشد.
         </p>

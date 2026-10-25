@@ -1,6 +1,6 @@
 import '@angular/compiler';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { EnvironmentInjector, createEnvironmentInjector, runInInjectionContext } from '@angular/core';
+import { createEnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LeaveRequestFormComponent } from './leave-request-form.component';
@@ -49,23 +49,36 @@ describe('LeaveRequestFormComponent', () => {
     });
   });
 
-  it('should initialize with daily leave type default and load active categories on init', () => {
+  it('should initialize with daily leave type default, leave categoryId unselected by default, and filter active categories', () => {
     expect(component.selectedLeaveType()).toBe('daily');
     component.ngOnInit();
     expect(leaveCategoryServiceMock.getAll).toHaveBeenCalled();
-    // Only active categories (cat-1 and cat-2) should be retained
+
+    // Strictly filter active categories (isActive === true)
     expect(component.categories().length).toBe(2);
     expect(component.categories().every((c) => c.isActive === true)).toBe(true);
-    expect(component.form.get('leaveCategoryId')?.value).toBe('cat-1');
+
+    // Default category selection must remain unselected ('') for placeholder display
+    expect(component.form.get('leaveCategoryId')?.value).toBe('');
+
+    // Computed options for app-custom-select should be properly mapped
+    expect(component.categoryOptions()).toEqual([
+      { value: 'cat-1', label: 'استحقاقی (با حقوق)' },
+      { value: 'cat-2', label: 'استعلاجی (با حقوق)' },
+    ]);
   });
 
-  it('should preserve id, organizationId, and name on loaded categories and bind id in form', () => {
+  it('should handle empty active categories state without error', () => {
+    leaveCategoryServiceMock.getAll.mockReturnValue(of([
+      { id: 'cat-inactive', name: 'غیرفعال', isPaid: false, isActive: false, maxDaysPerYear: 5, requiresAttachment: false, organizationId: 'org-1' }
+    ]));
+
     component.ngOnInit();
-    const categories = component.categories();
-    expect(categories[0].id).toBe('cat-1');
-    expect(categories[0].organizationId).toBe('org-1');
-    expect(categories[0].name).toBe('استحقاقی');
-    expect(component.form.get('leaveCategoryId')?.value).toBe('cat-1');
+
+    expect(component.categories().length).toBe(0);
+    expect(component.categoryOptions().length).toBe(0);
+    expect(component.isLoadingCategories()).toBe(false);
+    expect(component.categoriesError()).toBeNull();
   });
 
   it('should display specific Persian error message on HTTP 403 Forbidden category fetch failure', () => {
@@ -103,6 +116,7 @@ describe('LeaveRequestFormComponent', () => {
 
   it('should show error when daily dates are missing or invalid', () => {
     component.ngOnInit();
+    component.form.patchValue({ leaveCategoryId: 'cat-1' });
     component.setLeaveType('daily');
     component.onSubmit();
     expect(component.formError()).toBe('لطفاً تاریخ شروع و پایان مرخصی را وارد کنید.');
@@ -117,6 +131,7 @@ describe('LeaveRequestFormComponent', () => {
 
   it('should show error when hourly inputs are missing or invalid', () => {
     component.ngOnInit();
+    component.form.patchValue({ leaveCategoryId: 'cat-1' });
     component.setLeaveType('hourly');
     component.onSubmit();
     expect(component.formError()).toBe('لطفاً تاریخ، ساعت شروع و ساعت پایان را وارد کنید.');
@@ -130,7 +145,7 @@ describe('LeaveRequestFormComponent', () => {
     expect(component.formError()).toBe('ساعت پایان باید بعد از ساعت شروع باشد.');
   });
 
-  it('should submit daily leave successfully and navigate', () => {
+  it('should submit daily leave successfully and ensure server-controlled fields are not included in payload', () => {
     leaveRequestServiceMock.createLeaveRequest.mockReturnValue(of({ id: 'req-1' }));
     component.ngOnInit();
     component.setLeaveType('daily');
@@ -143,7 +158,7 @@ describe('LeaveRequestFormComponent', () => {
 
     component.onSubmit();
 
-    expect(leaveRequestServiceMock.createLeaveRequest).toHaveBeenCalledWith({
+    const expectedPayload = {
       leaveType: 1,
       leaveCategoryId: 'cat-1',
       startDate: '2025-02-10',
@@ -151,7 +166,15 @@ describe('LeaveRequestFormComponent', () => {
       startTime: null,
       endTime: null,
       reason: 'استراحت',
-    });
+    };
+
+    expect(leaveRequestServiceMock.createLeaveRequest).toHaveBeenCalledWith(expectedPayload);
+
+    // Verify that server-controlled fields are strictly absent
+    const callArgs = leaveRequestServiceMock.createLeaveRequest.mock.calls[0][0];
+    expect(callArgs).not.toHaveProperty('employeeId');
+    expect(callArgs).not.toHaveProperty('organizationId');
+    expect(callArgs).not.toHaveProperty('status');
   });
 
   it('should submit hourly leave with correct numeric leaveType 2 and formatted times', () => {
@@ -179,15 +202,17 @@ describe('LeaveRequestFormComponent', () => {
     });
   });
 
-  it('should extract ProblemDetails error message on HTTP failure', () => {
+  it('should extract error message on HTTP 400 ProblemDetails failure', () => {
     component.ngOnInit();
     leaveRequestServiceMock.createLeaveRequest.mockReturnValue(
       throwError(() => ({
+        status: 400,
         error: { detail: 'موجودی مرخصی شما کافی نیست.' },
       }))
     );
     component.setLeaveType('daily');
     component.form.patchValue({
+      leaveCategoryId: 'cat-1',
       startDate: '2025-02-10',
       endDate: '2025-02-12',
     });
@@ -198,10 +223,14 @@ describe('LeaveRequestFormComponent', () => {
     expect(component.isSubmitting()).toBe(false);
   });
 
-  it('should display appropriate Persian message on 401, 403, and network errors', () => {
+  it('should display appropriate Persian message on 401, 403, 500, and network errors', () => {
     component.ngOnInit();
     component.setLeaveType('daily');
-    component.form.patchValue({ startDate: '2025-02-10', endDate: '2025-02-12' });
+    component.form.patchValue({
+      leaveCategoryId: 'cat-1',
+      startDate: '2025-02-10',
+      endDate: '2025-02-12',
+    });
 
     leaveRequestServiceMock.createLeaveRequest.mockReturnValue(throwError(() => ({ status: 401 })));
     component.onSubmit();
@@ -210,6 +239,10 @@ describe('LeaveRequestFormComponent', () => {
     leaveRequestServiceMock.createLeaveRequest.mockReturnValue(throwError(() => ({ status: 403 })));
     component.onSubmit();
     expect(component.formError()).toBe('شما دسترسی لازم برای ثبت این درخواست را ندارید.');
+
+    leaveRequestServiceMock.createLeaveRequest.mockReturnValue(throwError(() => ({ status: 500 })));
+    component.onSubmit();
+    expect(component.formError()).toBe('ثبت درخواست انجام نشد. لطفاً دوباره تلاش کنید.');
 
     leaveRequestServiceMock.createLeaveRequest.mockReturnValue(throwError(() => ({ status: 0 })));
     component.onSubmit();
@@ -221,6 +254,7 @@ describe('LeaveRequestFormComponent', () => {
     leaveRequestServiceMock.createLeaveRequest.mockReturnValue(of({ id: 'req-3' }));
     component.setLeaveType('daily');
     component.form.patchValue({
+      leaveCategoryId: 'cat-1',
       startDate: '2025-02-10',
       endDate: '2025-02-12',
     });

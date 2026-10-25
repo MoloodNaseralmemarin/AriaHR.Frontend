@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { JalaliDatePickerComponent } from '../../../../shared/components/jalali-date-picker/jalali-date-picker.component';
 import { TimeInputComponent } from '../../../../shared/components/time-input/time-input.component';
+import { CustomSelectComponent, SelectOption } from '../../../../shared/components/custom-select/custom-select.component';
 import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { LeaveRequestService } from '../../services/leave-request.service';
@@ -21,6 +22,7 @@ import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe'
     ReactiveFormsModule,
     JalaliDatePickerComponent,
     TimeInputComponent,
+    CustomSelectComponent,
     ToastComponent,
     PersianDigitsPipe,
   ],
@@ -43,6 +45,14 @@ export class LeaveRequestFormComponent implements OnInit {
   readonly categories = signal<LeaveCategoryDto[]>([]);
   readonly isLoadingCategories = signal<boolean>(false);
   readonly categoriesError = signal<string | null>(null);
+
+  // Computed options for app-custom-select
+  readonly categoryOptions = computed<SelectOption[]>(() => {
+    return this.categories().map((c) => ({
+      value: c.id,
+      label: `${c.name} ${c.isPaid ? '(با حقوق)' : '(بدون حقوق)'}`,
+    }));
+  });
 
   // Toast state
   readonly showToast = signal<boolean>(false);
@@ -135,14 +145,10 @@ export class LeaveRequestFormComponent implements OnInit {
 
     this.leaveCategoryService.getAll().subscribe({
       next: (list) => {
-        // Strictly filter only categories where isActive === true
-        const activeCategories = (list || []).filter((c) => c.isActive === true);
+        // Strictly filter categories where isActive === true
+        const activeCategories = (list || []).filter((c) => c && c.isActive === true);
         this.categories.set(activeCategories);
         this.isLoadingCategories.set(false);
-
-        if (activeCategories.length > 0 && !this.form.get('leaveCategoryId')?.value) {
-          this.form.patchValue({ leaveCategoryId: activeCategories[0].id });
-        }
       },
       error: (err) => {
         this.isLoadingCategories.set(false);
