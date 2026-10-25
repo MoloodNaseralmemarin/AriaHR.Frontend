@@ -85,11 +85,13 @@ export class DashboardComponent implements OnInit {
   shiftStatusMap = shiftStatusMap;
 
   ngOnInit(): void {
-    this.authService.getCurrentUser().subscribe({
-      error: () => {
-        // Fallback handled gracefully in managerNameSignal
-      },
-    });
+    if (!this.authService.userDetails()) {
+      this.authService.getCurrentUser().subscribe({
+        error: () => {
+          // Fallback handled gracefully in managerNameSignal
+        },
+      });
+    }
   }
 
   get hasActionItems(): boolean {
