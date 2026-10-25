@@ -107,6 +107,84 @@ describe('LeaveRequestFormComponent', () => {
     expect(component.form.get('endTime')?.value).toBe('');
   });
 
+  it('should calculate single-day daily leave duration correctly (start date equals end date)', () => {
+    component.ngOnInit();
+    component.form.patchValue({ startDate: '2025-02-10', endDate: '2025-02-10' });
+    expect(component.computedDuration()).toBe('1 روز');
+  });
+
+  it('should calculate multi-day daily leave duration correctly', () => {
+    component.ngOnInit();
+    component.form.patchValue({ startDate: '2025-02-10', endDate: '2025-02-14' });
+    expect(component.computedDuration()).toBe('5 روز');
+  });
+
+  it('should return empty duration string when daily end date is before start date', () => {
+    component.ngOnInit();
+    component.form.patchValue({ startDate: '2025-02-14', endDate: '2025-02-10' });
+    expect(component.computedDuration()).toBe('');
+  });
+
+  it('should calculate hourly leave duration correctly for hours and minutes', () => {
+    component.ngOnInit();
+    component.setLeaveType('hourly');
+    component.form.patchValue({ date: '2025-02-10', startTime: '08:30', endTime: '11:45' });
+    expect(component.computedDuration()).toBe('3 ساعت و 15 دقیقه');
+  });
+
+  it('should calculate hourly leave duration correctly for exact hours', () => {
+    component.ngOnInit();
+    component.setLeaveType('hourly');
+    component.form.patchValue({ date: '2025-02-10', startTime: '08:00', endTime: '12:00' });
+    expect(component.computedDuration()).toBe('4 ساعت');
+  });
+
+  it('should calculate hourly leave duration correctly for exact minutes under an hour', () => {
+    component.ngOnInit();
+    component.setLeaveType('hourly');
+    component.form.patchValue({ date: '2025-02-10', startTime: '08:00', endTime: '08:45' });
+    expect(component.computedDuration()).toBe('45 دقیقه');
+  });
+
+  it('should return empty duration string when hourly start time equals or is after end time', () => {
+    component.ngOnInit();
+    component.setLeaveType('hourly');
+    component.form.patchValue({ date: '2025-02-10', startTime: '10:00', endTime: '10:00' });
+    expect(component.computedDuration()).toBe('');
+
+    component.form.patchValue({ date: '2025-02-10', startTime: '12:00', endTime: '10:00' });
+    expect(component.computedDuration()).toBe('');
+  });
+
+  it('should preserve payload isolation after switching between types multiple times', () => {
+    leaveRequestServiceMock.createLeaveRequest.mockReturnValue(of({ id: 'req-multi-switch' }));
+    component.ngOnInit();
+
+    // 1. Fill daily fields
+    component.form.patchValue({ leaveCategoryId: 'cat-1', startDate: '2025-02-01', endDate: '2025-02-03' });
+
+    // 2. Switch to hourly and fill hourly fields
+    component.setLeaveType('hourly');
+    component.form.patchValue({ date: '2025-02-05', startTime: '09:00', endTime: '11:00' });
+
+    // 3. Switch back to daily and fill daily fields again
+    component.setLeaveType('daily');
+    component.form.patchValue({ startDate: '2025-02-10', endDate: '2025-02-12' });
+
+    // 4. Submit daily request
+    component.onSubmit();
+
+    expect(leaveRequestServiceMock.createLeaveRequest).toHaveBeenCalledWith({
+      leaveType: 1,
+      leaveCategoryId: 'cat-1',
+      startDate: '2025-02-10',
+      endDate: '2025-02-12',
+      startTime: null,
+      endTime: null,
+      reason: null,
+    });
+  });
+
   it('should show error when category is missing', () => {
     component.form.patchValue({ leaveCategoryId: '' });
     component.setLeaveType('daily');
@@ -140,6 +218,14 @@ describe('LeaveRequestFormComponent', () => {
       date: '2025-02-15',
       startTime: '14:00',
       endTime: '12:00',
+    });
+    component.onSubmit();
+    expect(component.formError()).toBe('ساعت پایان باید بعد از ساعت شروع باشد.');
+
+    component.form.patchValue({
+      date: '2025-02-15',
+      startTime: '10:00',
+      endTime: '10:00',
     });
     component.onSubmit();
     expect(component.formError()).toBe('ساعت پایان باید بعد از ساعت شروع باشد.');
