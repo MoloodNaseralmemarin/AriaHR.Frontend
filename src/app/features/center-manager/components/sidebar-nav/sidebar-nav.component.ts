@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -55,11 +55,11 @@ interface NavItem {
         <div class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3">
           <div class="flex items-center gap-2 min-w-0">
             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
-              م‌ک
+              {{ avatarInitials }}
             </div>
             <div class="min-w-0">
-              <p class="truncate text-xs font-semibold text-slate-700">مدیر مرکز</p>
-              <p class="truncate text-[11px] text-slate-400">مرکز سلامت</p>
+              <p class="truncate text-xs font-semibold text-slate-700">{{ managerName }}</p>
+              <p class="truncate text-[11px] text-slate-400">مرکز: {{ centerName }}</p>
             </div>
           </div>
           <button type="button" (click)="onLogout()" class="rounded-lg p-1.5 text-rose-600 transition hover:bg-rose-50" title="خروج">
@@ -70,8 +70,59 @@ interface NavItem {
     </aside>
   `,
 })
-export class SidebarNavComponent {
+export class SidebarNavComponent implements OnInit {
   private readonly authService = inject(AuthService);
+
+  readonly managerNameSignal = computed(() => {
+    const details = this.authService.userDetails();
+    if (details) {
+      const first = details.firstName ? details.firstName.trim() : '';
+      const last = details.lastName ? details.lastName.trim() : '';
+      const full = `${first} ${last}`.trim();
+      if (full) {
+        return full;
+      }
+    }
+
+    const user = this.authService.currentUser();
+    if (user && user.fullName && user.fullName.trim()) {
+      return user.fullName.trim();
+    }
+
+    return 'مدیر مرکز';
+  });
+
+  get managerName(): string {
+    return this.managerNameSignal();
+  }
+
+  readonly centerNameSignal = computed(() => {
+    const details = this.authService.userDetails();
+    if (details && details.organizationName && details.organizationName.trim()) {
+      return details.organizationName.trim();
+    }
+    return 'تعیین نشده';
+  });
+
+  get centerName(): string {
+    return this.centerNameSignal();
+  }
+
+  readonly avatarInitialsSignal = computed(() => {
+    const name = this.managerNameSignal();
+    if (!name || name === 'مدیر مرکز') {
+      return 'م‌ک';
+    }
+    const parts = name.split(' ').filter((p) => p.trim().length > 0);
+    if (parts.length >= 2) {
+      return `${parts[0][0]}‌${parts[1][0]}`;
+    }
+    return parts[0].substring(0, 2);
+  });
+
+  get avatarInitials(): string {
+    return this.avatarInitialsSignal();
+  }
 
   items: NavItem[] = [
     { label: 'داشبورد', route: '/center-manager/dashboard', icon: 'dashboard' },
@@ -85,6 +136,16 @@ export class SidebarNavComponent {
     { label: 'اعلان‌ها', route: '/center-manager/notifications', icon: 'notifications' },
     { label: 'تنظیمات مرکز', route: '/center-manager/settings', icon: 'settings' },
   ];
+
+  ngOnInit(): void {
+    if (!this.authService.userDetails()) {
+      this.authService.getCurrentUser().subscribe({
+        error: () => {
+          // Fallback handled gracefully in computed signals
+        },
+      });
+    }
+  }
 
   onLogout(): void {
     this.authService.logout();
