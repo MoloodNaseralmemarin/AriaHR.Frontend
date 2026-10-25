@@ -135,14 +135,8 @@ export class LeaveRequestFormComponent implements OnInit {
 
     this.leaveCategoryService.getAll().subscribe({
       next: (list) => {
-        // Strictly filter only categories where isActive === true
-        const activeCategories = (list || []).filter((c) => c.isActive === true);
-        this.categories.set(activeCategories);
+        this.categories.set(list || []);
         this.isLoadingCategories.set(false);
-
-        if (activeCategories.length > 0 && !this.form.get('leaveCategoryId')?.value) {
-          this.form.patchValue({ leaveCategoryId: activeCategories[0].id });
-        }
       },
       error: (err) => {
         this.isLoadingCategories.set(false);

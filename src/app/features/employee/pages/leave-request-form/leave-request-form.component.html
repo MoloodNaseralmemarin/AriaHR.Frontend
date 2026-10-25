@@ -62,7 +62,7 @@
         >
           <option value="" disabled>انتخاب کنید...</option>
           <option *ngFor="let cat of categories()" [value]="cat.id">
-            {{ cat.name }} {{ cat.isPaid ? '(با حقوق)' : '(بدون حقوق)' }}
+            {{ cat.name }}
           </option>
         </select>
         <p *ngIf="categories().length === 0" class="mt-2 text-xs text-amber-600">
