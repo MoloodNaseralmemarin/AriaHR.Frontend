@@ -60,7 +60,18 @@ export class DashboardComponent implements OnInit {
     return this.managerNameSignal();
   }
 
-  centerName = 'مرکز سلامت بهار';
+  readonly centerNameSignal = computed(() => {
+    const details = this.authService.userDetails();
+    if (details && details.organizationName && details.organizationName.trim()) {
+      return details.organizationName.trim();
+    }
+    return 'تعیین نشده';
+  });
+
+  get centerName(): string {
+    return this.centerNameSignal();
+  }
+
   readonly persianDate = this.persianDateService.getTodayFormatted();
 
   summary = mockDashboardSummary;
