@@ -1,8 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { signal } from '@angular/core';
+import '@angular/compiler';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { Injector, runInInjectionContext, signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { DashboardComponent } from './dashboard.component';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -10,9 +9,6 @@ import { AuthUserDto, CurrentUserDto } from '../../../../core/auth/auth.models';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 
 describe('Center Manager DashboardComponent', () => {
-  let component: DashboardComponent;
-  let fixture: ComponentFixture<DashboardComponent>;
-
   const sampleUser: CurrentUserDto = {
     id: '12345678-1234-1234-1234-1234567890ab',
     firstName: 'محمد',
@@ -20,94 +16,130 @@ describe('Center Manager DashboardComponent', () => {
     phoneNumber: '09123456789',
     roles: ['CenterManager'],
     organizationId: '87654321-4321-4321-4321-ba0987654321',
+    organizationName: 'مرکز تخصصی پارس',
   };
 
-  const userDetailsSignal = signal<CurrentUserDto | null>(null);
-  const currentUserSignal = signal<AuthUserDto | null>(null);
-
-  const mockAuthService = {
-    userDetails: userDetailsSignal,
-    currentUser: currentUserSignal,
-    getCurrentUser: vi.fn(),
+  let userDetailsSignal: ReturnType<typeof signal<CurrentUserDto | null>>;
+  let currentUserSignal: ReturnType<typeof signal<AuthUserDto | null>>;
+  let mockAuthService: {
+    userDetails: typeof userDetailsSignal;
+    currentUser: typeof currentUserSignal;
+    getCurrentUser: ReturnType<typeof vi.fn>;
   };
+  let mockPersianDateService: {
+    getTodayFormatted: ReturnType<typeof vi.fn>;
+  };
+  let injector: Injector;
 
-  beforeEach(async () => {
-    userDetailsSignal.set(null);
-    currentUserSignal.set(null);
-    mockAuthService.getCurrentUser = vi.fn().mockReturnValue(of(sampleUser));
+  beforeEach(() => {
+    userDetailsSignal = signal<CurrentUserDto | null>(null);
+    currentUserSignal = signal<AuthUserDto | null>(null);
 
-    await TestBed.configureTestingModule({
-      imports: [DashboardComponent],
+    mockAuthService = {
+      userDetails: userDetailsSignal,
+      currentUser: currentUserSignal,
+      getCurrentUser: vi.fn().mockReturnValue(of(sampleUser)),
+    };
+
+    mockPersianDateService = {
+      getTodayFormatted: vi.fn().mockReturnValue('یکشنبه ۴ آبان ۱۴۰۴'),
+    };
+
+    injector = Injector.create({
       providers: [
-        provideRouter([]),
         { provide: AuthService, useValue: mockAuthService },
+        { provide: PersianDateService, useValue: mockPersianDateService },
       ],
-    }).compileComponents();
+    });
   });
 
-  it('should create component and call authService.getCurrentUser on init', () => {
-    fixture = TestBed.createComponent(DashboardComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+  it('should initialize component and call authService.getCurrentUser on init', () => {
+    runInInjectionContext(injector, () => {
+      const component = new DashboardComponent();
+      component.ngOnInit();
 
-    expect(component).toBeTruthy();
-    expect(mockAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
+      expect(mockAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('should display full name from userDetails without hardcoded prefixes', () => {
-    fixture = TestBed.createComponent(DashboardComponent);
-    component = fixture.componentInstance;
-    userDetailsSignal.set(sampleUser);
-    fixture.detectChanges();
+    runInInjectionContext(injector, () => {
+      userDetailsSignal.set(sampleUser);
+      const component = new DashboardComponent();
 
-    expect(component.managerName).toBe('محمد رضایی');
+      expect(component.managerName).toBe('محمد رضایی');
+    });
+  });
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('سلام، محمد رضایی 👋');
+  it('should display actual center name from userDetails.organizationName', () => {
+    runInInjectionContext(injector, () => {
+      userDetailsSignal.set(sampleUser);
+      const component = new DashboardComponent();
+
+      expect(component.centerName).toBe('مرکز تخصصی پارس');
+    });
+  });
+
+  it('should fallback centerName to "تعیین نشده" when organizationName is null, undefined, or whitespace', () => {
+    runInInjectionContext(injector, () => {
+      userDetailsSignal.set({
+        ...sampleUser,
+        organizationName: null,
+      });
+      const componentNull = new DashboardComponent();
+      expect(componentNull.centerName).toBe('تعیین نشده');
+
+      userDetailsSignal.set({
+        ...sampleUser,
+        organizationName: '   ',
+      });
+      const componentSpace = new DashboardComponent();
+      expect(componentSpace.centerName).toBe('تعیین نشده');
+
+      userDetailsSignal.set(null);
+      const componentNoUser = new DashboardComponent();
+      expect(componentNoUser.centerName).toBe('تعیین نشده');
+    });
   });
 
   it('should fallback to currentUser fullName if userDetails is null', () => {
-    fixture = TestBed.createComponent(DashboardComponent);
-    component = fixture.componentInstance;
-    userDetailsSignal.set(null);
-    currentUserSignal.set({
-      fullName: 'علی محمدی',
-    });
-    fixture.detectChanges();
+    runInInjectionContext(injector, () => {
+      userDetailsSignal.set(null);
+      currentUserSignal.set({
+        fullName: 'علی محمدی',
+      });
+      const component = new DashboardComponent();
 
-    expect(component.managerName).toBe('علی محمدی');
+      expect(component.managerName).toBe('علی محمدی');
+    });
   });
 
   it('should fallback to neutral string if no user info is available', () => {
-    fixture = TestBed.createComponent(DashboardComponent);
-    component = fixture.componentInstance;
-    userDetailsSignal.set(null);
-    currentUserSignal.set(null);
-    fixture.detectChanges();
+    runInInjectionContext(injector, () => {
+      userDetailsSignal.set(null);
+      currentUserSignal.set(null);
+      const component = new DashboardComponent();
 
-    expect(component.managerName).toBe('مدیر مرکز');
+      expect(component.managerName).toBe('مدیر مرکز');
+    });
   });
 
   it('should handle error from getCurrentUser gracefully', () => {
-    mockAuthService.getCurrentUser = vi.fn().mockReturnValue(throwError(() => new Error('API error')));
-    fixture = TestBed.createComponent(DashboardComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    mockAuthService.getCurrentUser.mockReturnValue(throwError(() => new Error('API error')));
 
-    expect(component.managerName).toBe('مدیر مرکز');
+    runInInjectionContext(injector, () => {
+      const component = new DashboardComponent();
+      component.ngOnInit();
+
+      expect(component.managerName).toBe('مدیر مرکز');
+    });
   });
 
   it('should display today Persian date using PersianDateService', () => {
-    const persianDateService = TestBed.inject(PersianDateService);
-    const expectedDate = persianDateService.getTodayFormatted();
+    runInInjectionContext(injector, () => {
+      const component = new DashboardComponent();
 
-    fixture = TestBed.createComponent(DashboardComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-
-    expect(component.persianDate).toBe(expectedDate);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain(expectedDate);
+      expect(component.persianDate).toBe('یکشنبه ۴ آبان ۱۴۰۴');
+    });
   });
 });

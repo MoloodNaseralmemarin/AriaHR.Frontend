@@ -24,6 +24,7 @@ export interface CurrentUserDto {
   readonly phoneNumber: string;
   readonly roles: string[];
   readonly organizationId: string | null;
+  readonly organizationName?: string | null;
 }
 
 /** User information returned upon successful authentication. */
