@@ -62,8 +62,8 @@ export class LeaveRequestFormComponent implements OnInit {
   readonly form: FormGroup = this.fb.group({
     leaveType: ['daily', [Validators.required]],
     leaveCategoryId: ['', [Validators.required]],
-    startDate: [''],
-    endDate: [''],
+    startDate: ['', [Validators.required]],
+    endDate: ['', [Validators.required]],
     date: [''],
     startTime: [''],
     endTime: [''],
@@ -173,6 +173,12 @@ export class LeaveRequestFormComponent implements OnInit {
     this.formError.set(null);
 
     if (type === 'daily') {
+      this.form.get('startDate')?.setValidators([Validators.required]);
+      this.form.get('endDate')?.setValidators([Validators.required]);
+      this.form.get('date')?.clearValidators();
+      this.form.get('startTime')?.clearValidators();
+      this.form.get('endTime')?.clearValidators();
+
       this.form.patchValue({
         leaveType: 'daily',
         date: '',
@@ -180,12 +186,22 @@ export class LeaveRequestFormComponent implements OnInit {
         endTime: '',
       });
     } else {
+      this.form.get('startDate')?.clearValidators();
+      this.form.get('endDate')?.clearValidators();
+      this.form.get('date')?.setValidators([Validators.required]);
+      this.form.get('startTime')?.setValidators([Validators.required]);
+      this.form.get('endTime')?.setValidators([Validators.required]);
+
       this.form.patchValue({
         leaveType: 'hourly',
         startDate: '',
         endDate: '',
       });
     }
+
+    ['startDate', 'endDate', 'date', 'startTime', 'endTime'].forEach((ctrlName) => {
+      this.form.get(ctrlName)?.updateValueAndValidity({ emitEvent: false });
+    });
   }
 
   onSubmit() {
