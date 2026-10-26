@@ -217,6 +217,9 @@ export class LeaveRequestFormComponent implements OnInit {
       return;
     }
 
+    let gregStartDate = '';
+    let gregEndDate = '';
+
     if (type === 'daily') {
       const startDate = this.form.get('startDate')?.value;
       const endDate = this.form.get('endDate')?.value;
@@ -226,10 +229,10 @@ export class LeaveRequestFormComponent implements OnInit {
         return;
       }
 
-      const gregStart = this.toGregorian(startDate);
-      const gregEnd = this.toGregorian(endDate);
+      gregStartDate = this.toGregorian(startDate);
+      gregEndDate = this.toGregorian(endDate);
 
-      if (new Date(gregEnd) < new Date(gregStart)) {
+      if (new Date(gregEndDate) < new Date(gregStartDate)) {
         this.formError.set('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.');
         return;
       }
@@ -250,6 +253,14 @@ export class LeaveRequestFormComponent implements OnInit {
         this.formError.set('ساعت پایان باید بعد از ساعت شروع باشد.');
         return;
       }
+
+      gregStartDate = this.toGregorian(date);
+      gregEndDate = this.toGregorian(date);
+
+      if (gregStartDate !== gregEndDate) {
+        this.formError.set('در مرخصی ساعتی، تاریخ شروع و پایان باید برابر باشد.');
+        return;
+      }
     }
 
     if (this.form.invalid) {
@@ -260,8 +271,6 @@ export class LeaveRequestFormComponent implements OnInit {
     this.isSubmitting.set(true);
 
     const formVal = this.form.value;
-    const gregStartDate = type === 'daily' ? this.toGregorian(formVal.startDate) : this.toGregorian(formVal.date);
-    const gregEndDate = type === 'daily' ? this.toGregorian(formVal.endDate) : this.toGregorian(formVal.date);
 
     const apiDto: CreateLeaveRequestApiDto = {
       leaveType: type === 'daily' ? 1 : 2,
@@ -313,15 +322,20 @@ export class LeaveRequestFormComponent implements OnInit {
     });
   }
 
-  private toGregorian(dateVal: string | null | undefined): string {
+  toGregorian(dateVal: string | null | undefined): string {
     if (!dateVal) return '';
     const trimmed = dateVal.trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      const year = parseInt(trimmed.substring(0, 4), 10);
+    if (!trimmed) return '';
+
+    // Standard Gregorian YYYY-MM-DD
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      const year = parseInt(isoMatch[1], 10);
       if (year >= 1900 && year <= 2100) {
-        return trimmed;
+        return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
       }
     }
+
     return this.persianDateService.toGregorianString(trimmed) || trimmed;
   }
 
