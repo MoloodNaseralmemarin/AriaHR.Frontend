@@ -11,12 +11,14 @@ export interface OrganizationResponseDto {
   managerFirstName?: string | null;
   managerLastName?: string | null;
   managerMobile?: string | null;
+  managerEmail?: string | null;
   centerPhone?: string | null;
   phone?: string | null;
   email?: string | null;
   isActive: boolean;
   createdAtUtc?: string | null;
   createdAt?: string | null;
+  createdByUserId?: string | null;
   nationalIdentifier?: string | null;
   address?: string | null;
 }
