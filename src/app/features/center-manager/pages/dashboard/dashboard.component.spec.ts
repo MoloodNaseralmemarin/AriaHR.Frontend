@@ -7,6 +7,8 @@ import { DashboardComponent } from './dashboard.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AuthUserDto, CurrentUserDto } from '../../../../core/auth/auth.models';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
+import { CenterManagerDashboardService } from '../../services/center-manager-dashboard.service';
+import { CenterManagerDashboardDto } from '../../models/center-manager-dashboard.dto';
 
 describe('Center Manager DashboardComponent', () => {
   const sampleUser: CurrentUserDto = {
@@ -19,6 +21,14 @@ describe('Center Manager DashboardComponent', () => {
     organizationName: 'مرکز تخصصی پارس',
   };
 
+  const sampleMetrics: CenterManagerDashboardDto = {
+    activeEmployeesCount: 10,
+    presentTodayCount: 8,
+    absentTodayCount: 1,
+    approvedLeaveTodayCount: 1,
+    lateArrivalsTodayCount: 0,
+  };
+
   let userDetailsSignal: ReturnType<typeof signal<CurrentUserDto | null>>;
   let currentUserSignal: ReturnType<typeof signal<AuthUserDto | null>>;
   let mockAuthService: {
@@ -28,6 +38,9 @@ describe('Center Manager DashboardComponent', () => {
   };
   let mockPersianDateService: {
     getTodayFormatted: ReturnType<typeof vi.fn>;
+  };
+  let mockDashboardService: {
+    getDashboardMetrics: ReturnType<typeof vi.fn>;
   };
   let injector: Injector;
 
@@ -45,20 +58,59 @@ describe('Center Manager DashboardComponent', () => {
       getTodayFormatted: vi.fn().mockReturnValue('یکشنبه ۴ آبان ۱۴۰۴'),
     };
 
+    mockDashboardService = {
+      getDashboardMetrics: vi.fn().mockReturnValue(of(sampleMetrics)),
+    };
+
     injector = Injector.create({
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: PersianDateService, useValue: mockPersianDateService },
+        { provide: CenterManagerDashboardService, useValue: mockDashboardService },
       ],
     });
   });
 
-  it('should initialize component and call authService.getCurrentUser on init', () => {
+  it('should initialize component, call authService and fetch metrics on init', () => {
     runInInjectionContext(injector, () => {
       const component = new DashboardComponent();
       component.ngOnInit();
 
       expect(mockAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
+      expect(mockDashboardService.getDashboardMetrics).toHaveBeenCalledTimes(1);
+      expect(component.isLoading()).toBe(false);
+      expect(component.errorMessage()).toBeNull();
+      expect(component.metrics()).toEqual(sampleMetrics);
+    });
+  });
+
+  it('should handle dashboard service error and present Persian error message', () => {
+    mockDashboardService.getDashboardMetrics.mockReturnValue(throwError(() => new Error('API Error')));
+
+    runInInjectionContext(injector, () => {
+      const component = new DashboardComponent();
+      component.ngOnInit();
+
+      expect(component.isLoading()).toBe(false);
+      expect(component.errorMessage()).toBe('خطا در دریافت اطلاعات داشبورد. لطفاً دوباره تلاش کنید.');
+      expect(component.metrics()).toBeNull();
+    });
+  });
+
+  it('should allow retrying dashboard metrics fetch on loadDashboardMetrics call', () => {
+    mockDashboardService.getDashboardMetrics
+      .mockReturnValueOnce(throwError(() => new Error('First failure')))
+      .mockReturnValueOnce(of(sampleMetrics));
+
+    runInInjectionContext(injector, () => {
+      const component = new DashboardComponent();
+      component.ngOnInit();
+      expect(component.errorMessage()).not.toBeNull();
+
+      component.loadDashboardMetrics();
+      expect(component.isLoading()).toBe(false);
+      expect(component.errorMessage()).toBeNull();
+      expect(component.metrics()).toEqual(sampleMetrics);
     });
   });
 

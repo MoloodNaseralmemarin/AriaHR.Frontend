@@ -16,20 +16,63 @@
     </div>
   </div>
 
-  <!-- Today's Overview -->
+  <!-- Today's Overview Metrics -->
   <section>
     <h2 class="mb-3 text-sm font-semibold text-slate-500">نمای امروز</h2>
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <app-summary-card label="کارکنان فعال" [value]="summary.activeEmployees" tone="default">
-        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+
+    <!-- Loading Skeleton State -->
+    <div *ngIf="isLoading()" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div *ngFor="let i of [1, 2, 3, 4, 5]" class="h-28 animate-pulse rounded-2xl border border-slate-200 bg-white p-4">
+        <div class="flex items-center justify-between">
+          <div class="h-4 w-20 rounded bg-slate-200"></div>
+          <div class="h-9 w-9 rounded-xl bg-slate-200"></div>
+        </div>
+        <div class="mt-6 h-7 w-12 rounded bg-slate-200"></div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="!isLoading() && errorMessage()" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-sm font-medium">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-rose-600"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>{{ errorMessage() }}</span>
+        </div>
+        <button
+          type="button"
+          (click)="loadDashboardMetrics()"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-rose-700 transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          تلاش مجدد
+        </button>
+      </div>
+    </div>
+
+    <!-- Metrics Cards Grid -->
+    <div *ngIf="!isLoading() && !errorMessage() && metrics()" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <!-- 1. Active Employees Count -->
+      <app-summary-card label="تعداد کارکنان فعال" [value]="metrics()!.activeEmployeesCount | persianDigits" tone="default">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </app-summary-card>
-      <app-summary-card label="حاضر امروز" [value]="summary.present" tone="success">
+
+      <!-- 2. Present Today Count -->
+      <app-summary-card label="حاضرین امروز" [value]="metrics()!.presentTodayCount | persianDigits" tone="success">
         <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       </app-summary-card>
-      <app-summary-card label="غایب" [value]="summary.absent" tone="danger">
+
+      <!-- 3. Absent Today Count -->
+      <app-summary-card label="غایبین امروز" [value]="metrics()!.absentTodayCount | persianDigits" tone="danger">
         <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>
       </app-summary-card>
-      <app-summary-card label="در انتظار ورود" [value]="summary.pendingCheckIn" tone="warning">
+
+      <!-- 4. Approved Leave Today Count -->
+      <app-summary-card label="مرخصی‌های تأییدشده امروز" [value]="metrics()!.approvedLeaveTodayCount | persianDigits" tone="info">
+        <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+      </app-summary-card>
+
+      <!-- 5. Late Arrivals Today Count -->
+      <app-summary-card label="تأخیرهای امروز" [value]="metrics()!.lateArrivalsTodayCount | persianDigits" tone="warning">
         <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
       </app-summary-card>
     </div>
@@ -45,19 +88,19 @@
         </div>
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div class="rounded-xl bg-emerald-50 p-3 text-center">
-            <p class="text-lg font-bold text-emerald-700">{{ todayAttendance.present }}</p>
+            <p class="text-lg font-bold text-emerald-700">{{ todayAttendance.present | persianDigits }}</p>
             <p class="mt-0.5 text-xs text-emerald-700/80">حاضر</p>
           </div>
           <div class="rounded-xl bg-amber-50 p-3 text-center">
-            <p class="text-lg font-bold text-amber-700">{{ todayAttendance.late }}</p>
+            <p class="text-lg font-bold text-amber-700">{{ todayAttendance.late | persianDigits }}</p>
             <p class="mt-0.5 text-xs text-amber-700/80">تأخیر</p>
           </div>
           <div class="rounded-xl bg-rose-50 p-3 text-center">
-            <p class="text-lg font-bold text-rose-700">{{ todayAttendance.absent }}</p>
+            <p class="text-lg font-bold text-rose-700">{{ todayAttendance.absent | persianDigits }}</p>
             <p class="mt-0.5 text-xs text-rose-700/80">غایب</p>
           </div>
           <div class="rounded-xl bg-sky-50 p-3 text-center">
-            <p class="text-lg font-bold text-sky-700">{{ todayAttendance.onLeave }}</p>
+            <p class="text-lg font-bold text-sky-700">{{ todayAttendance.onLeave | persianDigits }}</p>
             <p class="mt-0.5 text-xs text-sky-700/80">مرخصی</p>
           </div>
         </div>
@@ -89,8 +132,8 @@
               ></app-status-badge>
             </div>
             <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-              <span>{{ shift.plannedCount }} نفر برنامه‌ریزی شده</span>
-              <span *ngIf="shift.presentCount > 0">{{ shift.presentCount }} نفر حاضر</span>
+              <span>{{ shift.plannedCount | persianDigits }} نفر برنامه‌ریزی شده</span>
+              <span *ngIf="shift.presentCount > 0">{{ shift.presentCount | persianDigits }} نفر حاضر</span>
             </div>
           </div>
         </div>
@@ -112,7 +155,7 @@
           >
             <span class="flex items-center gap-2.5">
               <span class="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">
-                {{ item.count }}
+                {{ item.count | persianDigits }}
               </span>
               <span class="text-sm text-slate-700">{{ item.label }}</span>
             </span>
