@@ -140,7 +140,7 @@ type ReadFilter = 'all' | 'unread';
 
                 <div class="flex sm:flex-col items-center sm:items-end justify-between text-xs text-slate-400 gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
                   <span class="font-medium text-slate-500">
-                    {{ msg.createdAt | jalali }}
+                    <bdi dir="ltr">{{ msg.createdAt | jalali }}</bdi>
                   </span>
                   <span class="text-[11px] text-slate-400">
                     {{ msg.senderName }}
@@ -178,7 +178,7 @@ type ReadFilter = 'all' | 'unread';
                 <div class="flex items-center gap-4 text-xs text-slate-500">
                   <span>فرستنده: <strong class="text-slate-700">{{ selectedMessage()!.senderName }}</strong></span>
                   <span>•</span>
-                  <span>تاریخ: {{ selectedMessage()!.createdAt | jalali }}</span>
+                  <span>تاریخ: <bdi dir="ltr">{{ selectedMessage()!.createdAt | jalali }}</bdi></span>
                 </div>
               </div>
 
@@ -200,7 +200,7 @@ type ReadFilter = 'all' | 'unread';
                   @if (selectedMessage()!.isAcknowledged) {
                     <div class="flex items-center gap-2 rounded-xl bg-emerald-100/80 px-3 py-2 text-xs font-semibold text-emerald-800">
                       <span>✓</span>
-                      <span>تایید صریح دریافت در تاریخ {{ selectedMessage()!.acknowledgedAt | jalali }} ثبت گردید.</span>
+                      <span>تایید صریح دریافت در تاریخ <bdi dir="ltr">{{ selectedMessage()!.acknowledgedAt | jalali }}</bdi> ثبت گردید.</span>
                     </div>
                   } @else {
                     <button
@@ -228,7 +228,7 @@ type ReadFilter = 'all' | 'unread';
                     <div [class]="rep.isSelf ? 'mr-auto max-w-[85%] rounded-2xl bg-blue-600 p-3.5 text-white text-xs' : 'ml-auto max-w-[85%] rounded-2xl bg-slate-100 p-3.5 text-slate-800 text-xs'">
                       <div class="flex items-center justify-between gap-3 mb-1 text-[10px] opacity-80">
                         <span class="font-bold">{{ rep.senderName }}</span>
-                        <span>{{ rep.createdAt | jalali }}</span>
+                        <span><bdi dir="ltr">{{ rep.createdAt | jalali }}</bdi></span>
                       </div>
                       <p class="leading-relaxed whitespace-pre-line">{{ rep.content }}</p>
                     </div>

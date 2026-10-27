@@ -159,7 +159,7 @@
 
             <div class="flex sm:flex-col items-center sm:items-end justify-between text-xs text-slate-400 gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
               <span class="font-medium text-slate-500">
-                {{ msg.createdAt | jalali }}
+                <bdi dir="ltr">{{ msg.createdAt | jalali }}</bdi>
               </span>
               <span class="text-[11px] text-slate-400">
                 فرستنده: {{ msg.senderName }}
@@ -197,10 +197,10 @@
             <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500">
               <span>ارسال توسط: <strong class="text-slate-700">{{ selectedMessage()!.senderName }}</strong></span>
               <span>•</span>
-              <span>تاریخ انتشار: {{ selectedMessage()!.createdAt | jalali }}</span>
+              <span>تاریخ انتشار: <bdi dir="ltr">{{ selectedMessage()!.createdAt | jalali }}</bdi></span>
               @if (getExpirationDate(selectedMessage()!)) {
                 <span>•</span>
-                <span>تاریخ انقضا: <strong class="text-rose-600">{{ getExpirationDate(selectedMessage()!) | jalali }}</strong></span>
+                <span>تاریخ انقضا: <strong class="text-rose-600"><bdi dir="ltr">{{ getExpirationDate(selectedMessage()!) | jalali }}</bdi></strong></span>
               }
             </div>
 
@@ -256,7 +256,7 @@
                           <td class="p-3">
                             @if (rec.isRead) {
                               <span class="inline-flex items-center gap-1 text-emerald-600 font-medium">
-                                ✓ خوانده شده @if (rec.readAt) { ({{ rec.readAt | jalali }}) }
+                                ✓ خوانده شده @if (rec.readAt) { (<bdi dir="ltr">{{ rec.readAt | jalali }}</bdi>) }
                               </span>
                             } @else {
                               <span class="text-slate-400">خوانده نشده</span>
@@ -265,7 +265,7 @@
                           <td class="p-3">
                             @if (rec.isAcknowledged) {
                               <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
-                                ✓ تایید شد @if (rec.acknowledgedAt) { ({{ rec.acknowledgedAt | jalali }}) }
+                                ✓ تایید شد @if (rec.acknowledgedAt) { (<bdi dir="ltr">{{ rec.acknowledgedAt | jalali }}</bdi>) }
                               </span>
                             } @else if (selectedMessage()?.requiresAcknowledgment) {
                               <span class="text-amber-600 font-medium">در انتظار تایید</span>

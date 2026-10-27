@@ -139,9 +139,9 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
   private readonly persianDateService = inject(PersianDateService);
 
   @Input() id = '';
-  @Input() placeholder = 'روز-ماه-سال (مثال: 15-02-1405)';
+  @Input() placeholder = 'سال-ماه-روز (مثال: 1405-02-15)';
   @Input() digitsFormat: 'persian' | 'ascii' = 'ascii';
-  @Input() dateFormat: 'DD-MM-YYYY' | 'YYYY-MM-DD' = 'DD-MM-YYYY';
+  @Input() dateFormat: 'DD-MM-YYYY' | 'YYYY-MM-DD' = 'YYYY-MM-DD';
 
   readonly monthOptions = PERSIAN_MONTH_NAMES;
 

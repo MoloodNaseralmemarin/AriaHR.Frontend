@@ -15,7 +15,7 @@ export class JalaliPipe implements PipeTransform {
   transform(
     value: string | null | undefined,
     digitsFormat: 'persian' | 'ascii' = 'ascii',
-    dateFormat: 'DD-MM-YYYY' | 'YYYY-MM-DD' = 'DD-MM-YYYY'
+    dateFormat: 'DD-MM-YYYY' | 'YYYY-MM-DD' = 'YYYY-MM-DD'
   ): string {
     if (!value) return '';
     return this.persianDateService.toJalaliString(value, digitsFormat, dateFormat);

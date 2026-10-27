@@ -1,13 +1,18 @@
-import { TestBed } from '@angular/core';
+import '@angular/compiler';
 import { describe, beforeEach, it, expect } from 'vitest';
+import { EnvironmentInjector, createEnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { PersianDateService } from './persian-date.service';
 
 describe('PersianDateService', () => {
   let service: PersianDateService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(PersianDateService);
+    const injector = createEnvironmentInjector([
+      { provide: PersianDateService, useClass: PersianDateService },
+    ], {} as EnvironmentInjector);
+    runInInjectionContext(injector, () => {
+      service = injector.get(PersianDateService);
+    });
   });
 
   it('should be created', () => {
@@ -170,60 +175,60 @@ describe('PersianDateService', () => {
   });
 
   describe('Jalali Conversion Methods', () => {
-    it('should convert 2026-05-05 to ۱۵-۰۲-۱۴۰۵', () => {
+    it('should convert 2026-05-05 to 1405-02-15 in ASCII digits YYYY-MM-DD by default', () => {
       const result = service.toJalaliString('2026-05-05');
-      expect(result).toBe('۱۵-۰۲-۱۴۰۵');
+      expect(result).toBe('1405-02-15');
     });
 
-    it('should convert 2026-03-21 to ۰۱-۰۱-۱۴۰۵', () => {
+    it('should convert 2026-03-21 to 1405-01-01', () => {
       const result = service.toJalaliString('2026-03-21');
-      expect(result).toBe('۰۱-۰۱-۱۴۰۵');
+      expect(result).toBe('1405-01-01');
     });
 
     it('should ensure single digit months and days are padded with zero', () => {
       const result = service.toJalaliString('2026-03-22');
-      expect(result).toBe('۰۲-۰۱-۱۴۰۵');
+      expect(result).toBe('1405-01-02');
     });
 
-    it('should convert 15-02-1405 to 2026-05-05', () => {
-      const result = service.toGregorianString('15-02-1405');
+    it('should convert YYYY-MM-DD 1405-02-15 to 2026-05-05', () => {
+      const result = service.toGregorianString('1405-02-15');
       expect(result).toBe('2026-05-05');
     });
 
-    it('should convert Persian digits ۱۵-۰۲-۱۴۰۵ to 2026-05-05', () => {
-      const result = service.toGregorianString('۱۵-۰۲-۱۴۰۵');
+    it('should convert Persian digits ۱۴۰۵-۰۲-۱۵ to 2026-05-05', () => {
+      const result = service.toGregorianString('۱۴۰۵-۰۲-۱۵');
       expect(result).toBe('2026-05-05');
     });
 
-    it('should convert 01-01-1405 to 2026-03-21', () => {
-      const result = service.toGregorianString('01-01-1405');
+    it('should convert 1405-01-01 to 2026-03-21', () => {
+      const result = service.toGregorianString('1405-01-01');
       expect(result).toBe('2026-03-21');
     });
 
-    it('should convert Persian digits ۰۱-۰۱-۱۴۰۵ to 2026-03-21', () => {
-      const result = service.toGregorianString('۰۱-۰۱-۱۴۰۵');
+    it('should convert Persian digits ۱۴۰۵-۰۱-۰۱ to 2026-03-21', () => {
+      const result = service.toGregorianString('۱۴۰۵-۰۱-۰۱');
       expect(result).toBe('2026-03-21');
     });
 
-    it('should return null for invalid dates like 31-07-1403', () => {
-      const result = service.toGregorianString('31-07-1403');
+    it('should return null for invalid dates like 1403-07-31', () => {
+      const result = service.toGregorianString('1403-07-31');
       expect(result).toBeNull();
     });
 
     it('should handle leap year Esfand 30th (1403-12-30) correctly', () => {
-      const result = service.toGregorianString('30-12-1403');
+      const result = service.toGregorianString('1403-12-30');
       expect(result).toBe('2025-03-20');
     });
 
     it('should reject Esfand 30th on a non-leap year (1404-12-30)', () => {
-      const result = service.toGregorianString('30-12-1404');
+      const result = service.toGregorianString('1404-12-30');
       expect(result).toBeNull();
     });
 
     it('should extract calendar date without shifting days regardless of timezone ISO format', () => {
-      expect(service.toJalaliString('2026-05-05T00:00:00Z')).toBe('۱۵-۰۲-۱۴۰۵');
-      expect(service.toJalaliString('2026-05-05T23:59:59Z')).toBe('۱۵-۰۲-۱۴۰۵');
-      expect(service.toJalaliString('2026-05-05')).toBe('۱۵-۰۲-۱۴۰۵');
+      expect(service.toJalaliString('2026-05-05T00:00:00Z')).toBe('1405-02-15');
+      expect(service.toJalaliString('2026-05-05T23:59:59Z')).toBe('1405-02-15');
+      expect(service.toJalaliString('2026-05-05')).toBe('1405-02-15');
     });
   });
 });
