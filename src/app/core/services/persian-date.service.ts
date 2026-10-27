@@ -336,6 +336,28 @@ export class PersianDateService {
   }
 
   /**
+   * Formats a date range between start and end dates into "DD-MM-YYYY تا DD-MM-YYYY" Jalali format.
+   * Example output: "10-08-1405 تا 04-08-1405"
+   */
+  formatDateRange(
+    startDate: string | Date | null | undefined,
+    endDate: string | Date | null | undefined
+  ): string {
+    const startStr = startDate ? this.toJalaliString(startDate, 'ascii', 'DD-MM-YYYY') : '';
+    const endStr = endDate ? this.toJalaliString(endDate, 'ascii', 'DD-MM-YYYY') : '';
+
+    if (startStr && endStr) {
+      return `${startStr} تا ${endStr}`;
+    } else if (startStr) {
+      return startStr;
+    } else if (endStr) {
+      return endStr;
+    }
+
+    return 'تعیین نشده';
+  }
+
+  /**
    * Converts a Jalali date string (e.g. "15-02-1405" or "۱۵-۰۲-۱۴۰۵")
    * to a Gregorian date string in `YYYY-MM-DD` standard ASCII format (e.g. "2026-05-05").
    * Returns null if invalid.

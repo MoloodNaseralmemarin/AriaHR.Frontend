@@ -138,22 +138,18 @@ export class LeaveRequestsListComponent implements OnInit {
   getDisplayDate(req: LeaveRequestDto): string {
     if (req.leaveType === 'daily') {
       if (this.isInvalidDate(req.startDate)) return 'تعیین نشده';
-      const start = this.persianDateService.toJalaliString(req.startDate);
-      if (this.isInvalidDate(req.endDate)) return start || 'تعیین نشده';
-      const end = this.persianDateService.toJalaliString(req.endDate);
-
-      if (start && end && start !== end) {
-        return `${start} تا ${end}`;
+      if (this.isInvalidDate(req.endDate) || req.startDate === req.endDate) {
+        return this.persianDateService.toJalaliString(req.startDate, 'ascii', 'DD-MM-YYYY') || 'تعیین نشده';
       }
-      return start || 'تعیین نشده';
+      return this.persianDateService.formatDateRange(req.startDate, req.endDate);
     } else {
       if (this.isInvalidDate(req.date)) {
         if (!this.isInvalidDate(req.startDate)) {
-          return this.persianDateService.toJalaliString(req.startDate) || 'تعیین نشده';
+          return this.persianDateService.toJalaliString(req.startDate, 'ascii', 'DD-MM-YYYY') || 'تعیین نشده';
         }
         return 'تعیین نشده';
       }
-      return this.persianDateService.toJalaliString(req.date) || 'تعیین نشده';
+      return this.persianDateService.toJalaliString(req.date, 'ascii', 'DD-MM-YYYY') || 'تعیین نشده';
     }
   }
 

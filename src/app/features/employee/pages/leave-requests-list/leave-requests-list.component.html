@@ -350,13 +350,13 @@
                 <div>
                   <span class="text-xs font-medium text-slate-500 block mb-1">از تاریخ</span>
                   <bdi class="font-semibold text-slate-800 inline-block">
-                    {{ getDisplayDate(selectedRequest()!) }}
+                    {{ persianDateService.toJalaliString(selectedRequest()?.startDate, 'ascii', 'DD-MM-YYYY') || 'تعیین نشده' }}
                   </bdi>
                 </div>
                 <div>
                   <span class="text-xs font-medium text-slate-500 block mb-1">تا تاریخ</span>
                   <bdi class="font-semibold text-slate-800 inline-block">
-                    {{ persianDateService.toJalaliString(selectedRequest()?.endDate) || getDisplayDate(selectedRequest()!) }}
+                    {{ persianDateService.toJalaliString(selectedRequest()?.endDate || selectedRequest()?.startDate, 'ascii', 'DD-MM-YYYY') || 'تعیین نشده' }}
                   </bdi>
                 </div>
               </div>
