@@ -46,3 +46,30 @@ export interface LeaveSummaryDto {
   approvedCount: number;
   rejectedCount: number;
 }
+
+/**
+ * Detailed leave request response DTO returned from GET /api/requests/{id}
+ */
+export interface LeaveRequestDetailDto {
+  id: string;
+  employeeId: string;
+  organizationId: string;
+  leaveType: LeaveType; // Normalized 'daily' | 'hourly'
+  leaveTypeRaw: number; // Raw enum number: 1 = hourly, 2 = daily
+  leaveCategoryId: string | null;
+  leaveCategoryName: string | null;
+  employeeFirstName: string | null;
+  employeeLastName: string | null;
+  employeeFullName: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  reason: string | null;
+  status: LeaveRequestStatus; // Normalized 'pending' | 'approved' | 'rejected' | 'cancelled'
+  statusRaw: number; // Raw enum number
+  rejectedReason: string | null;
+  approvedAt: string | null;
+  approvedBy: string | null;
+  createdAtUtc: string;
+}

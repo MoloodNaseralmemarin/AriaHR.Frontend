@@ -1,0 +1,245 @@
+<div class="space-y-6">
+  <!-- Page Header -->
+  <app-page-header
+    title="جزئیات درخواست مرخصی"
+    subtitle="مشاهده کامل اطلاعات و وضعیت درخواست مرخصی پرسنل"
+  >
+    <div actions class="flex items-center gap-3">
+      <button
+        type="button"
+        (click)="goBack()"
+        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+        بازگشت
+      </button>
+    </div>
+  </app-page-header>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="space-y-6">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <app-skeleton-loader type="list" [count]="4"></app-skeleton-loader>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!loading() && error()" class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+    <app-empty-state
+      title="خطا در دریافت اطلاعات"
+      [description]="error() || 'امکان دریافت اطلاعات درخواست وجود ندارد.'"
+      icon="alert"
+    >
+      <button
+        action
+        type="button"
+        (click)="loadLeaveRequestDetails()"
+        class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+      >
+        تلاش مجدد
+      </button>
+    </app-empty-state>
+  </div>
+
+  <!-- Content State -->
+  <div *ngIf="!loading() && !error() && request() as req" class="space-y-6">
+    <!-- Status & Primary Summary Banner -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
+        <div class="flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-800">
+              درخواست مرخصی {{ getLeaveTypeLabel(req.leaveType) }}
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+              کد پیگیری: <span class="font-mono text-slate-600"><bdi dir="ltr">{{ req.id }}</bdi></span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <app-status-badge
+            [status]="req.status"
+            [label]="getStatusLabel(req.status)"
+          ></app-status-badge>
+        </div>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
+          <span class="block text-xs font-medium text-slate-400">نام متقاضی</span>
+          <span class="mt-1 block text-sm font-bold text-slate-800">
+            {{ getEmployeeName(req) }}
+          </span>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
+          <span class="block text-xs font-medium text-slate-400">نوع مرخصی</span>
+          <span class="mt-1 block text-sm font-bold text-slate-800">
+            {{ getLeaveTypeLabel(req.leaveType) }}
+          </span>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
+          <span class="block text-xs font-medium text-slate-400">دسته‌بندی مرخصی</span>
+          <span class="mt-1 block text-sm font-bold text-slate-800">
+            {{ getDisplayValue(req.leaveCategoryName) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid Details -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- Section 1: Employee & Information -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-600">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <h3 class="text-sm font-bold text-slate-800">اطلاعات متقاضی و دسته‌بندی</h3>
+        </div>
+
+        <dl class="space-y-3 divide-y divide-slate-100 text-sm">
+          <div class="flex justify-between pt-2">
+            <dt class="text-slate-500">نام و نام خانوادگی:</dt>
+            <dd class="font-semibold text-slate-800">{{ getEmployeeName(req) }}</dd>
+          </div>
+
+          <div class="flex justify-between pt-3">
+            <dt class="text-slate-500">شناسه پرسنلی متقاضی:</dt>
+            <dd class="font-mono text-xs text-slate-700"><bdi dir="ltr">{{ getDisplayValue(req.employeeId) }}</bdi></dd>
+          </div>
+
+          <div class="flex justify-between pt-3">
+            <dt class="text-slate-500">دسته‌بندی مرخصی:</dt>
+            <dd class="font-medium text-slate-800">{{ getDisplayValue(req.leaveCategoryName) }}</dd>
+          </div>
+
+          <div class="flex justify-between pt-3">
+            <dt class="text-slate-500">شناسه مرکز / سازمان:</dt>
+            <dd class="font-mono text-xs text-slate-700"><bdi dir="ltr">{{ getDisplayValue(req.organizationId) }}</bdi></dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Section 2: Dates & Time Details -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-600">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <h3 class="text-sm font-bold text-slate-800">زمان‌بندی و تاریخ مرخصی</h3>
+        </div>
+
+        <dl class="space-y-3 divide-y divide-slate-100 text-sm">
+          <div class="flex justify-between pt-2">
+            <dt class="text-slate-500">نوع مرخصی:</dt>
+            <dd class="font-semibold text-slate-800">{{ getLeaveTypeLabel(req.leaveType) }}</dd>
+          </div>
+
+          <div class="flex justify-between pt-3">
+            <dt class="text-slate-500">تاریخ شروع:</dt>
+            <dd class="font-medium text-slate-800">
+              <ng-container *ngIf="req.startDate">
+                <bdi dir="ltr">{{ req.startDate | jalali:'ascii':'YYYY-MM-DD' | persianDigits }}</bdi>
+              </ng-container>
+              <ng-container *ngIf="!req.startDate">ثبت نشده</ng-container>
+            </dd>
+          </div>
+
+          <div class="flex justify-between pt-3">
+            <dt class="text-slate-500">تاریخ پایان:</dt>
+            <dd class="font-medium text-slate-800">
+              <ng-container *ngIf="req.endDate">
+                <bdi dir="ltr">{{ req.endDate | jalali:'ascii':'YYYY-MM-DD' | persianDigits }}</bdi>
+              </ng-container>
+              <ng-container *ngIf="!req.endDate">ثبت نشده</ng-container>
+            </dd>
+          </div>
+
+          <!-- Time fields shown only for Hourly leave -->
+          <div *ngIf="req.leaveType === 'hourly'" class="flex justify-between pt-3">
+            <dt class="text-slate-500">بازه زمانی (ساعت):</dt>
+            <dd class="font-medium text-slate-800">
+              <bdi dir="ltr">{{ getTimeRangeDisplay(req.startTime, req.endTime) | persianDigits }}</bdi>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Section 3: Reason & Description -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
+      <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-600">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <h3 class="text-sm font-bold text-slate-800">علت درخواست</h3>
+      </div>
+      <p class="text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
+        {{ getDisplayValue(req.reason) }}
+      </p>
+    </div>
+
+    <!-- Section 4: Audit & Review History -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-600">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <h3 class="text-sm font-bold text-slate-800">سابقه و وضعیت بررسی</h3>
+      </div>
+
+      <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 text-sm">
+        <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+          <dt class="text-xs font-medium text-slate-400">تاریخ ثبت درخواست:</dt>
+          <dd class="mt-1 font-semibold text-slate-800">
+            <bdi dir="ltr">{{ req.createdAtUtc | jalali:'ascii':'YYYY-MM-DD' | persianDigits }}</bdi>
+          </dd>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+          <dt class="text-xs font-medium text-slate-400">بررسی‌کننده / تأییدکننده:</dt>
+          <dd class="mt-1 font-semibold text-slate-800">
+            {{ getDisplayValue(req.approvedBy) }}
+          </dd>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+          <dt class="text-xs font-medium text-slate-400">تاریخ بررسی / پاسخ:</dt>
+          <dd class="mt-1 font-semibold text-slate-800">
+            <ng-container *ngIf="req.approvedAt">
+              <bdi dir="ltr">{{ req.approvedAt | jalali:'ascii':'YYYY-MM-DD' | persianDigits }}</bdi>
+            </ng-container>
+            <ng-container *ngIf="!req.approvedAt">ثبت نشده</ng-container>
+          </dd>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+          <dt class="text-xs font-medium text-slate-400">دلیل رد (در صورت وجود):</dt>
+          <dd class="mt-1 font-semibold text-rose-700">
+            {{ getDisplayValue(req.rejectedReason) }}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</div>
