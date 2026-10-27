@@ -63,7 +63,7 @@ export class LeaveRequestFormComponent implements OnInit {
     leaveType: ['daily', [Validators.required]],
     leaveCategoryId: ['', [Validators.required]],
     startDate: ['', [Validators.required]],
-    endDate: ['', [Validators.required]],
+    endDate: [''],
     date: [''],
     startTime: [''],
     endTime: [''],
@@ -77,11 +77,13 @@ export class LeaveRequestFormComponent implements OnInit {
     const type = this.selectedLeaveType();
     if (type === 'daily') {
       const start = this.form.get('startDate')?.value;
-      const end = this.form.get('endDate')?.value;
-      if (!start || !end) return '';
+      const end = this.form.get('endDate')?.value || start;
+      if (!start) return '';
 
-      const dStart = new Date(start);
-      const dEnd = new Date(end);
+      const gregStart = this.toGregorian(start);
+      const gregEnd = this.toGregorian(end);
+      const dStart = new Date(gregStart);
+      const dEnd = new Date(gregEnd);
       if (isNaN(dStart.getTime()) || isNaN(dEnd.getTime())) return '';
 
       const diffTime = dEnd.getTime() - dStart.getTime();
@@ -131,9 +133,28 @@ export class LeaveRequestFormComponent implements OnInit {
   });
 
   readonly formattedSummaryEndDate = computed(() => {
-    const endVal = this.form.get('endDate')?.value;
+    const startVal = this.form.get('startDate')?.value;
+    const endVal = this.form.get('endDate')?.value || startVal;
     return endVal ? this.persianDateService.toJalaliString(endVal) : '---';
   });
+
+  constructor() {
+    // Listen to form value changes to clear server errors when modified
+    this.form.valueChanges.subscribe((val) => {
+      this.reasonLength.set((val.reason || '').length);
+    });
+
+    Object.keys(this.form.controls).forEach((ctrlName) => {
+      this.form.get(ctrlName)?.valueChanges.subscribe(() => {
+        const control = this.form.get(ctrlName);
+        if (control?.hasError('serverError')) {
+          const errors = { ...control.errors };
+          delete errors['serverError'];
+          control.setErrors(Object.keys(errors).length ? errors : null);
+        }
+      });
+    });
+  }
 
   ngOnInit(): void {
     this.loadCategories();
@@ -145,7 +166,6 @@ export class LeaveRequestFormComponent implements OnInit {
 
     this.leaveCategoryService.getAll().subscribe({
       next: (list) => {
-        // Strictly filter categories where isActive === true
         const activeCategories = (list || []).filter((c) => c && c.isActive === true);
         this.categories.set(activeCategories);
         this.isLoadingCategories.set(false);
@@ -161,20 +181,13 @@ export class LeaveRequestFormComponent implements OnInit {
     });
   }
 
-  constructor() {
-    // Listen to form value changes
-    this.form.valueChanges.subscribe((val) => {
-      this.reasonLength.set((val.reason || '').length);
-    });
-  }
-
   setLeaveType(type: LeaveType) {
     this.selectedLeaveType.set(type);
     this.formError.set(null);
 
     if (type === 'daily') {
       this.form.get('startDate')?.setValidators([Validators.required]);
-      this.form.get('endDate')?.setValidators([Validators.required]);
+      this.form.get('endDate')?.clearValidators();
       this.form.get('date')?.clearValidators();
       this.form.get('startTime')?.clearValidators();
       this.form.get('endTime')?.clearValidators();
@@ -200,7 +213,11 @@ export class LeaveRequestFormComponent implements OnInit {
     }
 
     ['startDate', 'endDate', 'date', 'startTime', 'endTime'].forEach((ctrlName) => {
-      this.form.get(ctrlName)?.updateValueAndValidity({ emitEvent: false });
+      const ctrl = this.form.get(ctrlName);
+      if (ctrl) {
+        ctrl.setErrors(null);
+        ctrl.updateValueAndValidity({ emitEvent: false });
+      }
     });
   }
 
@@ -219,17 +236,17 @@ export class LeaveRequestFormComponent implements OnInit {
 
     if (type === 'daily') {
       const startDate = this.form.get('startDate')?.value;
-      const endDate = this.form.get('endDate')?.value;
+      const endDate = this.form.get('endDate')?.value || startDate;
 
-      if (!startDate || !endDate) {
-        this.formError.set('لطفاً تاریخ شروع و پایان مرخصی را وارد کنید.');
+      if (!startDate) {
+        this.formError.set('لطفاً تاریخ شروع مرخصی را وارد کنید.');
         return;
       }
 
       const gregStart = this.toGregorian(startDate);
       const gregEnd = this.toGregorian(endDate);
 
-      if (new Date(gregEnd) < new Date(gregStart)) {
+      if (gregEnd < gregStart) {
         this.formError.set('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.');
         return;
       }
@@ -261,7 +278,8 @@ export class LeaveRequestFormComponent implements OnInit {
 
     const formVal = this.form.value;
     const gregStartDate = type === 'daily' ? this.toGregorian(formVal.startDate) : this.toGregorian(formVal.date);
-    const gregEndDate = type === 'daily' ? this.toGregorian(formVal.endDate) : this.toGregorian(formVal.date);
+    const effectiveEndDate = type === 'daily' ? (formVal.endDate || formVal.startDate) : formVal.date;
+    const gregEndDate = this.toGregorian(effectiveEndDate);
 
     const apiDto: CreateLeaveRequestApiDto = {
       leaveType: type === 'daily' ? 1 : 2,
@@ -423,7 +441,6 @@ export class LeaveRequestFormComponent implements OnInit {
       return 'درخواست مرخصی هم‌پوشان با این تاریخ وجود دارد.';
     }
 
-    // Return original string if already Persian, otherwise clean default
     if (/[\u0600-\u06FF]/.test(msg)) {
       return msg;
     }
