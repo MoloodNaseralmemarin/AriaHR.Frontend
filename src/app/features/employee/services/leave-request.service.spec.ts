@@ -48,9 +48,9 @@ describe('LeaveRequestService', () => {
     expect(httpClientMock.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/my`);
   });
 
-  it('should create a daily leave request via POST /api/requests/leave', () => {
+  it('should create a daily leave request via POST /api/requests/leave with leaveType 2', () => {
     const dto = {
-      leaveType: 1,
+      leaveType: 2,
       leaveCategoryId: 'cat-1',
       startDate: '2025-02-10',
       endDate: '2025-02-12',
@@ -78,9 +78,9 @@ describe('LeaveRequestService', () => {
     expect(httpClientMock.post).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/leave`, dto);
   });
 
-  it('should create an hourly leave request via POST /api/requests/leave', () => {
+  it('should create an hourly leave request via POST /api/requests/leave with leaveType 1', () => {
     const dto = {
-      leaveType: 2,
+      leaveType: 1,
       leaveCategoryId: 'cat-2',
       startDate: '2025-02-15',
       endDate: '2025-02-15',

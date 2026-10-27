@@ -282,7 +282,7 @@ export class LeaveRequestFormComponent implements OnInit {
     const gregEndDate = this.toGregorian(effectiveEndDate);
 
     const apiDto: CreateLeaveRequestApiDto = {
-      leaveType: type === 'daily' ? 1 : 2,
+      leaveType: type === 'daily' ? 2 : 1,
       leaveCategoryId: formVal.leaveCategoryId,
       startDate: gregStartDate,
       endDate: gregEndDate,
