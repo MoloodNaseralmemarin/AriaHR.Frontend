@@ -45,8 +45,8 @@ describe('LeaveRequestService', () => {
         categoryName: 'مرخصی ساعتی',
         startDate: '2025-02-15',
         endDate: '2025-02-15',
-        startTime: '08:30',
-        endTime: '12:30',
+        startTime: '08:30:00',
+        endTime: '12:30:00',
         status: 2,
         rejectionReason: 'عدم موافقت با زمان درخواست',
         createdAt: '2025-02-10T12:00:00Z',
@@ -63,6 +63,8 @@ describe('LeaveRequestService', () => {
       expect(res[0].durationText).toBe('3 روز');
 
       expect(res[1].leaveType).toBe('hourly');
+      expect(res[1].startTime).toBe('08:30');
+      expect(res[1].endTime).toBe('12:30');
       expect(res[1].status).toBe('rejected');
       expect(res[1].rejectionReason).toBe('عدم موافقت با زمان درخواست');
       expect(res[1].durationText).toBe('4 ساعت');
@@ -103,16 +105,18 @@ describe('LeaveRequestService', () => {
     expect(httpClientMock.post).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/leave`, dto);
   });
 
-  it('should normalize hourly duration with hours and minutes accurately', () => {
+  it('should normalize hourly duration and remove seconds from start and end times', () => {
     const raw = {
       id: '10',
       leaveType: 1,
-      startTime: '09:15',
-      endTime: '11:45',
+      startTime: '09:15:00',
+      endTime: '11:45:00',
       status: 'pending',
     };
     const normalized = service.normalizeLeaveRequest(raw);
     expect(normalized.leaveType).toBe('hourly');
+    expect(normalized.startTime).toBe('09:15');
+    expect(normalized.endTime).toBe('11:45');
     expect(normalized.durationText).toBe('2 ساعت و 30 دقیقه');
   });
 });

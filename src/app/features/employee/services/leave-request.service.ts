@@ -52,6 +52,20 @@ export class LeaveRequestService {
   }
 
   /**
+   * Helper to format raw time strings into HH:mm (removing seconds if present).
+   */
+  private formatTimeHHMM(timeStr?: string | null): string | undefined {
+    if (!timeStr || !timeStr.trim()) return undefined;
+    const parts = timeStr.trim().split(':');
+    if (parts.length >= 2) {
+      const hh = parts[0].padStart(2, '0');
+      const mm = parts[1].padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+    return timeStr;
+  }
+
+  /**
    * Safely normalizes raw API response objects to a standard LeaveRequestDto.
    */
   normalizeLeaveRequest(raw: any): LeaveRequestDto {
@@ -110,8 +124,11 @@ export class LeaveRequestService {
     const endDate = raw.endDate ?? raw.EndDate ?? raw.end_date;
     const date = raw.date ?? raw.Date ?? (leaveType === 'hourly' ? startDate : undefined);
 
-    const startTime = raw.startTime ?? raw.StartTime ?? raw.start_time ?? undefined;
-    const endTime = raw.endTime ?? raw.EndTime ?? raw.end_time ?? undefined;
+    const startTimeRaw = raw.startTime ?? raw.StartTime ?? raw.start_time ?? undefined;
+    const endTimeRaw = raw.endTime ?? raw.EndTime ?? raw.end_time ?? undefined;
+
+    const startTime = this.formatTimeHHMM(startTimeRaw);
+    const endTime = this.formatTimeHHMM(endTimeRaw);
 
     // Reason & Comments
     const reason = raw.reason ?? raw.Reason ?? raw.description ?? raw.Description ?? undefined;

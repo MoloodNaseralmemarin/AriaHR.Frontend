@@ -135,6 +135,20 @@ export class LeaveRequestsListComponent implements OnInit {
     return dateStr.startsWith('0001-01-01') || dateStr.startsWith('0001-01-02');
   }
 
+  /**
+   * Format time strings to strictly HH:mm (removing seconds if present).
+   */
+  formatTimeWithoutSeconds(timeStr?: string): string | null {
+    if (!timeStr || !timeStr.trim()) return null;
+    const parts = timeStr.trim().split(':');
+    if (parts.length >= 2) {
+      const hh = parts[0].padStart(2, '0');
+      const mm = parts[1].padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+    return timeStr;
+  }
+
   getDisplayDate(req: LeaveRequestDto): string {
     if (req.leaveType === 'daily') {
       if (this.isInvalidDate(req.startDate)) return 'تعیین نشده';
@@ -159,8 +173,10 @@ export class LeaveRequestsListComponent implements OnInit {
 
   getDisplayRange(req: LeaveRequestDto): string {
     if (req.leaveType === 'hourly') {
-      if (req.startTime && req.endTime) {
-        return `${req.startTime} - ${req.endTime}`;
+      const startFormatted = this.formatTimeWithoutSeconds(req.startTime);
+      const endFormatted = this.formatTimeWithoutSeconds(req.endTime);
+      if (startFormatted && endFormatted) {
+        return `${startFormatted} - ${endFormatted}`;
       }
       return 'تعیین نشده';
     }
