@@ -126,6 +126,50 @@ describe('LeaveRequestsListComponent', () => {
     expect(component.errorMsg()).toBe('خطا در دریافت اطلاعات درخواست‌های مرخصی. لطفاً مجدداً تلاش کنید.');
   });
 
+  it('should format hourly time range correctly without seconds and handle HH:mm:ss inputs', () => {
+    const hourlyReqWithSeconds: LeaveRequestDto = {
+      id: '1',
+      leaveType: 'hourly',
+      date: '2025-02-15',
+      startTime: '08:30:00',
+      endTime: '12:00:00',
+      durationText: '3 ساعت و 30 دقیقه',
+      status: 'approved',
+      createdAt: '2025-02-10T12:00:00Z',
+    };
+    const hourlyReqWithoutSeconds: LeaveRequestDto = {
+      id: '2',
+      leaveType: 'hourly',
+      date: '2025-02-15',
+      startTime: '09:15',
+      endTime: '17:45',
+      durationText: '8 ساعت و 30 دقیقه',
+      status: 'approved',
+      createdAt: '2025-02-10T12:00:00Z',
+    };
+    const hourlyReqMissingTime: LeaveRequestDto = {
+      id: '3',
+      leaveType: 'hourly',
+      date: '2025-02-15',
+      durationText: '',
+      status: 'pending',
+      createdAt: '2025-02-10T12:00:00Z',
+    };
+    const dailyReq: LeaveRequestDto = {
+      id: '4',
+      leaveType: 'daily',
+      startDate: '2025-02-10',
+      endDate: '2025-02-12',
+      status: 'pending',
+      createdAt: '2025-02-09T10:00:00Z',
+    };
+
+    expect(component.getDisplayRange(hourlyReqWithSeconds)).toBe('08:30 - 12:00');
+    expect(component.getDisplayRange(hourlyReqWithoutSeconds)).toBe('09:15 - 17:45');
+    expect(component.getDisplayRange(hourlyReqMissingTime)).toBe('تعیین نشده');
+    expect(component.getDisplayRange(dailyReq)).toBe('روز کامل');
+  });
+
   it('should open and close details drawer', () => {
     const mockReq: LeaveRequestDto = {
       id: '1',
