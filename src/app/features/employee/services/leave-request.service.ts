@@ -7,6 +7,7 @@ import {
   CreateLeaveRequestApiDto,
   CreateLeaveRequestDto,
   LeaveRequestDto,
+  LeaveRequestDetailDto,
   LeaveType,
   LeaveRequestStatus,
 } from '../models/leave-request.model';
@@ -18,6 +19,7 @@ export class LeaveRequestService {
   private readonly http = inject(HttpClient);
   private readonly myRequestsUrl = `${environment.apiUrl}/api/requests/my`;
   private readonly submitApiUrl = `${environment.apiUrl}/api/requests/leave`;
+  private readonly requestsBaseUrl = `${environment.apiUrl}/api/requests`;
 
   /**
    * Retrieves all leave requests for the authenticated employee.
@@ -42,6 +44,16 @@ export class LeaveRequestService {
   }
 
   /**
+   * Retrieves a leave request by ID.
+   * Endpoint: GET /api/requests/{id}
+   */
+  getLeaveRequestById(id: string): Observable<LeaveRequestDetailDto> {
+    return this.http.get<any>(`${this.requestsBaseUrl}/${id}`).pipe(
+      map((res) => this.normalizeLeaveRequestDetail(res))
+    );
+  }
+
+  /**
    * Submits a new leave request to the backend requests API.
    * Endpoint: POST /api/requests/leave
    */
@@ -49,6 +61,128 @@ export class LeaveRequestService {
     return this.http.post<any>(this.submitApiUrl, dto).pipe(
       map((res) => this.normalizeLeaveRequest(res))
     );
+  }
+
+  /**
+   * Safely normalizes raw API response objects for request details GET /api/requests/{id}
+   */
+  normalizeLeaveRequestDetail(raw: any): LeaveRequestDetailDto {
+    if (!raw) {
+      return {
+        id: '',
+        employeeId: '',
+        organizationId: '',
+        leaveType: 'daily',
+        leaveTypeRaw: 2,
+        leaveCategoryId: null,
+        leaveCategoryName: null,
+        employeeFirstName: null,
+        employeeLastName: null,
+        employeeFullName: null,
+        startDate: null,
+        endDate: null,
+        startTime: null,
+        endTime: null,
+        reason: null,
+        status: 'pending',
+        statusRaw: 0,
+        rejectedReason: null,
+        approvedAt: null,
+        approvedBy: null,
+        createdAtUtc: new Date().toISOString(),
+      };
+    }
+
+    // Leave Type: 1 = Hourly, 2 = Daily
+    const rawType = raw.leaveType ?? raw.LeaveType ?? raw.type ?? raw.Type;
+    let leaveType: LeaveType = 'daily';
+    let leaveTypeRaw = 2;
+
+    if (typeof rawType === 'number') {
+      leaveTypeRaw = rawType;
+      leaveType = rawType === 1 ? 'hourly' : 'daily';
+    } else if (typeof rawType === 'string') {
+      const lower = rawType.toLowerCase();
+      if (lower === '1' || lower === 'hourly') {
+        leaveType = 'hourly';
+        leaveTypeRaw = 1;
+      } else {
+        leaveType = 'daily';
+        leaveTypeRaw = 2;
+      }
+    }
+
+    // Status: 0 = Pending, 1 = Approved, 2 = Rejected, 3 = Cancelled
+    const rawStatus = raw.status ?? raw.Status;
+    let status: LeaveRequestStatus = 'pending';
+    let statusRaw = 0;
+
+    if (typeof rawStatus === 'number') {
+      statusRaw = rawStatus;
+      switch (rawStatus) {
+        case 1:
+          status = 'approved';
+          break;
+        case 2:
+          status = 'rejected';
+          break;
+        case 3:
+          status = 'cancelled';
+          break;
+        case 0:
+        default:
+          status = 'pending';
+          break;
+      }
+    } else if (typeof rawStatus === 'string') {
+      const lower = rawStatus.toLowerCase();
+      if (lower === '1' || lower.includes('approved') || lower.includes('تایید') || lower.includes('تأیید')) {
+        status = 'approved';
+        statusRaw = 1;
+      } else if (lower === '2' || lower.includes('reject') || lower.includes('رد')) {
+        status = 'rejected';
+        statusRaw = 2;
+      } else if (lower === '3' || lower.includes('cancel') || lower.includes('لغو')) {
+        status = 'cancelled';
+        statusRaw = 3;
+      } else {
+        status = 'pending';
+        statusRaw = 0;
+      }
+    }
+
+    // Employee Full Name logic
+    const firstName = raw.employeeFirstName ?? raw.EmployeeFirstName ?? null;
+    const lastName = raw.employeeLastName ?? raw.EmployeeLastName ?? null;
+    let fullName = raw.employeeFullName ?? raw.EmployeeFullName ?? null;
+
+    if (!fullName && (firstName || lastName)) {
+      fullName = `${firstName ?? ''} ${lastName ?? ''}`.trim() || null;
+    }
+
+    return {
+      id: String(raw.id ?? raw.Id ?? ''),
+      employeeId: String(raw.employeeId ?? raw.EmployeeId ?? ''),
+      organizationId: String(raw.organizationId ?? raw.OrganizationId ?? ''),
+      leaveType,
+      leaveTypeRaw,
+      leaveCategoryId: raw.leaveCategoryId ?? raw.LeaveCategoryId ?? null,
+      leaveCategoryName: raw.leaveCategoryName ?? raw.LeaveCategoryName ?? raw.categoryName ?? raw.CategoryName ?? null,
+      employeeFirstName: firstName,
+      employeeLastName: lastName,
+      employeeFullName: fullName,
+      startDate: raw.startDate ?? raw.StartDate ?? null,
+      endDate: raw.endDate ?? raw.EndDate ?? null,
+      startTime: raw.startTime ?? raw.StartTime ?? null,
+      endTime: raw.endTime ?? raw.EndTime ?? null,
+      reason: raw.reason ?? raw.Reason ?? raw.description ?? raw.Description ?? null,
+      status,
+      statusRaw,
+      rejectedReason: raw.rejectedReason ?? raw.RejectedReason ?? raw.rejectionReason ?? raw.RejectionReason ?? null,
+      approvedAt: raw.approvedAt ?? raw.ApprovedAt ?? null,
+      approvedBy: raw.approvedBy ?? raw.ApprovedBy ?? raw.approverName ?? raw.ApproverName ?? null,
+      createdAtUtc: raw.createdAtUtc ?? raw.CreatedAtUtc ?? raw.createdAt ?? raw.CreatedAt ?? new Date().toISOString(),
+    };
   }
 
   /**
