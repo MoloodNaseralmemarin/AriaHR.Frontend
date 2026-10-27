@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed } from '@angular/core';
+import { Component, OnInit, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -7,11 +7,14 @@ import { PersianDateService } from '../../../../core/services/persian-date.servi
 import { SummaryCardComponent } from '../../../../shared/components/summary-card/summary-card.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
+import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { CenterManagerDashboardService } from '../../services/center-manager-dashboard.service';
+import { CenterManagerDashboardDto } from '../../models/center-manager-dashboard.dto';
 
 import {
   mockActionRequiredItems,
   mockDashboardNotifications,
-  mockDashboardSummary,
   mockEmployeeStatusPreview,
   mockTodayAttendanceSummary,
   mockTodayShifts,
@@ -19,21 +22,30 @@ import {
 import { attendanceStatusMap, shiftStatusMap } from '../../../../shared/utils/status-map';
 
 /**
- * /center/dashboard
- * Center Manager landing screen: greeting, today's overview, attendance
- * snapshot, action-required queue, today's shifts and a quick employee /
+ * /center-manager/dashboard
+ * Center Manager landing screen: greeting, today's overview stats from API,
+ * attendance snapshot, action-required queue, today's shifts and a quick employee /
  * notifications preview.
  */
 @Component({
   selector: 'app-center-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, SummaryCardComponent, StatusBadgeComponent, EmptyStateComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    SummaryCardComponent,
+    StatusBadgeComponent,
+    EmptyStateComponent,
+    SkeletonLoaderComponent,
+    PersianDigitsPipe,
+  ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly persianDateService = inject(PersianDateService);
+  private readonly dashboardService = inject(CenterManagerDashboardService);
 
   readonly managerNameSignal = computed(() => {
     const details = this.authService.userDetails();
@@ -74,7 +86,11 @@ export class DashboardComponent implements OnInit {
 
   readonly persianDate = this.persianDateService.getTodayFormatted();
 
-  summary = mockDashboardSummary;
+  // Dashboard API state
+  readonly isLoading = signal<boolean>(true);
+  readonly errorMessage = signal<string | null>(null);
+  readonly metrics = signal<CenterManagerDashboardDto | null>(null);
+
   todayAttendance = mockTodayAttendanceSummary;
   actionItems = mockActionRequiredItems;
   todayShifts = mockTodayShifts;
@@ -92,6 +108,24 @@ export class DashboardComponent implements OnInit {
         },
       });
     }
+
+    this.loadDashboardMetrics();
+  }
+
+  loadDashboardMetrics(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    this.dashboardService.getDashboardMetrics().subscribe({
+      next: (data) => {
+        this.metrics.set(data);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.errorMessage.set('خطا در دریافت اطلاعات داشبورد. لطفاً دوباره تلاش کنید.');
+        this.isLoading.set(false);
+      },
+    });
   }
 
   get hasActionItems(): boolean {
