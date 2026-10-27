@@ -6,10 +6,6 @@
 
 export type AttendanceStatus = 'present' | 'late' | 'absent' | 'onLeave' | 'pendingCheckIn';
 
-export type RequestStatus = 'pending' | 'approved' | 'rejected';
-
-export type RequestType = 'leave' | 'attendanceCorrection' | 'shiftApproval';
-
 export type NotificationType = 'shift' | 'request' | 'report' | 'system';
 
 export type ShiftStatus = 'notStarted' | 'inProgress' | 'completed';
@@ -45,17 +41,6 @@ export interface ShiftAssignment {
   status: ShiftStatus;
   assignedEmployeeNames: string[];
   dateLabel: string;
-}
-
-export interface RequestItem {
-  id: string;
-  employeeName: string;
-  avatarInitials: string;
-  type: RequestType;
-  typeLabel: string;
-  dateLabel: string;
-  description: string;
-  status: RequestStatus;
 }
 
 export interface NotificationItem {

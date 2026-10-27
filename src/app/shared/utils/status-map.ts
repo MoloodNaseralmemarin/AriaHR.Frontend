@@ -1,4 +1,4 @@
-import { AttendanceStatus, RequestStatus, ShiftStatus } from '../models/center-manager.models';
+import { AttendanceStatus, ShiftStatus } from '../models/center-manager.models';
 import { BadgeTone } from '../components/status-badge/status-badge.component';
 
 export const attendanceStatusMap: Record<AttendanceStatus, { label: string; tone: BadgeTone }> = {
@@ -7,12 +7,6 @@ export const attendanceStatusMap: Record<AttendanceStatus, { label: string; tone
   absent: { label: 'غایب', tone: 'danger' },
   onLeave: { label: 'مرخصی', tone: 'info' },
   pendingCheckIn: { label: 'در انتظار ورود', tone: 'neutral' },
-};
-
-export const requestStatusMap: Record<RequestStatus, { label: string; tone: BadgeTone }> = {
-  pending: { label: 'در انتظار بررسی', tone: 'warning' },
-  approved: { label: 'تأیید شده', tone: 'success' },
-  rejected: { label: 'رد شده', tone: 'danger' },
 };
 
 export const shiftStatusMap: Record<ShiftStatus, { label: string; tone: BadgeTone }> = {

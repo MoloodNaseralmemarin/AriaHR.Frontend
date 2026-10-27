@@ -4,7 +4,6 @@ import {
   DashboardSummary,
   Employee,
   NotificationItem,
-  RequestItem,
   ShiftAssignment,
   TodayAttendanceSummary,
 } from '../../../shared/models/center-manager.models';
@@ -103,16 +102,6 @@ export const mockUpcomingShifts: ShiftAssignment[] = [
   { id: 'u1', startTime: '08:00', endTime: '16:00', plannedCount: 12, presentCount: 0, status: 'notStarted', assignedEmployeeNames: ['سارا احمدی', 'مریم رضایی'], dateLabel: 'فردا، سه‌شنبه' },
   { id: 'u2', startTime: '16:00', endTime: '22:00', plannedCount: 5, presentCount: 0, status: 'notStarted', assignedEmployeeNames: ['رضا کریمی', 'نگار حسینی'], dateLabel: 'فردا، سه‌شنبه' },
   { id: 'u3', startTime: '08:00', endTime: '16:00', plannedCount: 11, presentCount: 0, status: 'notStarted', assignedEmployeeNames: ['علی محمدی', 'زهرا نوری'], dateLabel: 'چهارشنبه' },
-];
-
-/** ---------- Requests ---------- */
-
-export const mockRequests: RequestItem[] = [
-  { id: 'q1', employeeName: 'مریم رضایی', avatarInitials: 'م‌ر', type: 'leave', typeLabel: 'درخواست مرخصی', dateLabel: '۱۴۰۳/۰۶/۰۴', description: 'مرخصی استعلاجی به مدت یک روز', status: 'pending' },
-  { id: 'q2', employeeName: 'علی محمدی', avatarInitials: 'ع‌م', type: 'attendanceCorrection', typeLabel: 'اصلاح حضور', dateLabel: '۱۴۰۳/۰۶/۰۳', description: 'ثبت نشدن ورود به دلیل قطعی سیستم', status: 'pending' },
-  { id: 'q3', employeeName: 'رضا کریمی', avatarInitials: 'ر‌ک', type: 'shiftApproval', typeLabel: 'تأیید شیفت', dateLabel: '۱۴۰۳/۰۶/۰۲', description: 'درخواست تعویض شیفت عصر با آقای طاهری', status: 'approved' },
-  { id: 'q4', employeeName: 'نگار حسینی', avatarInitials: 'ن‌ح', type: 'leave', typeLabel: 'درخواست مرخصی', dateLabel: '۱۴۰۳/۰۵/۳۰', description: 'مرخصی روزانه جهت کار شخصی', status: 'rejected' },
-  { id: 'q5', employeeName: 'زهرا نوری', avatarInitials: 'ز‌ن', type: 'attendanceCorrection', typeLabel: 'اصلاح حضور', dateLabel: '۱۴۰۳/۰۵/۲۹', description: 'فراموشی ثبت خروج', status: 'approved' },
 ];
 
 /** ---------- Notifications ---------- */
