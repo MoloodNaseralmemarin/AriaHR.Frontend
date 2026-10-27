@@ -153,7 +153,7 @@ export class LeaveRequestFormComponent implements OnInit {
       error: (err) => {
         this.isLoadingCategories.set(false);
         if (err?.status === 403) {
-          this.categoriesError.set('شما دسترسی لازم برای دریافت دسته‌بندی‌های مرخصی را ندارید. این موضوع نیازمند اصلاح در سمت سرور توسط مدیر سیستم می‌باشد.');
+          this.categoriesError.set('شما دسترسی لازم برای دریافت دسته‌بندی‌های مرخصی را ندارید.');
         } else {
           this.categoriesError.set('خطا در دریافت لیست دسته‌بندی‌های مرخصی.');
         }
@@ -283,32 +283,7 @@ export class LeaveRequestFormComponent implements OnInit {
       },
       error: (err: any) => {
         this.isSubmitting.set(false);
-        let msg = 'ثبت درخواست انجام نشد. لطفاً دوباره تلاش کنید.';
-
-        if (err?.status === 0) {
-          msg = 'عدم برقراری ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.';
-        } else if (err?.status === 401) {
-          msg = 'شما وارد سیستم نشده‌اید. لطفاً مجدداً وارد شوید.';
-        } else if (err?.status === 403) {
-          msg = 'شما دسترسی لازم برای ثبت این درخواست را ندارید.';
-        } else if (err?.error) {
-          if (typeof err.error === 'string') {
-            msg = err.error;
-          } else if (err.error.detail) {
-            msg = err.error.detail;
-          } else if (err.error.message) {
-            msg = err.error.message;
-          } else if (err.error.title) {
-            msg = err.error.title;
-          } else if (err.error.errors && typeof err.error.errors === 'object') {
-            const errorValues = Object.values(err.error.errors).flat();
-            if (errorValues.length > 0 && typeof errorValues[0] === 'string') {
-              msg = errorValues[0];
-            }
-          }
-        }
-        this.formError.set(msg);
-        this.triggerToast(msg, 'error');
+        this.handleApiError(err);
       },
     });
   }
@@ -330,5 +305,129 @@ export class LeaveRequestFormComponent implements OnInit {
     this.toastTone.set(tone);
     this.showToast.set(true);
     setTimeout(() => this.showToast.set(false), 3000);
+  }
+
+  private handleApiError(err: any): void {
+    let generalMessage = 'ثبت درخواست انجام نشد. لطفاً دوباره تلاش کنید.';
+
+    if (err?.status === 0) {
+      generalMessage = 'عدم برقراری ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.';
+      this.formError.set(generalMessage);
+      this.triggerToast(generalMessage, 'error');
+      return;
+    }
+
+    if (err?.status === 401) {
+      generalMessage = 'شما وارد سیستم نشده‌اید. لطفاً مجدداً وارد شوید.';
+      this.formError.set(generalMessage);
+      this.triggerToast(generalMessage, 'error');
+      return;
+    }
+
+    if (err?.status === 403) {
+      generalMessage = 'شما دسترسی لازم برای ثبت این درخواست را ندارید.';
+      this.formError.set(generalMessage);
+      this.triggerToast(generalMessage, 'error');
+      return;
+    }
+
+    if (err?.status === 409) {
+      generalMessage = 'درخواست مرخصی دیگری در این بازه زمانی وجود دارد یا با قوانین کاری مغایرت دارد.';
+      this.formError.set(generalMessage);
+      this.triggerToast(generalMessage, 'error');
+      return;
+    }
+
+    if (err?.status === 500) {
+      generalMessage = 'خطای داخلی سرور رخ داده است. لطفاً بعداً تلاش کنید.';
+      this.formError.set(generalMessage);
+      this.triggerToast(generalMessage, 'error');
+      return;
+    }
+
+    let hasMappedFieldError = false;
+
+    // Handle ASP.NET Core ProblemDetails errors object
+    if (err?.error?.errors && typeof err.error.errors === 'object') {
+      const errorsObj = err.error.errors;
+      for (const fieldKey of Object.keys(errorsObj)) {
+        const rawFieldName = fieldKey.charAt(0).toLowerCase() + fieldKey.slice(1);
+        const controlName = this.mapFieldKeyToControlName(rawFieldName);
+        const rawErrorsArray = errorsObj[fieldKey];
+        const rawErrorMsg = Array.isArray(rawErrorsArray) && rawErrorsArray.length > 0 ? rawErrorsArray[0] : '';
+
+        const persianFieldError = this.translateServerErrorToPersian(rawFieldName, rawErrorMsg);
+
+        if (controlName && this.form.get(controlName)) {
+          this.form.get(controlName)?.setErrors({ serverError: persianFieldError });
+          this.form.get(controlName)?.markAsTouched();
+          hasMappedFieldError = true;
+        }
+      }
+    }
+
+    if (!hasMappedFieldError) {
+      if (typeof err?.error === 'string') {
+        generalMessage = this.translateServerErrorToPersian('', err.error);
+      } else if (err?.error?.detail) {
+        generalMessage = this.translateServerErrorToPersian('', err.error.detail);
+      } else if (err?.error?.message) {
+        generalMessage = this.translateServerErrorToPersian('', err.error.message);
+      } else if (err?.error?.title) {
+        generalMessage = this.translateServerErrorToPersian('', err.error.title);
+      }
+      this.formError.set(generalMessage);
+      this.triggerToast(generalMessage, 'error');
+    } else {
+      const fieldNotice = 'لطفاً خطاهای مشخص‌شده در فرم را بررسی و اصلاح فرمایید.';
+      this.formError.set(fieldNotice);
+      this.triggerToast(fieldNotice, 'error');
+    }
+  }
+
+  private mapFieldKeyToControlName(key: string): string | null {
+    const type = this.selectedLeaveType();
+    switch (key.toLowerCase()) {
+      case 'leavecategoryid':
+        return 'leaveCategoryId';
+      case 'startdate':
+        return type === 'daily' ? 'startDate' : 'date';
+      case 'enddate':
+        return type === 'daily' ? 'endDate' : 'date';
+      case 'starttime':
+        return 'startTime';
+      case 'endtime':
+        return 'endTime';
+      case 'reason':
+        return 'reason';
+      default:
+        return null;
+    }
+  }
+
+  private translateServerErrorToPersian(field: string, msg: string): string {
+    if (!msg) return 'مقدار وارد شده معتبر نمی‌باشد.';
+
+    const lowerMsg = msg.toLowerCase();
+
+    if (lowerMsg.includes('could not be converted to system.dateonly') || lowerMsg.includes('invalid date')) {
+      return 'فرمت تاریخ وارد شده معتبر نمی‌باشد.';
+    }
+    if (lowerMsg.includes('required') || lowerMsg.includes('is mandatory')) {
+      return 'ورود این فیلد الزامی است.';
+    }
+    if (lowerMsg.includes('insufficient balance') || lowerMsg.includes('balance')) {
+      return 'موجودی مرخصی شما برای این درخواست کافی نیست.';
+    }
+    if (lowerMsg.includes('overlap') || lowerMsg.includes('conflict')) {
+      return 'درخواست مرخصی هم‌پوشان با این تاریخ وجود دارد.';
+    }
+
+    // Return original string if already Persian, otherwise clean default
+    if (/[\u0600-\u06FF]/.test(msg)) {
+      return msg;
+    }
+
+    return 'مقدار وارد شده معتبر نمی‌باشد.';
   }
 }
