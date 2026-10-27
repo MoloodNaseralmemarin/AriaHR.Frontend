@@ -20,7 +20,7 @@ describe('JalaliDatePickerComponent', () => {
   it('should write value in Gregorian and set display value in Jalali ASCII digits', () => {
     const comp = createComponent();
     comp.writeValue('2026-05-05');
-    expect(comp.displayValue()).toBe('15-02-1405');
+    expect(comp.displayValue()).toBe('1405-02-15');
   });
 
   it('should write null/empty value and clear display value', () => {
@@ -35,27 +35,27 @@ describe('JalaliDatePickerComponent', () => {
     comp.registerOnChange(onChangeSpy);
 
     const event = {
-      target: { value: '15-02-1405' },
+      target: { value: '1405-02-15' },
     } as unknown as Event;
 
     comp.onInputChange(event);
 
-    expect(comp.displayValue()).toBe('15-02-1405');
+    expect(comp.displayValue()).toBe('1405-02-15');
     expect(onChangeSpy).toHaveBeenCalledWith('2026-05-05');
   });
 
-  it('should handle continuous digit typing (e.g. "15021405") and format it as DD-MM-YYYY in ASCII digits', () => {
+  it('should handle continuous digit typing (e.g. "14050215") and format it as YYYY-MM-DD in ASCII digits', () => {
     const comp = createComponent();
     const onChangeSpy = vi.fn();
     comp.registerOnChange(onChangeSpy);
 
     const event = {
-      target: { value: '15021405' },
+      target: { value: '14050215' },
     } as unknown as Event;
 
     comp.onInputChange(event);
 
-    expect(comp.displayValue()).toBe('15-02-1405');
+    expect(comp.displayValue()).toBe('1405-02-15');
     expect(onChangeSpy).toHaveBeenCalledWith('2026-05-05');
   });
 

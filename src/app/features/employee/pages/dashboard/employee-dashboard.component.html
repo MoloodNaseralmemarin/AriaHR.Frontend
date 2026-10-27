@@ -181,7 +181,7 @@
                       مرخصی {{ request.leaveType === 'hourly' ? 'ساعتی' : 'روزانه' }}
                     </p>
                     <p class="mt-0.5 truncate text-xs text-slate-500">
-                      تاریخ: {{ request.startDate | jalali }}
+                      تاریخ: <bdi dir="ltr">{{ request.startDate | jalali }}</bdi>
                     </p>
                   </div>
                 </div>

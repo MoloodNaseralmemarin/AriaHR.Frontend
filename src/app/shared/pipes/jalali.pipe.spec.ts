@@ -14,9 +14,9 @@ describe('JalaliPipe', () => {
     pipe = new JalaliPipe();
   });
 
-  it('should transform Gregorian date string to Jalali format in ASCII digits DD-MM-YYYY', () => {
-    expect(pipe.transform('2026-05-05')).toBe('15-02-1405');
-    expect(pipe.transform('2026-03-21')).toBe('01-01-1405');
+  it('should transform Gregorian date string to Jalali format in ASCII digits YYYY-MM-DD', () => {
+    expect(pipe.transform('2026-05-05')).toBe('1405-02-15');
+    expect(pipe.transform('2026-03-21')).toBe('1405-01-01');
   });
 
   it('should return empty string for null, undefined, or empty values', () => {

@@ -151,7 +151,7 @@
 
             <div class="flex sm:flex-col items-center sm:items-end justify-between text-xs text-slate-400 gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
               <span class="font-medium text-slate-500">
-                {{ msg.createdAt | jalali }}
+                <bdi dir="ltr">{{ msg.createdAt | jalali }}</bdi>
               </span>
               <span class="text-[11px] text-slate-400">
                 {{ msg.senderName }}
@@ -189,7 +189,7 @@
             <div class="flex items-center gap-4 text-xs text-slate-500">
               <span>فرستنده: <strong class="text-slate-700">{{ selectedMessage()!.senderName }}</strong></span>
               <span>•</span>
-              <span>تاریخ: {{ selectedMessage()!.createdAt | jalali }}</span>
+              <span>تاریخ: <bdi dir="ltr">{{ selectedMessage()!.createdAt | jalali }}</bdi></span>
             </div>
           </div>
 
@@ -205,7 +205,7 @@
                 <div class="flex items-center gap-2 font-medium">
                   @if (selectedMessage()!.isAcknowledged) {
                     <span class="text-base">✓</span>
-                    <span>تأیید دریافت این پیام در تاریخ {{ selectedMessage()!.acknowledgedAt | jalali }} ثبت گردید.</span>
+                    <span>تأیید دریافت این پیام در تاریخ <bdi dir="ltr">{{ selectedMessage()!.acknowledgedAt | jalali }}</bdi> ثبت گردید.</span>
                   } @else {
                     <span class="text-base">⚠️</span>
                     <span>این پیام نیازمند تأیید صریح دریافت می‌باشد.</span>
@@ -249,7 +249,7 @@
                         <td class="p-3">
                           @if (rec.isRead) {
                             <span class="inline-flex items-center gap-1 text-emerald-600 font-medium">
-                              ✓ ({{ rec.readAt | jalali }})
+                              ✓ (<bdi dir="ltr">{{ rec.readAt | jalali }}</bdi>)
                             </span>
                           } @else {
                             <span class="text-slate-400">مشاهده نشده</span>
@@ -258,7 +258,7 @@
                         <td class="p-3">
                           @if (rec.isAcknowledged) {
                             <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
-                              ✓ تایید شد ({{ rec.acknowledgedAt | jalali }})
+                              ✓ تایید شد (<bdi dir="ltr">{{ rec.acknowledgedAt | jalali }}</bdi>)
                             </span>
                           } @else {
                             <span class="text-amber-600 font-medium">در انتظار</span>
@@ -281,7 +281,7 @@
                 <div [class]="rep.isSelf ? 'mr-auto max-w-[85%] rounded-2xl bg-blue-600 p-3.5 text-white text-xs' : 'ml-auto max-w-[85%] rounded-2xl bg-slate-100 p-3.5 text-slate-800 text-xs'">
                   <div class="flex items-center justify-between gap-3 mb-1 text-[10px] opacity-80">
                     <span class="font-bold">{{ rep.senderName }}</span>
-                    <span>{{ rep.createdAt | jalali }}</span>
+                    <span><bdi dir="ltr">{{ rep.createdAt | jalali }}</bdi></span>
                   </div>
                   <p class="leading-relaxed whitespace-pre-line">{{ rep.content }}</p>
                 </div>
