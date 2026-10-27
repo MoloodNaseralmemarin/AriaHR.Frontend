@@ -10,6 +10,7 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
 import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
+import { formatTimeRange } from '../../../../shared/utils/time.util';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
 
 @Component({
@@ -159,10 +160,7 @@ export class LeaveRequestsListComponent implements OnInit {
 
   getDisplayRange(req: LeaveRequestDto): string {
     if (req.leaveType === 'hourly') {
-      if (req.startTime && req.endTime) {
-        return `${req.startTime} - ${req.endTime}`;
-      }
-      return 'تعیین نشده';
+      return formatTimeRange(req.startTime, req.endTime);
     }
     return 'روز کامل';
   }
