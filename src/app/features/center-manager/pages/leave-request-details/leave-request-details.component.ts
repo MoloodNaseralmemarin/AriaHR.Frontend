@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { LeaveRequestService } from '../../../employee/services/leave-request.service';
 import { LeaveRequestDetailDto } from '../../../employee/models/leave-request.model';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { BadgeTone, StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
@@ -17,7 +17,6 @@ import { formatTimeRange } from '../../../../shared/utils/time.util';
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     PageHeaderComponent,
     StatusBadgeComponent,
     SkeletonLoaderComponent,
@@ -113,6 +112,20 @@ export class LeaveRequestDetailsComponent implements OnInit {
       case 'pending':
       default:
         return 'در انتظار بررسی';
+    }
+  }
+
+  getStatusBadgeTone(status: string | null | undefined): BadgeTone {
+    switch (status) {
+      case 'approved':
+        return 'success';
+      case 'rejected':
+        return 'danger';
+      case 'cancelled':
+        return 'neutral';
+      case 'pending':
+      default:
+        return 'warning';
     }
   }
 
