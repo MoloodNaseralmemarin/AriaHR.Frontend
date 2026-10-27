@@ -255,4 +255,34 @@ describe('LeaveRequestFormComponent', () => {
     expect(component.formError()).toBe('موجودی مرخصی شما کافی نیست.');
     expect(component.isSubmitting()).toBe(false);
   });
+
+  it('11. should map field-specific validation errors from ProblemDetails to form controls', () => {
+    mockLeaveRequestService.createLeaveRequest.mockReturnValue(
+      throwError(() => ({
+        status: 400,
+        error: {
+          title: 'One or more validation errors occurred.',
+          status: 400,
+          errors: {
+            StartDate: ['The JSON value could not be converted to System.DateOnly.'],
+            LeaveCategoryId: ['Required field.'],
+          },
+        },
+      }))
+    );
+
+    component.ngOnInit();
+    component.form.patchValue({
+      leaveCategoryId: 'cat-1',
+      startDate: '2025-05-10',
+      endDate: '2025-05-12',
+    });
+
+    component.onSubmit();
+
+    expect(component.form.get('startDate')?.getError('serverError')).toBe('فرمت تاریخ وارد شده معتبر نمی‌باشد.');
+    expect(component.form.get('leaveCategoryId')?.getError('serverError')).toBe('ورود این فیلد الزامی است.');
+    expect(component.formError()).toBe('لطفاً خطاهای مشخص‌شده در فرم را بررسی و اصلاح فرمایید.');
+    expect(component.isSubmitting()).toBe(false);
+  });
 });
