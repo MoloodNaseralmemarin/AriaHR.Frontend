@@ -27,22 +27,45 @@ describe('LeaveRequestService', () => {
     });
   });
 
-  it('should get authenticated employee leave requests via GET /api/requests/my', () => {
-    const mockData: LeaveRequestDto[] = [
+  it('should get authenticated employee leave requests via GET /api/requests/my and normalize raw response', () => {
+    const rawData = [
       {
         id: '1',
-        leaveType: 'daily',
+        leaveType: 2,
+        categoryName: 'مرخصی استحقاقی',
         startDate: '2025-02-10',
         endDate: '2025-02-12',
-        durationText: '3 روز',
-        status: 'pending',
+        status: 1,
         createdAt: '2025-02-09T10:00:00Z',
+        managerName: 'علی رضایی',
+      },
+      {
+        id: '2',
+        leaveType: 1,
+        categoryName: 'مرخصی ساعتی',
+        startDate: '2025-02-15',
+        endDate: '2025-02-15',
+        startTime: '08:30',
+        endTime: '12:30',
+        status: 2,
+        rejectionReason: 'عدم موافقت با زمان درخواست',
+        createdAt: '2025-02-10T12:00:00Z',
       },
     ];
-    httpClientMock.get.mockReturnValue(of(mockData));
+    httpClientMock.get.mockReturnValue(of({ items: rawData }));
 
     service.getLeaveRequests().subscribe((res) => {
-      expect(res).toEqual(mockData);
+      expect(res.length).toBe(2);
+      expect(res[0].leaveType).toBe('daily');
+      expect(res[0].categoryName).toBe('مرخصی استحقاقی');
+      expect(res[0].status).toBe('approved');
+      expect(res[0].approverName).toBe('علی رضایی');
+      expect(res[0].durationText).toBe('3 روز');
+
+      expect(res[1].leaveType).toBe('hourly');
+      expect(res[1].status).toBe('rejected');
+      expect(res[1].rejectionReason).toBe('عدم موافقت با زمان درخواست');
+      expect(res[1].durationText).toBe('4 ساعت');
     });
 
     expect(httpClientMock.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/my`);
@@ -59,54 +82,37 @@ describe('LeaveRequestService', () => {
       reason: 'استراحت',
     };
 
-    const mockResponse: LeaveRequestDto = {
+    const rawResponse = {
       id: '1',
-      leaveType: 'daily',
+      leaveType: 2,
       startDate: '2025-02-10',
       endDate: '2025-02-12',
-      durationText: '3 روز',
       reason: 'استراحت',
-      status: 'pending',
+      status: 0,
       createdAt: '2025-02-09T10:00:00Z',
     };
-    httpClientMock.post.mockReturnValue(of(mockResponse));
+    httpClientMock.post.mockReturnValue(of(rawResponse));
 
     service.createLeaveRequest(dto).subscribe((res) => {
-      expect(res).toEqual(mockResponse);
+      expect(res.id).toBe('1');
+      expect(res.leaveType).toBe('daily');
+      expect(res.status).toBe('pending');
+      expect(res.durationText).toBe('3 روز');
     });
 
     expect(httpClientMock.post).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/leave`, dto);
   });
 
-  it('should create an hourly leave request via POST /api/requests/leave with leaveType 1', () => {
-    const dto = {
+  it('should normalize hourly duration with hours and minutes accurately', () => {
+    const raw = {
+      id: '10',
       leaveType: 1,
-      leaveCategoryId: 'cat-2',
-      startDate: '2025-02-15',
-      endDate: '2025-02-15',
-      startTime: '08:30',
-      endTime: '12:30',
-      reason: 'کارهای شخصی',
-    };
-
-    const mockResponse: LeaveRequestDto = {
-      id: '2',
-      leaveType: 'hourly',
-      startDate: '2025-02-15',
-      endDate: '2025-02-15',
-      startTime: '08:30',
-      endTime: '12:30',
-      durationText: '4 ساعت',
-      reason: 'کارهای شخصی',
+      startTime: '09:15',
+      endTime: '11:45',
       status: 'pending',
-      createdAt: '2025-02-10T12:00:00Z',
     };
-    httpClientMock.post.mockReturnValue(of(mockResponse));
-
-    service.createLeaveRequest(dto).subscribe((res) => {
-      expect(res).toEqual(mockResponse);
-    });
-
-    expect(httpClientMock.post).toHaveBeenCalledWith(`${environment.apiUrl}/api/requests/leave`, dto);
+    const normalized = service.normalizeLeaveRequest(raw);
+    expect(normalized.leaveType).toBe('hourly');
+    expect(normalized.durationText).toBe('2 ساعت و 30 دقیقه');
   });
 });

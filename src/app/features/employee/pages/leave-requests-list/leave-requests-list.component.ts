@@ -127,24 +127,62 @@ export class LeaveRequestsListComponent implements OnInit {
     setTimeout(() => this.selectedRequest.set(null), 200);
   }
 
+  /**
+   * Safe check to filter out invalid dates like '0001-01-01' or empty values.
+   */
+  private isInvalidDate(dateStr?: string): boolean {
+    if (!dateStr) return true;
+    return dateStr.startsWith('0001-01-01') || dateStr.startsWith('0001-01-02');
+  }
+
   getDisplayDate(req: LeaveRequestDto): string {
     if (req.leaveType === 'daily') {
+      if (this.isInvalidDate(req.startDate)) return 'تعیین نشده';
       const start = this.persianDateService.toJalaliString(req.startDate);
+      if (this.isInvalidDate(req.endDate)) return start || 'تعیین نشده';
       const end = this.persianDateService.toJalaliString(req.endDate);
+
       if (start && end && start !== end) {
         return `${start} تا ${end}`;
       }
-      return start || '---';
+      return start || 'تعیین نشده';
     } else {
-      return this.persianDateService.toJalaliString(req.date) || '---';
+      if (this.isInvalidDate(req.date)) {
+        if (!this.isInvalidDate(req.startDate)) {
+          return this.persianDateService.toJalaliString(req.startDate) || 'تعیین نشده';
+        }
+        return 'تعیین نشده';
+      }
+      return this.persianDateService.toJalaliString(req.date) || 'تعیین نشده';
     }
   }
 
   getDisplayRange(req: LeaveRequestDto): string {
-    if (req.leaveType === 'hourly' && req.startTime && req.endTime) {
-      return `${req.startTime} - ${req.endTime}`;
+    if (req.leaveType === 'hourly') {
+      if (req.startTime && req.endTime) {
+        return `${req.startTime} - ${req.endTime}`;
+      }
+      return 'تعیین نشده';
     }
-    return 'کامل روز';
+    return 'روز کامل';
+  }
+
+  getDisplayDuration(req: LeaveRequestDto): string {
+    if (req.durationText && req.durationText.trim().length > 0) {
+      return req.durationText;
+    }
+    if (req.leaveType === 'daily') {
+      if (!this.isInvalidDate(req.startDate) && !this.isInvalidDate(req.endDate)) {
+        const d1 = new Date(req.startDate!);
+        const d2 = new Date(req.endDate!);
+        if (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
+          const diffDays = Math.max(1, Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)) + 1);
+          return `${diffDays} روز`;
+        }
+      }
+      return '۱ روز';
+    }
+    return 'تعیین نشده';
   }
 
   getStatusBadgeTone(status: string): BadgeTone {

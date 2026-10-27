@@ -25,6 +25,8 @@ export interface CreateLeaveRequestApiDto {
 export interface LeaveRequestDto {
   id: string;
   leaveType: LeaveType;
+  leaveCategoryId?: string;
+  categoryName?: string;
   startDate?: string;
   endDate?: string;
   date?: string;
@@ -34,6 +36,7 @@ export interface LeaveRequestDto {
   reason?: string;
   status: LeaveRequestStatus;
   createdAt: string;
+  approverName?: string;
   managerComment?: string;
   rejectionReason?: string;
 }

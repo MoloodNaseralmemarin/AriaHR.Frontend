@@ -32,9 +32,9 @@ describe('LeaveRequestsListComponent', () => {
 
   it('should load requests via getLeaveRequests and compute summary counts from list', () => {
     const mockData: LeaveRequestDto[] = [
-      { id: '1', leaveType: 'daily', startDate: '2025-02-10', endDate: '2025-02-12', durationText: '3 روز', status: 'pending', createdAt: '2025-02-09T10:00:00Z' },
-      { id: '2', leaveType: 'hourly', date: '2025-02-15', startTime: '08:30', endTime: '12:30', durationText: '4 ساعت', status: 'approved', createdAt: '2025-02-10T12:00:00Z' },
-      { id: '3', leaveType: 'daily', startDate: '2025-01-01', endDate: '2025-01-02', durationText: '2 روز', status: 'rejected', createdAt: '2025-01-01T08:00:00Z' },
+      { id: '1', leaveType: 'daily', categoryName: 'استحقاقی', startDate: '2025-02-10', endDate: '2025-02-12', durationText: '3 روز', status: 'pending', createdAt: '2025-02-09T10:00:00Z' },
+      { id: '2', leaveType: 'hourly', categoryName: 'ساعتی', date: '2025-02-15', startTime: '08:30', endTime: '12:30', durationText: '4 ساعت', status: 'approved', createdAt: '2025-02-10T12:00:00Z' },
+      { id: '3', leaveType: 'daily', categoryName: 'استعلاجی', startDate: '2025-01-01', endDate: '2025-01-02', durationText: '2 روز', status: 'rejected', createdAt: '2025-01-01T08:00:00Z' },
     ];
     leaveRequestServiceMock.getLeaveRequests.mockReturnValue(of(mockData));
 
@@ -76,6 +76,47 @@ describe('LeaveRequestsListComponent', () => {
     expect(component.filteredRequests().length).toBe(3);
   });
 
+  it('should format single-day vs multi-day daily leave date display properly', () => {
+    const singleDay: LeaveRequestDto = {
+      id: '1',
+      leaveType: 'daily',
+      startDate: '2025-02-10',
+      endDate: '2025-02-10',
+      durationText: '1 روز',
+      status: 'pending',
+      createdAt: '2025-02-09T10:00:00Z',
+    };
+    const multiDay: LeaveRequestDto = {
+      id: '2',
+      leaveType: 'daily',
+      startDate: '2025-02-10',
+      endDate: '2025-02-12',
+      durationText: '3 روز',
+      status: 'pending',
+      createdAt: '2025-02-09T10:00:00Z',
+    };
+
+    const singleDisplay = component.getDisplayDate(singleDay);
+    const multiDisplay = component.getDisplayDate(multiDay);
+
+    expect(singleDisplay).not.toContain('تا');
+    expect(multiDisplay).toContain('تا');
+  });
+
+  it('should handle invalid default dates (0001-01-01) safely without crashing', () => {
+    const invalidReq: LeaveRequestDto = {
+      id: '99',
+      leaveType: 'daily',
+      startDate: '0001-01-01T00:00:00Z',
+      endDate: '0001-01-01T00:00:00Z',
+      durationText: '',
+      status: 'pending',
+      createdAt: '2025-02-09T10:00:00Z',
+    };
+
+    expect(component.getDisplayDate(invalidReq)).toBe('تعیین نشده');
+  });
+
   it('should handle API error state correctly', () => {
     leaveRequestServiceMock.getLeaveRequests.mockReturnValue(throwError(() => new Error('API error')));
 
@@ -89,6 +130,7 @@ describe('LeaveRequestsListComponent', () => {
     const mockReq: LeaveRequestDto = {
       id: '1',
       leaveType: 'daily',
+      categoryName: 'مرخصی استحقاقی',
       startDate: '2025-02-10',
       endDate: '2025-02-12',
       durationText: '3 روز',
