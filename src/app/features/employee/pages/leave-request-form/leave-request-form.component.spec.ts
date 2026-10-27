@@ -69,7 +69,7 @@ describe('LeaveRequestFormComponent', () => {
     expect(component.categories()[0].id).toBe('cat-1');
   });
 
-  it('1. should submit a valid multi-day daily leave request without hourly times', () => {
+  it('1. should submit a valid multi-day daily leave request with leaveType 2 and without hourly times', () => {
     component.ngOnInit();
     component.form.patchValue({
       leaveCategoryId: 'cat-1',
@@ -82,7 +82,7 @@ describe('LeaveRequestFormComponent', () => {
     component.onSubmit();
 
     const expectedPayload: CreateLeaveRequestApiDto = {
-      leaveType: 1,
+      leaveType: 2,
       leaveCategoryId: 'cat-1',
       startDate: '2025-05-10',
       endDate: '2025-05-12',
@@ -94,7 +94,7 @@ describe('LeaveRequestFormComponent', () => {
     expect(mockLeaveRequestService.createLeaveRequest).toHaveBeenCalledWith(expectedPayload);
   });
 
-  it('1b. should submit a valid single-day daily leave request without entering endDate (defaulting endDate to startDate)', () => {
+  it('1b. should submit a valid single-day daily leave request with leaveType 2 without entering endDate (defaulting endDate to startDate)', () => {
     component.ngOnInit();
     component.form.patchValue({
       leaveCategoryId: 'cat-1',
@@ -107,7 +107,7 @@ describe('LeaveRequestFormComponent', () => {
     component.onSubmit();
 
     const expectedPayload: CreateLeaveRequestApiDto = {
-      leaveType: 1,
+      leaveType: 2,
       leaveCategoryId: 'cat-1',
       startDate: '2025-05-10',
       endDate: '2025-05-10',
@@ -119,7 +119,7 @@ describe('LeaveRequestFormComponent', () => {
     expect(mockLeaveRequestService.createLeaveRequest).toHaveBeenCalledWith(expectedPayload);
   });
 
-  it('2. should submit a valid hourly leave request using only one date and times', () => {
+  it('2. should submit a valid hourly leave request with leaveType 1 using only one date and times', () => {
     component.ngOnInit();
     component.setLeaveType('hourly');
 
@@ -135,7 +135,7 @@ describe('LeaveRequestFormComponent', () => {
     component.onSubmit();
 
     const expectedPayload: CreateLeaveRequestApiDto = {
-      leaveType: 2,
+      leaveType: 1,
       leaveCategoryId: 'cat-1',
       startDate: '2025-05-10',
       endDate: '2025-05-10',
