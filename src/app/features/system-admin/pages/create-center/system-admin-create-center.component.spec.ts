@@ -20,16 +20,18 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
   };
 
   const sampleResponse: OrganizationResponseDto = {
-    id: 1,
+    id: '123e4567-e89b-12d3-a456-426614174000',
     name: 'کلینیک سلامت',
     code: 'C-101',
     type: OrganizationType.Clinic,
+    organizationType: OrganizationType.Clinic,
     nationalIdentifier: null,
     phone: '02166667777',
     address: 'خیابان آزادی',
     managerFirstName: 'مریم',
     managerLastName: 'حسینی',
     managerMobile: '09129876543',
+    managerEmail: 'hosseini@example.com',
     isActive: true,
   };
 
@@ -170,16 +172,16 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
     expect(comp.form.get('managerEmail')?.invalid).toBe(true);
   });
 
-  it('valid Step 2 submits successfully with numeric type (1 for Clinic) and navigates to /system-admin/centers', () => {
+  it('valid Step 2 submits successfully with numeric type, managerEmail, organizationType, and navigates to /system-admin/centers', () => {
     const comp = createComponent();
     comp.form.patchValue({
-      centerName: 'کلینیک سلامت',
+      centerName: '  کلینیک سلامت  ',
       centerCode: '  C-101  ',
       centerType: '1',
-      address: 'خیابان آزادی',
+      address: '  خیابان آزادی  ',
       phone: '02166667777',
-      managerFirstName: 'مریم',
-      managerLastName: 'حسینی',
+      managerFirstName: '  مریم  ',
+      managerLastName: '  حسینی  ',
       managerMobile: '09129876543',
       managerEmail: 'hosseini@example.com',
     });
@@ -191,17 +193,45 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       name: 'کلینیک سلامت',
       code: 'C-101',
       type: OrganizationType.Clinic,
+      organizationType: OrganizationType.Clinic,
       nationalIdentifier: null,
       phone: '02166667777',
       address: 'خیابان آزادی',
       managerFirstName: 'مریم',
       managerLastName: 'حسینی',
       managerMobile: '09129876543',
+      managerEmail: 'hosseini@example.com',
       isActive: true,
     });
 
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/system-admin/centers']);
     expect(comp.saving()).toBe(false);
+  });
+
+  it('normalizes empty whitespace optional fields to null in submission payload', () => {
+    const comp = createComponent();
+    comp.form.patchValue({
+      centerName: 'کلینیک نور',
+      centerCode: 'C-102',
+      centerType: '1',
+      address: '   ',
+      phone: '',
+      managerFirstName: 'رضا',
+      managerLastName: 'مرادی',
+      managerMobile: '09121112233',
+      managerEmail: '',
+    });
+
+    comp.nextStep();
+    comp.onSubmit();
+
+    expect(mockOrganizationService.createOrganization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: null,
+        phone: null,
+        managerEmail: null,
+      })
+    );
   });
 
   it('submits laboratory type (4) correctly in payload', () => {
@@ -222,6 +252,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       expect.objectContaining({
         code: 'LAB-404',
         type: OrganizationType.Laboratory,
+        organizationType: OrganizationType.Laboratory,
       })
     );
   });
@@ -244,6 +275,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       expect.objectContaining({
         code: 'PHARM-505',
         type: OrganizationType.Pharmacy,
+        organizationType: OrganizationType.Pharmacy,
       })
     );
   });
@@ -295,5 +327,27 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
 
     expect(comp.saving()).toBe(false);
     expect(comp.errorMessage()).toBe('Server error occurred');
+  });
+
+  it('extracts backend error message from err.error string or title', () => {
+    mockOrganizationService.createOrganization.mockReturnValue(
+      throwError(() => ({ error: { title: 'نام مرکز تکراری است.' } }))
+    );
+
+    const comp = createComponent();
+    comp.form.patchValue({
+      centerName: 'کلینیک سلامت',
+      centerCode: 'C-101',
+      centerType: '1',
+      managerFirstName: 'مریم',
+      managerLastName: 'حسینی',
+      managerMobile: '09129876543',
+    });
+
+    comp.nextStep();
+    comp.onSubmit();
+
+    expect(comp.saving()).toBe(false);
+    expect(comp.errorMessage()).toBe('نام مرکز تکراری است.');
   });
 });

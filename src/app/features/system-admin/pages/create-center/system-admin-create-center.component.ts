@@ -156,16 +156,24 @@ export class SystemAdminCreateCenterComponent {
     const typeValue: OrganizationType =
       numericType in OrganizationType ? (numericType as OrganizationType) : OrganizationType.Clinic;
 
+    const normalizeString = (val: string | null | undefined): string | null => {
+      if (!val) return null;
+      const trimmed = val.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    };
+
     const requestDto: CreateOrganizationDto = {
-      name: formValues.centerName,
-      code: formValues.centerCode ? formValues.centerCode.trim() : '',
+      name: formValues.centerName.trim(),
+      code: formValues.centerCode.trim(),
       type: typeValue,
+      organizationType: typeValue,
       nationalIdentifier: null,
-      phone: formValues.phone ? formValues.phone : null,
-      address: formValues.address ? formValues.address : null,
-      managerFirstName: formValues.managerFirstName ? formValues.managerFirstName : null,
-      managerLastName: formValues.managerLastName ? formValues.managerLastName : null,
-      managerMobile: formValues.managerMobile ? formValues.managerMobile : null,
+      phone: normalizeString(formValues.phone),
+      address: normalizeString(formValues.address),
+      managerFirstName: normalizeString(formValues.managerFirstName),
+      managerLastName: normalizeString(formValues.managerLastName),
+      managerMobile: normalizeString(formValues.managerMobile),
+      managerEmail: normalizeString(formValues.managerEmail),
       isActive: true,
     };
 
@@ -181,9 +189,17 @@ export class SystemAdminCreateCenterComponent {
           this.router.navigate(['/system-admin/centers']);
         },
         error: (err) => {
-          this.errorMessage.set(
-            err?.error?.message || err?.message || 'خطایی در ثبت مرکز رخ داد. لطفا مجدداً تلاش کنید.'
-          );
+          let message = 'خطایی در ثبت مرکز رخ داد. لطفا مجدداً تلاش کنید.';
+          if (typeof err?.error === 'string') {
+            message = err.error;
+          } else if (err?.error?.message) {
+            message = err.error.message;
+          } else if (err?.error?.title) {
+            message = err.error.title;
+          } else if (err?.message) {
+            message = err.message;
+          }
+          this.errorMessage.set(message);
         },
       });
   }
