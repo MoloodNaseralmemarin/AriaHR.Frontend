@@ -151,6 +151,21 @@ describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
     expect(component.getStatusLabel('rejected')).toBe('رد شده');
     expect(component.getStatusLabel('cancelled')).toBe('لغو شده');
     expect(component.getStatusLabel('pending')).toBe('در انتظار بررسی');
+    expect(component.getStatusLabel('unknown' as any)).toBe('در انتظار بررسی');
+    expect(component.getStatusLabel(null)).toBe('در انتظار بررسی');
+    expect(component.getStatusLabel(undefined)).toBe('در انتظار بررسی');
+  });
+
+  it('should return correct badge tones for status values', () => {
+    const component = createComponentWithContext();
+
+    expect(component.getStatusBadgeTone('approved')).toBe('success');
+    expect(component.getStatusBadgeTone('rejected')).toBe('danger');
+    expect(component.getStatusBadgeTone('cancelled')).toBe('neutral');
+    expect(component.getStatusBadgeTone('pending')).toBe('warning');
+    expect(component.getStatusBadgeTone('unknown')).toBe('warning');
+    expect(component.getStatusBadgeTone(null)).toBe('warning');
+    expect(component.getStatusBadgeTone(undefined)).toBe('warning');
   });
 
   it('should format leave type labels correctly', () => {
