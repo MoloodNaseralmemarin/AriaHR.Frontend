@@ -44,6 +44,32 @@ export class LeaveRequestService {
   }
 
   /**
+   * Retrieves all leave requests for Center Manager.
+   * Endpoint: GET /api/requests
+   */
+  getAllLeaveRequests(status?: string): Observable<LeaveRequestDto[]> {
+    let url = this.requestsBaseUrl;
+    if (status) {
+      url += `?status=${encodeURIComponent(status)}`;
+    }
+    return this.http.get<any>(url).pipe(
+      map((res) => {
+        let items: any[] = [];
+        if (Array.isArray(res)) {
+          items = res;
+        } else if (res && Array.isArray(res.items)) {
+          items = res.items;
+        } else if (res && Array.isArray(res.data)) {
+          items = res.data;
+        } else if (res && Array.isArray(res.value)) {
+          items = res.value;
+        }
+        return items.map((item) => this.normalizeLeaveRequest(item));
+      })
+    );
+  }
+
+  /**
    * Retrieves a leave request by ID.
    * Endpoint: GET /api/requests/{id}
    */
@@ -247,6 +273,14 @@ export class LeaveRequestService {
     const startTime = raw.startTime ?? raw.StartTime ?? raw.start_time ?? undefined;
     const endTime = raw.endTime ?? raw.EndTime ?? raw.end_time ?? undefined;
 
+    // Employee Name extraction
+    const firstName = raw.employeeFirstName ?? raw.EmployeeFirstName ?? raw.firstName ?? raw.FirstName ?? '';
+    const lastName = raw.employeeLastName ?? raw.EmployeeLastName ?? raw.lastName ?? raw.LastName ?? '';
+    let employeeName = raw.employeeName ?? raw.EmployeeName ?? raw.employeeFullName ?? raw.EmployeeFullName ?? `${firstName} ${lastName}`.trim();
+    if (!employeeName) {
+      employeeName = undefined;
+    }
+
     // Reason & Comments
     const reason = raw.reason ?? raw.Reason ?? raw.description ?? raw.Description ?? undefined;
     const managerComment = raw.managerComment ?? raw.ManagerComment ?? raw.managerNotes ?? raw.comment ?? undefined;
@@ -294,6 +328,8 @@ export class LeaveRequestService {
       leaveType,
       leaveCategoryId,
       categoryName,
+      employeeName,
+      employeeFullName: employeeName,
       startDate,
       endDate,
       date,

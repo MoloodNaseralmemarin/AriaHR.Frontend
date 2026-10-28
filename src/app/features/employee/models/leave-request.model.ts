@@ -27,6 +27,8 @@ export interface LeaveRequestDto {
   leaveType: LeaveType;
   leaveCategoryId?: string;
   categoryName?: string;
+  employeeName?: string;
+  employeeFullName?: string;
   startDate?: string;
   endDate?: string;
   date?: string;

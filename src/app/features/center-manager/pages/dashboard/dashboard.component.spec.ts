@@ -27,6 +27,9 @@ describe('Center Manager DashboardComponent', () => {
     absentTodayCount: 1,
     approvedLeaveTodayCount: 1,
     lateArrivalsTodayCount: 0,
+    pendingLeaveRequestsCount: 2,
+    pendingAttendanceCorrectionRequestsCount: 0,
+    unapprovedShiftsCount: 0,
   };
 
   let userDetailsSignal: ReturnType<typeof signal<CurrentUserDto | null>>;

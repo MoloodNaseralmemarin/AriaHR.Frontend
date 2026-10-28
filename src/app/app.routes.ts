@@ -27,6 +27,7 @@ import { ReportsComponent as CenterManagerReportsComponent } from './features/ce
 import { NotificationsComponent as CenterManagerNotificationsComponent } from './features/center-manager/pages/notifications/notifications.component';
 import { SettingsComponent as CenterManagerSettingsComponent } from './features/center-manager/pages/settings/settings.component';
 import { LeaveRequestDetailsComponent as CenterManagerLeaveRequestDetailsComponent } from './features/center-manager/pages/leave-request-details/leave-request-details.component';
+import { CenterManagerLeaveRequestsListComponent } from './features/center-manager/pages/leave-requests-list/center-manager-leave-requests-list.component';
 
 // Employee Components
 import { EmployeeLayoutComponent } from './features/employee/layout/employee-layout.component';
@@ -86,6 +87,7 @@ export const routes: Routes = [
       { path: 'shifts/create', component: CenterManagerCreateShiftComponent },
       { path: 'shifts/:id/edit', component: CenterManagerEditShiftComponent },
       { path: 'work-locations/create', component: CenterManagerCreateWorkLocationComponent },
+      { path: 'leave-requests', component: CenterManagerLeaveRequestsListComponent },
       { path: 'leave-requests/:id', component: CenterManagerLeaveRequestDetailsComponent },
       { path: 'reports', component: CenterManagerReportsComponent },
       { path: 'notifications', component: CenterManagerNotificationsComponent },
