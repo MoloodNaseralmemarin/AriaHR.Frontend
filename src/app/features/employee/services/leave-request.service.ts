@@ -209,6 +209,19 @@ export class LeaveRequestService {
       fullName = `${firstName ?? ''} ${lastName ?? ''}`.trim() || null;
     }
 
+    const approvedByRaw =
+      raw.approvedByFullName ??
+      raw.ApprovedByFullName ??
+      raw.approverFullName ??
+      raw.ApproverFullName ??
+      raw.approverName ??
+      raw.ApproverName ??
+      raw.approvedByName ??
+      raw.ApprovedByName ??
+      raw.approvedBy ??
+      raw.ApprovedBy ??
+      null;
+
     return {
       id: String(raw.id ?? raw.Id ?? ''),
       employeeId: String(raw.employeeId ?? raw.EmployeeId ?? ''),
@@ -229,7 +242,7 @@ export class LeaveRequestService {
       statusRaw,
       rejectedReason: raw.rejectedReason ?? raw.RejectedReason ?? raw.rejectionReason ?? raw.RejectionReason ?? null,
       approvedAt: raw.approvedAt ?? raw.ApprovedAt ?? null,
-      approvedBy: raw.approvedBy ?? raw.ApprovedBy ?? raw.approverName ?? raw.ApproverName ?? null,
+      approvedBy: approvedByRaw,
       createdAtUtc: raw.createdAtUtc ?? raw.CreatedAtUtc ?? raw.createdAt ?? raw.CreatedAt ?? new Date().toISOString(),
     };
   }

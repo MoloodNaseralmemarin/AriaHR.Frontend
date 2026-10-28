@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 
 import { LeaveRequestService } from '../../../employee/services/leave-request.service';
 import { LeaveRequestDetailDto } from '../../../employee/models/leave-request.model';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { BadgeTone, StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
@@ -38,6 +39,7 @@ export type ReviewActionType = 'approve' | 'reject';
 export class LeaveRequestDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly leaveRequestService = inject(LeaveRequestService);
+  private readonly authService = inject(AuthService);
   private readonly location = inject(Location);
   private readonly dateService = inject(PersianDateService);
 
@@ -192,6 +194,38 @@ export class LeaveRequestDetailsComponent implements OnInit {
       return 'ثبت نشده';
     }
     return value.trim();
+  }
+
+  getReviewerDisplay(req: LeaveRequestDetailDto): string {
+    if (req.status === 'pending') {
+      return 'در انتظار بررسی';
+    }
+
+    const val = req.approvedBy ? req.approvedBy.trim() : '';
+
+    if (!val) {
+      return 'ثبت نشده';
+    }
+
+    // Check if approvedBy is a raw GUID pattern (e.g. 8-4-4-4-12 hex chars)
+    const isGuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(val);
+
+    const currentUserDetails = this.authService.userDetails();
+    const currentAuthUser = this.authService.currentUser();
+    const currentUserId = currentUserDetails?.id || currentAuthUser?.id;
+
+    if (currentUserId && val.toLowerCase() === currentUserId.toLowerCase()) {
+      const first = currentUserDetails?.firstName || '';
+      const last = currentUserDetails?.lastName || '';
+      const name = `${first} ${last}`.trim();
+      return name ? `شما (${name})` : 'شما (مدیر مرکز)';
+    }
+
+    if (isGuid) {
+      return 'مدیر مرکز';
+    }
+
+    return val;
   }
 
   getEmployeeName(req: LeaveRequestDetailDto): string {

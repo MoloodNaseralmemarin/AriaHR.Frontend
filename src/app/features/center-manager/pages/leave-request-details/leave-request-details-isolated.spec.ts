@@ -8,6 +8,7 @@ import { of, throwError } from 'rxjs';
 import { LeaveRequestDetailsComponent } from './leave-request-details.component';
 import { LeaveRequestService } from '../../../employee/services/leave-request.service';
 import { LeaveRequestDetailDto } from '../../../employee/models/leave-request.model';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 
 describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
@@ -26,6 +27,10 @@ describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
   };
   let mockLocation: {
     back: ReturnType<typeof vi.fn>;
+  };
+  let mockAuthService: {
+    userDetails: ReturnType<typeof vi.fn>;
+    currentUser: ReturnType<typeof vi.fn>;
   };
   let mockPersianDateService: {
     toJalaliString: ReturnType<typeof vi.fn>;
@@ -93,6 +98,11 @@ describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
       back: vi.fn(),
     };
 
+    mockAuthService = {
+      userDetails: vi.fn().mockReturnValue({ id: 'mgr-100', firstName: 'علی', lastName: 'رضایی' }),
+      currentUser: vi.fn().mockReturnValue({ id: 'mgr-100' }),
+    };
+
     mockPersianDateService = {
       toJalaliString: vi.fn().mockReturnValue('1405-08-05'),
       formatDateRange: vi.fn().mockReturnValue('05-08-1405 تا 06-08-1405'),
@@ -105,6 +115,7 @@ describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
         { provide: LeaveRequestService, useValue: mockLeaveRequestService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: Location, useValue: mockLocation },
+        { provide: AuthService, useValue: mockAuthService },
         { provide: PersianDateService, useValue: mockPersianDateService },
       ],
     });
@@ -229,5 +240,22 @@ describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
     };
 
     expect(component.getDateDisplay(rangeDay)).toBe('05-08-1405 تا 06-08-1405');
+  });
+
+  it('should format reviewer name correctly and hide raw GUIDs', () => {
+    const component = createComponentWithContext();
+
+    // 1. Pending status returns "در انتظار بررسی"
+    expect(component.getReviewerDisplay(mockPendingDetail)).toBe('در انتظار بررسی');
+
+    // 2. Approved with full reviewer name
+    expect(component.getReviewerDisplay(mockApprovedDetail)).toBe('مدیر کلینیک');
+
+    // 3. Approved with raw GUID falls back to "مدیر مرکز" instead of displaying raw UUID
+    const guidReq: LeaveRequestDetailDto = {
+      ...mockApprovedDetail,
+      approvedBy: 'd5897ca3-4c51-4b20-919e-aad8b540f41e',
+    };
+    expect(component.getReviewerDisplay(guidReq)).toBe('مدیر مرکز');
   });
 });
