@@ -16,6 +16,9 @@ describe('CenterManagerDashboardService (isolated)', () => {
     absentTodayCount: 1,
     approvedLeaveTodayCount: 2,
     lateArrivalsTodayCount: 0,
+    pendingLeaveRequestsCount: 3,
+    pendingAttendanceCorrectionRequestsCount: 0,
+    unapprovedShiftsCount: 0,
   };
 
   beforeEach(() => {

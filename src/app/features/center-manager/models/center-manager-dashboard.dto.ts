@@ -4,4 +4,7 @@ export interface CenterManagerDashboardDto {
   absentTodayCount: number;
   approvedLeaveTodayCount: number;
   lateArrivalsTodayCount: number;
+  pendingLeaveRequestsCount: number;
+  pendingAttendanceCorrectionRequestsCount: number;
+  unapprovedShiftsCount: number;
 }

@@ -1,0 +1,256 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <app-page-header
+    title="درخواست‌های مرخصی"
+    description="مدیریت و بررسی درخواست‌های مرخصی کارکنان مرکز"
+  ></app-page-header>
+
+  <!-- Summary KPI Cards -->
+  <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <app-summary-card
+      label="کل درخواست‌ها"
+      [value]="summary().totalCount | persianDigits"
+      tone="default"
+    >
+      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+    </app-summary-card>
+
+    <app-summary-card
+      label="در انتظار بررسی"
+      [value]="summary().pendingCount | persianDigits"
+      tone="warning"
+    >
+      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </app-summary-card>
+
+    <app-summary-card
+      label="تأیید شده"
+      [value]="summary().approvedCount | persianDigits"
+      tone="success"
+    >
+      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </app-summary-card>
+
+    <app-summary-card
+      label="رد شده"
+      [value]="summary().rejectedCount | persianDigits"
+      tone="danger"
+    >
+      <svg icon width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </app-summary-card>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="space-y-4">
+    <app-skeleton-loader [count]="3" [height]="'80px'"></app-skeleton-loader>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!isLoading() && errorMsg()" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2 text-sm font-medium">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-rose-600"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>{{ errorMsg() }}</span>
+      </div>
+      <button
+        type="button"
+        (click)="loadRequests()"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-rose-700 transition-colors"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        تلاش مجدد
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Container -->
+  <div *ngIf="!isLoading() && !errorMsg()" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+    <!-- Filter Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      <!-- Status Tabs -->
+      <div class="flex flex-wrap gap-1.5">
+        <button
+          type="button"
+          (click)="setStatusFilter('all')"
+          [class.bg-blue-600]="selectedStatusFilter() === 'all'"
+          [class.text-white]="selectedStatusFilter() === 'all'"
+          [class.bg-slate-100]="selectedStatusFilter() !== 'all'"
+          [class.text-slate-600]="selectedStatusFilter() !== 'all'"
+          class="rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors"
+        >
+          همه ({{ summary().totalCount | persianDigits }})
+        </button>
+        <button
+          type="button"
+          (click)="setStatusFilter('pending')"
+          [class.bg-amber-600]="selectedStatusFilter() === 'pending'"
+          [class.text-white]="selectedStatusFilter() === 'pending'"
+          [class.bg-slate-100]="selectedStatusFilter() !== 'pending'"
+          [class.text-slate-600]="selectedStatusFilter() !== 'pending'"
+          class="rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors"
+        >
+          در انتظار بررسی ({{ summary().pendingCount | persianDigits }})
+        </button>
+        <button
+          type="button"
+          (click)="setStatusFilter('approved')"
+          [class.bg-emerald-600]="selectedStatusFilter() === 'approved'"
+          [class.text-white]="selectedStatusFilter() === 'approved'"
+          [class.bg-slate-100]="selectedStatusFilter() !== 'approved'"
+          [class.text-slate-600]="selectedStatusFilter() !== 'approved'"
+          class="rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors"
+        >
+          تأیید شده ({{ summary().approvedCount | persianDigits }})
+        </button>
+        <button
+          type="button"
+          (click)="setStatusFilter('rejected')"
+          [class.bg-rose-600]="selectedStatusFilter() === 'rejected'"
+          [class.text-white]="selectedStatusFilter() === 'rejected'"
+          [class.bg-slate-100]="selectedStatusFilter() !== 'rejected'"
+          [class.text-slate-600]="selectedStatusFilter() !== 'rejected'"
+          class="rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors"
+        >
+          رد شده ({{ summary().rejectedCount | persianDigits }})
+        </button>
+      </div>
+
+      <!-- Type Filter & Search -->
+      <div class="flex flex-wrap items-center gap-2">
+        <select
+          [ngModel]="selectedTypeFilter()"
+          (ngModelChange)="setTypeFilter($event)"
+          class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none"
+        >
+          <option value="all">همه انواع مرخصی</option>
+          <option value="daily">روزانه</option>
+          <option value="hourly">ساعتی</option>
+        </select>
+
+        <div class="relative min-w-[200px]">
+          <input
+            type="text"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="onSearchChange($event)"
+            placeholder="جستجو بر اساس نام یا دسته..."
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pr-8 pl-3 text-xs text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none"
+          />
+          <svg class="absolute right-2.5 top-2 h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty Filtered Results -->
+    <div *ngIf="filteredRequests().length === 0" class="py-8">
+      <app-empty-state
+        title="درخواستی یافت نشد"
+        description="هیچ درخواست مرخصی با فیلترهای انتخاب شده مطابقت ندارد."
+      ></app-empty-state>
+    </div>
+
+    <!-- Desktop Table View -->
+    <div *ngIf="filteredRequests().length > 0" class="hidden overflow-x-auto sm:block">
+      <table class="w-full text-start text-sm">
+        <thead>
+          <tr class="border-b border-slate-100 text-xs text-slate-400">
+            <th class="pb-3 text-start font-medium">نام کارمند</th>
+            <th class="pb-3 text-start font-medium">نوع مرخصی</th>
+            <th class="pb-3 text-start font-medium">دسته‌بندی</th>
+            <th class="pb-3 text-start font-medium">تاریخ / زمان</th>
+            <th class="pb-3 text-start font-medium">وضعیت</th>
+            <th class="pb-3 text-end font-medium">عملیات</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-slate-700">
+          <tr *ngFor="let req of filteredRequests()" class="hover:bg-slate-50/80 transition-colors">
+            <td class="py-3.5 font-semibold text-slate-800">
+              {{ req.employeeName || req.employeeFullName || 'ثبت نشده' }}
+            </td>
+            <td class="py-3.5">
+              <span class="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                {{ getLeaveTypeLabel(req.leaveType) }}
+              </span>
+            </td>
+            <td class="py-3.5 text-xs text-slate-600">
+              {{ req.categoryName || 'ثبت نشده' }}
+            </td>
+            <td class="py-3.5 text-xs">
+              <div class="space-y-0.5">
+                <div>
+                  <bdi dir="ltr">{{ req.startDate | jalali:'ascii':'YYYY-MM-DD' | persianDigits }}</bdi>
+                  <span *ngIf="req.endDate && req.endDate !== req.startDate">
+                    تا <bdi dir="ltr">{{ req.endDate | jalali:'ascii':'YYYY-MM-DD' | persianDigits }}</bdi>
+                  </span>
+                </div>
+                <div *ngIf="req.leaveType === 'hourly'" class="text-slate-400">
+                  ساعت {{ getTimeDisplay(req) | persianDigits }}
+                </div>
+              </div>
+            </td>
+            <td class="py-3.5">
+              <app-status-badge
+                [label]="getStatusLabel(req.status)"
+                [tone]="getStatusTone(req.status)"
+              ></app-status-badge>
+            </td>
+            <td class="py-3.5 text-end">
+              <a
+                [routerLink]="['/center-manager/leave-requests', req.id]"
+                class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+              >
+                بررسی و جزئیات
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Stacked Card View -->
+    <div *ngIf="filteredRequests().length > 0" class="space-y-3 sm:hidden">
+      <div
+        *ngFor="let req of filteredRequests()"
+        class="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-3"
+      >
+        <div class="flex items-center justify-between gap-2">
+          <p class="font-bold text-slate-800">
+            {{ req.employeeName || req.employeeFullName || 'ثبت نشده' }}
+          </p>
+          <app-status-badge
+            [label]="getStatusLabel(req.status)"
+            [tone]="getStatusTone(req.status)"
+          ></app-status-badge>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs text-slate-600">
+          <div>
+            <span class="text-slate-400">نوع: </span>
+            <span>{{ getLeaveTypeLabel(req.leaveType) }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400">دسته: </span>
+            <span>{{ req.categoryName || 'ثبت نشده' }}</span>
+          </div>
+          <div class="col-span-2">
+            <span class="text-slate-400">تاریخ: </span>
+            <bdi dir="ltr">{{ req.startDate | jalali:'ascii':'YYYY-MM-DD' | persianDigits }}</bdi>
+            <span *ngIf="req.endDate && req.endDate !== req.startDate">
+              تا <bdi dir="ltr">{{ req.endDate | jalali:'ascii':'YYYY-MM-DD' | persianDigits }}</bdi>
+            </span>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-200/60 flex justify-end">
+          <a
+            [routerLink]="['/center-manager/leave-requests', req.id]"
+            class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+          >
+            بررسی و جزئیات
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

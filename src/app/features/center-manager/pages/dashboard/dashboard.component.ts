@@ -13,7 +13,6 @@ import { CenterManagerDashboardService } from '../../services/center-manager-das
 import { CenterManagerDashboardDto } from '../../models/center-manager-dashboard.dto';
 
 import {
-  mockActionRequiredItems,
   mockDashboardNotifications,
   mockEmployeeStatusPreview,
   mockTodayAttendanceSummary,
@@ -92,7 +91,6 @@ export class DashboardComponent implements OnInit {
   readonly metrics = signal<CenterManagerDashboardDto | null>(null);
 
   todayAttendance = mockTodayAttendanceSummary;
-  actionItems = mockActionRequiredItems;
   todayShifts = mockTodayShifts;
   employeePreview = mockEmployeeStatusPreview;
   notifications = mockDashboardNotifications;
@@ -128,13 +126,4 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  get hasActionItems(): boolean {
-    return this.actionItems.length > 0;
-  }
-
-  onActionClick(id: string): void {
-    // Visual-only: in the integrated app this would navigate to the
-    // relevant filtered list (e.g. Requests screen with a status filter).
-    console.log('action required clicked (UI only):', id);
-  }
 }
