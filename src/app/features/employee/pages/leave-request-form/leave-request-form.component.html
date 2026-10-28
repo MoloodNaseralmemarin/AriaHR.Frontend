@@ -120,7 +120,11 @@
             formControlName="startDate"
             digitsFormat="persian"
             dateFormat="DD-MM-YYYY"
+            [minDate]="todayGregorian()"
           ></app-jalali-date-picker>
+          <p *ngIf="(form.get('startDate')?.hasError('pastDate') || form.get('startDate')?.hasError('minDate')) && form.get('startDate')?.touched" class="mt-1.5 text-xs font-medium text-rose-600">
+            امکان ثبت مرخصی برای تاریخ‌های گذشته وجود ندارد.
+          </p>
           <p *ngIf="form.get('startDate')?.hasError('serverError') && form.get('startDate')?.touched" class="mt-1.5 text-xs font-medium text-rose-600">
             {{ form.get('startDate')?.getError('serverError') }}
           </p>
@@ -134,7 +138,11 @@
             formControlName="endDate"
             digitsFormat="persian"
             dateFormat="DD-MM-YYYY"
+            [minDate]="todayGregorian()"
           ></app-jalali-date-picker>
+          <p *ngIf="(form.get('endDate')?.hasError('pastDate') || form.get('endDate')?.hasError('minDate')) && form.get('endDate')?.touched" class="mt-1.5 text-xs font-medium text-rose-600">
+            امکان ثبت مرخصی برای تاریخ‌های گذشته وجود ندارد.
+          </p>
           <p *ngIf="form.get('endDate')?.hasError('serverError') && form.get('endDate')?.touched" class="mt-1.5 text-xs font-medium text-rose-600">
             {{ form.get('endDate')?.getError('serverError') }}
           </p>
@@ -149,7 +157,11 @@
             formControlName="date"
             digitsFormat="persian"
             dateFormat="DD-MM-YYYY"
+            [minDate]="todayGregorian()"
           ></app-jalali-date-picker>
+          <p *ngIf="(form.get('date')?.hasError('pastDate') || form.get('date')?.hasError('minDate')) && form.get('date')?.touched" class="mt-1.5 text-xs font-medium text-rose-600">
+            امکان ثبت مرخصی برای تاریخ‌های گذشته وجود ندارد.
+          </p>
           <p *ngIf="form.get('date')?.hasError('serverError') && form.get('date')?.touched" class="mt-1.5 text-xs font-medium text-rose-600">
             {{ form.get('date')?.getError('serverError') }}
           </p>
@@ -193,67 +205,6 @@
       <p *ngIf="form.get('reason')?.hasError('serverError') && form.get('reason')?.touched" class="mt-1.5 text-xs font-medium text-rose-600">
         {{ form.get('reason')?.getError('serverError') }}
       </p>
-    </div>
-
-    <!-- Request Summary Card -->
-    <div class="rounded-2xl border border-blue-100 bg-blue-50/50 p-5 shadow-xs">
-      <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-          <polyline points="10 9 9 9 8 9" />
-        </svg>
-        <span>خلاصه درخواست</span>
-      </h3>
-
-      <div class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm sm:grid-cols-4">
-        <div>
-          <span class="block text-xs font-medium text-slate-500 mb-0.5">نوع مرخصی</span>
-          <span class="font-semibold text-slate-800">
-            {{ selectedLeaveType() === 'daily' ? 'مرخصی روزانه' : 'مرخصی ساعتی' }}
-          </span>
-        </div>
-
-        <ng-container *ngIf="selectedLeaveType() === 'daily'">
-          <div>
-            <span class="block text-xs font-medium text-slate-500 mb-0.5">از تاریخ</span>
-            <span class="font-semibold text-slate-800">{{ formattedSummaryDate() }}</span>
-          </div>
-
-          <div>
-            <span class="block text-xs font-medium text-slate-500 mb-0.5">تا تاریخ</span>
-            <span class="font-semibold text-slate-800">{{ formattedSummaryEndDate() }}</span>
-          </div>
-        </ng-container>
-
-        <ng-container *ngIf="selectedLeaveType() === 'hourly'">
-          <div>
-            <span class="block text-xs font-medium text-slate-500 mb-0.5">تاریخ</span>
-            <span class="font-semibold text-slate-800">{{ formattedSummaryDate() }}</span>
-          </div>
-
-          <div>
-            <span class="block text-xs font-medium text-slate-500 mb-0.5">ساعت</span>
-            <span class="font-semibold text-slate-800">
-              <ng-container *ngIf="form.get('startTime')?.value && form.get('endTime')?.value">
-                {{ form.get('startTime')?.value | persianDigits }} تا {{ form.get('endTime')?.value | persianDigits }}
-              </ng-container>
-              <ng-container *ngIf="!form.get('startTime')?.value || !form.get('endTime')?.value">
-                ---
-              </ng-container>
-            </span>
-          </div>
-        </ng-container>
-
-        <div>
-          <span class="block text-xs font-medium text-slate-500 mb-0.5">مدت</span>
-          <span class="font-bold text-blue-700">
-            {{ computedDuration() ? computedDuration() : '---' }}
-          </span>
-        </div>
-      </div>
     </div>
 
     <!-- Actions -->

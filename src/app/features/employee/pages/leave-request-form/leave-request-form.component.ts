@@ -9,8 +9,9 @@ import { ToastComponent, ToastTone } from '../../../../shared/components/toast/t
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { LeaveRequestService } from '../../services/leave-request.service';
 import { LeaveCategoryService } from '../../../leave-categories/services/leave-category.service';
+import { LeavePolicyService } from '../../services/leave-policy.service';
 import { LeaveCategoryDto } from '../../../leave-categories/models/leave-category.dto';
-import { CreateLeaveRequestApiDto, LeaveType } from '../../models/leave-request.model';
+import { CreateLeaveRequestApiDto, LeaveRequestDto, LeaveType } from '../../models/leave-request.model';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
 
 @Component({
@@ -35,16 +36,19 @@ export class LeaveRequestFormComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly leaveRequestService = inject(LeaveRequestService);
   private readonly leaveCategoryService = inject(LeaveCategoryService);
+  private readonly leavePolicyService = inject(LeavePolicyService);
   private readonly persianDateService = inject(PersianDateService);
 
   readonly selectedLeaveType = signal<LeaveType>('daily');
   readonly isSubmitting = signal<boolean>(false);
   readonly formError = signal<string | null>(null);
+  readonly todayGregorian = signal<string>(this.persianDateService.getTodayGregorianString());
 
   // Leave Categories state
   readonly categories = signal<LeaveCategoryDto[]>([]);
   readonly isLoadingCategories = signal<boolean>(false);
   readonly categoriesError = signal<string | null>(null);
+  readonly myExistingRequests = signal<LeaveRequestDto[]>([]);
 
   // Computed options for app-custom-select
   readonly categoryOptions = computed<SelectOption[]>(() => {
@@ -120,28 +124,28 @@ export class LeaveRequestFormComponent implements OnInit {
     }
   });
 
-  // Summary display signals
-  readonly formattedSummaryDate = computed(() => {
-    const type = this.selectedLeaveType();
-    if (type === 'hourly') {
-      const dateVal = this.form.get('date')?.value;
-      return dateVal ? this.persianDateService.toJalaliString(dateVal) : '---';
-    } else {
-      const startVal = this.form.get('startDate')?.value;
-      return startVal ? this.persianDateService.toJalaliString(startVal) : '---';
-    }
-  });
-
-  readonly formattedSummaryEndDate = computed(() => {
-    const startVal = this.form.get('startDate')?.value;
-    const endVal = this.form.get('endDate')?.value || startVal;
-    return endVal ? this.persianDateService.toJalaliString(endVal) : '---';
-  });
-
   constructor() {
-    // Listen to form value changes to clear server errors when modified
+    // Listen to form value changes to clear server errors and check hourly-to-daily conversion
     this.form.valueChanges.subscribe((val) => {
       this.reasonLength.set((val.reason || '').length);
+
+      // Automatic conversion if hourly leave duration >= 8 hours
+      if (this.selectedLeaveType() === 'hourly' && val.startTime && val.endTime) {
+        if (this.leavePolicyService.isHourlyThresholdExceeded(val.startTime, val.endTime)) {
+          const selectedDate = val.date;
+          this.setLeaveType('daily');
+          if (selectedDate) {
+            this.form.patchValue({
+              startDate: selectedDate,
+              endDate: selectedDate,
+            });
+          }
+          this.triggerToast(
+            'مدت مرخصی به ۸ ساعت یا بیشتر رسیده است؛ نوع درخواست به مرخصی روزانه تغییر کرد.',
+            'info'
+          );
+        }
+      }
     });
 
     Object.keys(this.form.controls).forEach((ctrlName) => {
@@ -158,6 +162,14 @@ export class LeaveRequestFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCategories();
+    this.loadExistingRequests();
+  }
+
+  private loadExistingRequests(): void {
+    this.leaveRequestService.getLeaveRequests().subscribe({
+      next: (reqs) => this.myExistingRequests.set(reqs || []),
+      error: () => this.myExistingRequests.set([]),
+    });
   }
 
   loadCategories(): void {
@@ -234,6 +246,8 @@ export class LeaveRequestFormComponent implements OnInit {
       return;
     }
 
+    const today = this.todayGregorian();
+
     if (type === 'daily') {
       const startDate = this.form.get('startDate')?.value;
       const endDate = this.form.get('endDate')?.value || startDate;
@@ -245,6 +259,11 @@ export class LeaveRequestFormComponent implements OnInit {
 
       const gregStart = this.toGregorian(startDate);
       const gregEnd = this.toGregorian(endDate);
+
+      if (gregStart < today || gregEnd < today) {
+        this.formError.set('امکان ثبت مرخصی برای تاریخ‌های گذشته وجود ندارد.');
+        return;
+      }
 
       if (gregEnd < gregStart) {
         this.formError.set('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.');
@@ -260,6 +279,12 @@ export class LeaveRequestFormComponent implements OnInit {
         return;
       }
 
+      const gregDate = this.toGregorian(date);
+      if (gregDate < today) {
+        this.formError.set('امکان ثبت مرخصی برای تاریخ‌های گذشته وجود ندارد.');
+        return;
+      }
+
       const [sH, sM] = startTime.split(':').map(Number);
       const [eH, eM] = endTime.split(':').map(Number);
 
@@ -267,6 +292,53 @@ export class LeaveRequestFormComponent implements OnInit {
         this.formError.set('ساعت پایان باید بعد از ساعت شروع باشد.');
         return;
       }
+
+      if (this.leavePolicyService.isHourlyThresholdExceeded(startTime, endTime)) {
+        this.formError.set('مرخصی ساعتی ۸ ساعت یا بیشتر باید به صورت مرخصی روزانه ثبت شود.');
+        return;
+      }
+    }
+
+    if (
+      this.form.get('startDate')?.hasError('pastDate') ||
+      this.form.get('endDate')?.hasError('pastDate') ||
+      this.form.get('date')?.hasError('pastDate')
+    ) {
+      this.formError.set('امکان ثبت مرخصی برای تاریخ‌های گذشته وجود ندارد.');
+      return;
+    }
+
+    // Entitlement limit validation via LeavePolicyService
+    const categoryId = this.form.get('leaveCategoryId')?.value;
+    const category = this.categories().find((c) => c.id === categoryId);
+    let requestedDays = 1;
+
+    if (type === 'daily') {
+      const start = this.form.get('startDate')?.value;
+      const end = this.form.get('endDate')?.value || start;
+      const dStart = new Date(this.toGregorian(start));
+      const dEnd = new Date(this.toGregorian(end));
+      if (!isNaN(dStart.getTime()) && !isNaN(dEnd.getTime())) {
+        requestedDays = Math.max(1, Math.round((dEnd.getTime() - dStart.getTime()) / (1000 * 3600 * 24)) + 1);
+      }
+    } else {
+      const startTime = this.form.get('startTime')?.value;
+      const endTime = this.form.get('endTime')?.value;
+      const minutes = this.leavePolicyService.calculateHourlyMinutes(startTime, endTime);
+      requestedDays = minutes / 480;
+    }
+
+    const entitlementCheck = this.leavePolicyService.validateEntitlement(
+      category,
+      requestedDays,
+      this.myExistingRequests()
+    );
+
+    if (!entitlementCheck.valid) {
+      const msg = entitlementCheck.message || 'موجودی مرخصی شما برای این درخواست کافی نیست.';
+      this.formError.set(msg);
+      this.triggerToast(msg, 'error');
+      return;
     }
 
     if (this.form.invalid) {

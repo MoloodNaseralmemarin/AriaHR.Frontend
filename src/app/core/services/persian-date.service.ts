@@ -42,6 +42,17 @@ export class PersianDateService {
   }
 
   /**
+   * Returns today's date in Gregorian YYYY-MM-DD format using local time.
+   */
+  getTodayGregorianString(): string {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
    * Formats a given JavaScript Date into Persian/Jalali calendar string format: "نام روز، روز ماه سال".
    * Example: "دوشنبه، ۴ شهریور ۱۴۰۳"
    */

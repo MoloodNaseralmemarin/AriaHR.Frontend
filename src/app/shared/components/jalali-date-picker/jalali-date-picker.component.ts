@@ -53,8 +53,8 @@ const PERSIAN_MONTH_NAMES = [
     },
   ],
   template: `
-    <div dir="rtl" class="w-full space-y-2">
-      <!-- Direct Segmented Inputs for Year, Month, Day in RTL order -->
+    <div dir="rtl" class="w-full">
+      <!-- Segmented Inputs for Year, Month, Day in RTL order -->
       <div class="grid grid-cols-3 gap-2">
         <!-- Day Input (روز) -->
         <div>
@@ -111,26 +111,6 @@ const PERSIAN_MONTH_NAMES = [
           />
         </div>
       </div>
-
-      <!-- Quick Continuous Input & Formatted Jalali Display Preview -->
-      <div class="relative w-full">
-        <input
-          type="text"
-          [id]="id"
-          [placeholder]="placeholder"
-          [disabled]="disabled"
-          [value]="displayValue()"
-          (input)="onInputChange($event)"
-          (blur)="onBlur()"
-          dir="ltr"
-          class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-left text-xs text-slate-700 transition duration-200 focus:bg-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-slate-100 disabled:text-slate-400"
-        />
-        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-          </svg>
-        </div>
-      </div>
     </div>
   `,
   styles: [],
@@ -142,6 +122,7 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
   @Input() placeholder = 'سال-ماه-روز (مثال: 1405-02-15)';
   @Input() digitsFormat: 'persian' | 'ascii' = 'ascii';
   @Input() dateFormat: 'DD-MM-YYYY' | 'YYYY-MM-DD' = 'YYYY-MM-DD';
+  @Input() minDate?: string;
 
   readonly monthOptions = PERSIAN_MONTH_NAMES;
 
@@ -343,6 +324,16 @@ export class JalaliDatePickerComponent implements ControlValueAccessor, Validato
 
     if (hasAnyInput && !this.gregorianValue) {
       return { invalidJalaliDate: true };
+    }
+
+    if (this.minDate && this.gregorianValue) {
+      let minGreg = this.minDate;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(minGreg)) {
+        minGreg = this.persianDateService.toGregorianString(this.minDate) || this.minDate;
+      }
+      if (minGreg && this.gregorianValue < minGreg) {
+        return { pastDate: true, minDate: true };
+      }
     }
 
     return null;
