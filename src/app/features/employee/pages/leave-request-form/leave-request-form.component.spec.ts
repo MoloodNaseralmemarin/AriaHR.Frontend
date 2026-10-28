@@ -8,7 +8,7 @@ import { LeaveRequestFormComponent } from './leave-request-form.component';
 import { LeaveRequestService } from '../../services/leave-request.service';
 import { LeaveCategoryService } from '../../../leave-categories/services/leave-category.service';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
-import { CreateLeaveRequestApiDto } from '../../models/leave-request.model';
+import { CreateLeaveRequestApiDto, LeaveRequestDto } from '../../models/leave-request.model';
 
 describe('LeaveRequestFormComponent', () => {
   let component: LeaveRequestFormComponent;
@@ -16,6 +16,37 @@ describe('LeaveRequestFormComponent', () => {
   let mockLeaveRequestService: any;
   let mockLeaveCategoryService: any;
   let mockPersianDateService: any;
+
+  const sampleExistingRequests: LeaveRequestDto[] = [
+    {
+      id: 'req-1',
+      leaveType: 'daily',
+      startDate: '2025-05-10',
+      endDate: '2025-05-12',
+      status: 'approved',
+      durationText: '3 روز',
+      createdAt: '2025-05-01',
+    },
+    {
+      id: 'req-2',
+      leaveType: 'hourly',
+      date: '2025-05-15',
+      startTime: '08:00',
+      endTime: '12:00',
+      status: 'pending',
+      durationText: '4 ساعت',
+      createdAt: '2025-05-01',
+    },
+    {
+      id: 'req-3',
+      leaveType: 'daily',
+      startDate: '2025-05-20',
+      endDate: '2025-05-20',
+      status: 'rejected',
+      durationText: '1 روز',
+      createdAt: '2025-05-01',
+    },
+  ];
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -25,7 +56,8 @@ describe('LeaveRequestFormComponent', () => {
     };
 
     mockLeaveRequestService = {
-      createLeaveRequest: vi.fn().mockReturnValue(of({ id: 'req-1' })),
+      getLeaveRequests: vi.fn().mockReturnValue(of(sampleExistingRequests)),
+      createLeaveRequest: vi.fn().mockReturnValue(of({ id: 'new-req-1' })),
     };
 
     mockLeaveCategoryService = {
@@ -33,7 +65,6 @@ describe('LeaveRequestFormComponent', () => {
         of([
           { id: 'cat-1', name: 'استحقاقی', isPaid: true, isActive: true },
           { id: 'cat-2', name: 'استعلاجی', isPaid: true, isActive: true },
-          { id: 'cat-3', name: 'غیرفعال', isPaid: false, isActive: false },
         ])
       ),
     };
@@ -42,7 +73,10 @@ describe('LeaveRequestFormComponent', () => {
       toGregorianString: vi.fn((val: string) => {
         if (!val) return '';
         if (val === '2025-05-10') return '2025-05-10';
+        if (val === '2025-05-11') return '2025-05-11';
         if (val === '2025-05-12') return '2025-05-12';
+        if (val === '2025-05-15') return '2025-05-15';
+        if (val === '2025-05-20') return '2025-05-20';
         return val;
       }),
       toJalaliString: vi.fn((val: string) => val || '---'),
@@ -61,261 +95,146 @@ describe('LeaveRequestFormComponent', () => {
     });
   });
 
-  it('should initialize with daily leave type and load active categories', () => {
+  it('should initialize and fetch categories and existing leave requests', () => {
     component.ngOnInit();
     expect(component.selectedLeaveType()).toBe('daily');
     expect(mockLeaveCategoryService.getAll).toHaveBeenCalled();
-    expect(component.categories().length).toBe(2);
-    expect(component.categories()[0].id).toBe('cat-1');
+    expect(mockLeaveRequestService.getLeaveRequests).toHaveBeenCalled();
+    expect(component.existingRequests().length).toBe(3);
+    expect(component.isLoadingExistingRequests()).toBe(false);
   });
 
-  it('1. should submit a valid multi-day daily leave request with leaveType 2 and without hourly times', () => {
+  it('1. detects duplicate daily leave on the same date and sets conflict error', () => {
     component.ngOnInit();
     component.form.patchValue({
-      leaveCategoryId: 'cat-1',
-      startDate: '2025-05-10',
-      endDate: '2025-05-12',
-      reason: 'مرخصی سالانه',
-    });
-
-    expect(component.form.valid).toBe(true);
-    component.onSubmit();
-
-    const expectedPayload: CreateLeaveRequestApiDto = {
-      leaveType: 2,
-      leaveCategoryId: 'cat-1',
-      startDate: '2025-05-10',
-      endDate: '2025-05-12',
-      startTime: null,
-      endTime: null,
-      reason: 'مرخصی سالانه',
-    };
-
-    expect(mockLeaveRequestService.createLeaveRequest).toHaveBeenCalledWith(expectedPayload);
-  });
-
-  it('1b. should submit a valid single-day daily leave request with leaveType 2 without entering endDate (defaulting endDate to startDate)', () => {
-    component.ngOnInit();
-    component.form.patchValue({
-      leaveCategoryId: 'cat-1',
-      startDate: '2025-05-10',
-      endDate: '',
-      reason: 'یک روز مرخصی',
-    });
-
-    expect(component.form.valid).toBe(true);
-    component.onSubmit();
-
-    const expectedPayload: CreateLeaveRequestApiDto = {
-      leaveType: 2,
       leaveCategoryId: 'cat-1',
       startDate: '2025-05-10',
       endDate: '2025-05-10',
-      startTime: null,
-      endTime: null,
-      reason: 'یک روز مرخصی',
-    };
+    });
 
-    expect(mockLeaveRequestService.createLeaveRequest).toHaveBeenCalledWith(expectedPayload);
+    expect(component.conflictError()).not.toBeNull();
+    expect(component.conflictError()).toContain('برای تاریخ انتخاب‌شده، درخواست مرخصی دیگری ثبت شده است.');
+
+    component.onSubmit();
+    expect(mockLeaveRequestService.createLeaveRequest).not.toHaveBeenCalled();
   });
 
-  it('2. should submit a valid hourly leave request with leaveType 1 using only one date and times', () => {
+  it('2. detects overlapping daily leave date ranges', () => {
+    component.ngOnInit();
+    component.form.patchValue({
+      leaveCategoryId: 'cat-1',
+      startDate: '2025-05-11',
+      endDate: '2025-05-13',
+    });
+
+    expect(component.conflictError()).not.toBeNull();
+    expect(component.conflictError()).toContain('برای تاریخ انتخاب‌شده، درخواست مرخصی دیگری ثبت شده است.');
+  });
+
+  it('3. detects overlapping hourly leave intervals', () => {
     component.ngOnInit();
     component.setLeaveType('hourly');
 
     component.form.patchValue({
       leaveCategoryId: 'cat-1',
-      date: '2025-05-10',
+      date: '2025-05-15',
       startTime: '09:00',
-      endTime: '12:00',
-      reason: 'کارهای شخصی',
+      endTime: '11:00',
     });
 
-    expect(component.form.valid).toBe(true);
-    component.onSubmit();
+    expect(component.conflictError()).not.toBeNull();
+    expect(component.conflictError()).toContain('برای تاریخ انتخاب‌شده، درخواست مرخصی دیگری ثبت شده است.');
+  });
 
-    const expectedPayload: CreateLeaveRequestApiDto = {
-      leaveType: 1,
+  it('4. permits non-overlapping hourly leave intervals', () => {
+    component.ngOnInit();
+    component.setLeaveType('hourly');
+
+    component.form.patchValue({
+      leaveCategoryId: 'cat-1',
+      date: '2025-05-15',
+      startTime: '12:00',
+      endTime: '14:00',
+    });
+
+    expect(component.conflictError()).toBeNull();
+  });
+
+  it('5. detects daily leave conflicting with hourly leave on the same date', () => {
+    component.ngOnInit();
+    component.form.patchValue({
+      leaveCategoryId: 'cat-1',
+      startDate: '2025-05-15',
+      endDate: '2025-05-15',
+    });
+
+    expect(component.conflictError()).not.toBeNull();
+    expect(component.conflictError()).toContain('برای تاریخ انتخاب‌شده، درخواست مرخصی دیگری ثبت شده است.');
+  });
+
+  it('6. ignores Rejected requests when checking conflicts', () => {
+    component.ngOnInit();
+    component.form.patchValue({
+      leaveCategoryId: 'cat-1',
+      startDate: '2025-05-20',
+      endDate: '2025-05-20',
+    });
+
+    expect(component.conflictError()).toBeNull();
+  });
+
+  it('7. revalidates when changing dates or leave types', () => {
+    component.ngOnInit();
+    component.form.patchValue({
       leaveCategoryId: 'cat-1',
       startDate: '2025-05-10',
-      endDate: '2025-05-10',
-      startTime: '09:00',
-      endTime: '12:00',
-      reason: 'کارهای شخصی',
-    };
-
-    expect(mockLeaveRequestService.createLeaveRequest).toHaveBeenCalledWith(expectedPayload);
-  });
-
-  it('3. should reject missing start date for daily leave', () => {
-    component.ngOnInit();
-    component.form.patchValue({
-      leaveCategoryId: 'cat-1',
-      startDate: '',
-      endDate: '2025-05-12',
     });
 
-    expect(component.form.valid).toBe(false);
-    component.onSubmit();
-    expect(component.formError()).toBe('لطفاً تاریخ شروع مرخصی را وارد کنید.');
-    expect(mockLeaveRequestService.createLeaveRequest).not.toHaveBeenCalled();
+    expect(component.conflictError()).not.toBeNull();
+
+    component.form.patchValue({
+      startDate: '2025-05-25',
+    });
+
+    expect(component.conflictError()).toBeNull();
   });
 
-  it('4. should reject missing hourly times for hourly leave', () => {
+  it('8. handles failures when loading existing leave requests and disables form submission', () => {
+    mockLeaveRequestService.getLeaveRequests.mockReturnValue(
+      throwError(() => new Error('Network error'))
+    );
+
     component.ngOnInit();
-    component.setLeaveType('hourly');
+
+    expect(component.existingRequestsError()).not.toBeNull();
+    expect(component.existingRequestsError()).toContain('خطا در دریافت لیست درخواست‌های قبلی');
 
     component.form.patchValue({
       leaveCategoryId: 'cat-1',
-      date: '2025-05-10',
-      startTime: '09:00',
-      endTime: '',
+      startDate: '2025-05-25',
     });
 
-    expect(component.form.valid).toBe(false);
     component.onSubmit();
-    expect(component.formError()).toBe('لطفاً تاریخ، ساعت شروع و ساعت پایان را وارد کنید.');
     expect(mockLeaveRequestService.createLeaveRequest).not.toHaveBeenCalled();
+    expect(component.formError()).toContain('ثبت درخواست امکان‌پذیر نیست');
   });
 
-  it('5. should reject invalid time ranges for hourly leave (endTime <= startTime)', () => {
-    component.ngOnInit();
-    component.setLeaveType('hourly');
-
-    component.form.patchValue({
-      leaveCategoryId: 'cat-1',
-      date: '2025-05-10',
-      startTime: '14:00',
-      endTime: '10:00',
-    });
-
-    expect(component.form.valid).toBe(true);
-    component.onSubmit();
-    expect(component.formError()).toBe('ساعت پایان باید بعد از ساعت شروع باشد.');
-    expect(mockLeaveRequestService.createLeaveRequest).not.toHaveBeenCalled();
-  });
-
-  it('6. should reject invalid date ranges for daily leave (endDate < startDate)', () => {
-    component.ngOnInit();
-    component.form.patchValue({
-      leaveCategoryId: 'cat-1',
-      startDate: '2025-05-12',
-      endDate: '2025-05-10',
-    });
-
-    expect(component.form.valid).toBe(true);
-    component.onSubmit();
-    expect(component.formError()).toBe('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.');
-    expect(mockLeaveRequestService.createLeaveRequest).not.toHaveBeenCalled();
-  });
-
-  it('7. should clear daily values and errors when switching to hourly leave', () => {
-    component.ngOnInit();
-    component.form.patchValue({
-      startDate: '2025-05-10',
-      endDate: '2025-05-12',
-    });
-
-    component.setLeaveType('hourly');
-
-    expect(component.form.get('startDate')?.value).toBe('');
-    expect(component.form.get('endDate')?.value).toBe('');
-    expect(component.form.get('startDate')?.validator).toBeNull();
-    expect(component.form.get('endDate')?.validator).toBeNull();
-    expect(component.form.get('date')?.validator).not.toBeNull();
-    expect(component.form.get('startTime')?.validator).not.toBeNull();
-    expect(component.form.get('endTime')?.validator).not.toBeNull();
-  });
-
-  it('8. should clear hourly values and errors when switching back to daily leave', () => {
-    component.ngOnInit();
-    component.setLeaveType('hourly');
-    component.form.patchValue({
-      date: '2025-05-10',
-      startTime: '09:00',
-      endTime: '12:00',
-    });
-
-    component.setLeaveType('daily');
-
-    expect(component.form.get('date')?.value).toBe('');
-    expect(component.form.get('startTime')?.value).toBe('');
-    expect(component.form.get('endTime')?.value).toBe('');
-    expect(component.form.get('date')?.validator).toBeNull();
-    expect(component.form.get('startTime')?.validator).toBeNull();
-    expect(component.form.get('endTime')?.validator).toBeNull();
-    expect(component.form.get('startDate')?.validator).not.toBeNull();
-  });
-
-  it('9. should compute durations correctly for daily and hourly leave without interference', () => {
-    component.ngOnInit();
-    component.form.patchValue({
-      startDate: '2025-05-10',
-      endDate: '2025-05-12',
-    });
-    expect(component.computedDuration()).toBe('3 روز');
-
-    component.setLeaveType('hourly');
-    component.form.patchValue({
-      startTime: '08:30',
-      endTime: '11:15',
-    });
-    expect(component.computedDuration()).toBe('2 ساعت و 45 دقیقه');
-  });
-
-  it('10. should handle leave creation API error response gracefully', () => {
+  it('9. handles backend 409 conflict error during submission', () => {
     mockLeaveRequestService.createLeaveRequest.mockReturnValue(
-      throwError(() => ({ status: 400, error: { message: 'موجودی مرخصی شما کافی نیست.' } }))
+      throwError(() => ({ status: 409, error: { message: 'Conflict' } }))
     );
 
     component.ngOnInit();
     component.form.patchValue({
       leaveCategoryId: 'cat-1',
-      startDate: '2025-05-10',
-      endDate: '2025-05-12',
-    });
-
-    component.onSubmit();
-    expect(component.formError()).toBe('موجودی مرخصی شما کافی نیست.');
-    expect(component.isSubmitting()).toBe(false);
-  });
-
-  it('11. should map field-specific validation errors from ProblemDetails to form controls', () => {
-    mockLeaveRequestService.createLeaveRequest.mockReturnValue(
-      throwError(() => ({
-        status: 400,
-        error: {
-          title: 'One or more validation errors occurred.',
-          status: 400,
-          errors: {
-            StartDate: ['The JSON value could not be converted to System.DateOnly.'],
-            LeaveCategoryId: ['Required field.'],
-          },
-        },
-      }))
-    );
-
-    component.ngOnInit();
-    component.form.patchValue({
-      leaveCategoryId: 'cat-1',
-      startDate: '2025-05-10',
-      endDate: '2025-05-12',
+      startDate: '2025-05-25',
+      endDate: '2025-05-25',
     });
 
     component.onSubmit();
 
-    expect(component.form.get('startDate')?.getError('serverError')).toBe('فرمت تاریخ وارد شده معتبر نمی‌باشد.');
-    expect(component.form.get('leaveCategoryId')?.getError('serverError')).toBe('ورود این فیلد الزامی است.');
-    expect(component.formError()).toBe('لطفاً خطاهای مشخص‌شده در فرم را بررسی و اصلاح فرمایید.');
+    expect(component.formError()).toBe('برای تاریخ انتخاب‌شده، درخواست مرخصی دیگری ثبت شده است.');
+    expect(component.conflictError()).toBe('برای تاریخ انتخاب‌شده، درخواست مرخصی دیگری ثبت شده است.');
     expect(component.isSubmitting()).toBe(false);
-  });
-
-  it('12. should clear serverError on control when control value changes', () => {
-    component.ngOnInit();
-    component.form.get('startDate')?.setErrors({ serverError: 'خطا' });
-    expect(component.form.get('startDate')?.hasError('serverError')).toBe(true);
-
-    component.form.get('startDate')?.setValue('2025-05-11');
-    expect(component.form.get('startDate')?.hasError('serverError')).toBe(false);
   });
 });

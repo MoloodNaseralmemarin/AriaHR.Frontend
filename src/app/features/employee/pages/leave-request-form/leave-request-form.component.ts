@@ -10,8 +10,9 @@ import { PersianDateService } from '../../../../core/services/persian-date.servi
 import { LeaveRequestService } from '../../services/leave-request.service';
 import { LeaveCategoryService } from '../../../leave-categories/services/leave-category.service';
 import { LeaveCategoryDto } from '../../../leave-categories/models/leave-category.dto';
-import { CreateLeaveRequestApiDto, LeaveType } from '../../models/leave-request.model';
+import { CreateLeaveRequestApiDto, LeaveRequestDto, LeaveType } from '../../models/leave-request.model';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { findLeaveConflict } from '../../utils/leave-conflict.validator';
 
 @Component({
   selector: 'app-leave-request-form',
@@ -45,6 +46,14 @@ export class LeaveRequestFormComponent implements OnInit {
   readonly categories = signal<LeaveCategoryDto[]>([]);
   readonly isLoadingCategories = signal<boolean>(false);
   readonly categoriesError = signal<string | null>(null);
+
+  // Existing Leave Requests state for conflict validation
+  readonly existingRequests = signal<LeaveRequestDto[]>([]);
+  readonly isLoadingExistingRequests = signal<boolean>(false);
+  readonly existingRequestsError = signal<string | null>(null);
+
+  // Conflict validation state
+  readonly conflictError = signal<string | null>(null);
 
   // Computed options for app-custom-select
   readonly categoryOptions = computed<SelectOption[]>(() => {
@@ -139,9 +148,10 @@ export class LeaveRequestFormComponent implements OnInit {
   });
 
   constructor() {
-    // Listen to form value changes to clear server errors when modified
+    // Listen to form value changes for character count, clearing server errors, and live conflict revalidation
     this.form.valueChanges.subscribe((val) => {
       this.reasonLength.set((val.reason || '').length);
+      this.revalidateConflicts();
     });
 
     Object.keys(this.form.controls).forEach((ctrlName) => {
@@ -158,6 +168,7 @@ export class LeaveRequestFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCategories();
+    this.loadExistingRequests();
   }
 
   loadCategories(): void {
@@ -179,6 +190,79 @@ export class LeaveRequestFormComponent implements OnInit {
         }
       },
     });
+  }
+
+  loadExistingRequests(): void {
+    this.isLoadingExistingRequests.set(true);
+    this.existingRequestsError.set(null);
+
+    this.leaveRequestService.getLeaveRequests().subscribe({
+      next: (requests) => {
+        this.existingRequests.set(requests || []);
+        this.isLoadingExistingRequests.set(false);
+        this.revalidateConflicts();
+      },
+      error: () => {
+        this.isLoadingExistingRequests.set(false);
+        this.existingRequestsError.set('خطا در دریافت لیست درخواست‌های قبلی. برای اطمینان از عدم تداخل، دریافت اطلاعات الزامی است.');
+      },
+    });
+  }
+
+  /**
+   * Performs client-side revalidation against existing leave requests.
+   */
+  revalidateConflicts(): void {
+    // If requests are loading or failed to load, don't perform conflict check here
+    if (this.isLoadingExistingRequests() || this.existingRequestsError()) {
+      return;
+    }
+
+    const type = this.selectedLeaveType();
+    const formVal = this.form.value;
+
+    let candidateStart: string | null = null;
+    let candidateEnd: string | null = null;
+    let candidateDate: string | null = null;
+    let candidateStartTime: string | null = null;
+    let candidateEndTime: string | null = null;
+
+    if (type === 'daily') {
+      if (!formVal.startDate) {
+        this.conflictError.set(null);
+        return;
+      }
+      candidateStart = this.toGregorian(formVal.startDate);
+      candidateEnd = this.toGregorian(formVal.endDate || formVal.startDate);
+    } else {
+      if (!formVal.date || !formVal.startTime || !formVal.endTime) {
+        this.conflictError.set(null);
+        return;
+      }
+      candidateDate = this.toGregorian(formVal.date);
+      candidateStartTime = formVal.startTime;
+      candidateEndTime = formVal.endTime;
+    }
+
+    const conflictResult = findLeaveConflict(
+      {
+        leaveType: type,
+        startDate: candidateStart,
+        endDate: candidateEnd,
+        date: candidateDate,
+        startTime: candidateStartTime,
+        endTime: candidateEndTime,
+      },
+      this.existingRequests(),
+      undefined,
+      this.persianDateService
+    );
+
+    if (conflictResult.hasConflict) {
+      this.conflictError.set(conflictResult.conflictMessage || 'برای تاریخ انتخاب‌شده، درخواست مرخصی دیگری ثبت شده است.');
+    } else {
+      this.conflictError.set(null);
+    }
   }
 
   setLeaveType(type: LeaveType) {
@@ -219,10 +303,33 @@ export class LeaveRequestFormComponent implements OnInit {
         ctrl.updateValueAndValidity({ emitEvent: false });
       }
     });
+
+    this.revalidateConflicts();
   }
 
   onSubmit() {
     if (this.isSubmitting()) {
+      return;
+    }
+
+    // Block submission if existing requests failed to load
+    if (this.existingRequestsError()) {
+      this.formError.set('به علت عدم دریافت لیست درخواست‌های قبلی، ثبت درخواست امکان‌پذیر نیست. لطفاً مجدداً تلاش کنید.');
+      return;
+    }
+
+    // Block submission if currently loading existing requests
+    if (this.isLoadingExistingRequests()) {
+      this.formError.set('لطفاً تا تکمیل بررسی درخواست‌های قبلی منتظر بمانید.');
+      return;
+    }
+
+    // Force conflict revalidation before submit
+    this.revalidateConflicts();
+
+    if (this.conflictError()) {
+      this.formError.set(this.conflictError());
+      this.triggerToast(this.conflictError()!, 'error');
       return;
     }
 
@@ -350,7 +457,8 @@ export class LeaveRequestFormComponent implements OnInit {
     }
 
     if (err?.status === 409) {
-      generalMessage = 'درخواست مرخصی دیگری در این بازه زمانی وجود دارد یا با قوانین کاری مغایرت دارد.';
+      generalMessage = 'برای تاریخ انتخاب‌شده، درخواست مرخصی دیگری ثبت شده است.';
+      this.conflictError.set(generalMessage);
       this.formError.set(generalMessage);
       this.triggerToast(generalMessage, 'error');
       return;
@@ -437,8 +545,8 @@ export class LeaveRequestFormComponent implements OnInit {
     if (lowerMsg.includes('insufficient balance') || lowerMsg.includes('balance')) {
       return 'موجودی مرخصی شما برای این درخواست کافی نیست.';
     }
-    if (lowerMsg.includes('overlap') || lowerMsg.includes('conflict')) {
-      return 'درخواست مرخصی هم‌پوشان با این تاریخ وجود دارد.';
+    if (lowerMsg.includes('overlap') || lowerMsg.includes('conflict') || lowerMsg.includes('duplicate')) {
+      return 'برای تاریخ انتخاب‌شده، درخواست مرخصی دیگری ثبت شده است.';
     }
 
     if (/[\u0600-\u06FF]/.test(msg)) {
