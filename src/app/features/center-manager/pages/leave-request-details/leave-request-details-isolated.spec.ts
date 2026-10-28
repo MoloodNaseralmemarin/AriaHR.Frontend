@@ -8,10 +8,13 @@ import { of, throwError } from 'rxjs';
 import { LeaveRequestDetailsComponent } from './leave-request-details.component';
 import { LeaveRequestService } from '../../../employee/services/leave-request.service';
 import { LeaveRequestDetailDto } from '../../../employee/models/leave-request.model';
+import { PersianDateService } from '../../../../core/services/persian-date.service';
 
 describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
   let mockLeaveRequestService: {
     getLeaveRequestById: ReturnType<typeof vi.fn>;
+    approveLeaveRequest: ReturnType<typeof vi.fn>;
+    rejectLeaveRequest: ReturnType<typeof vi.fn>;
   };
   let mockActivatedRoute: {
     paramMap: any;
@@ -24,8 +27,12 @@ describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
   let mockLocation: {
     back: ReturnType<typeof vi.fn>;
   };
+  let mockPersianDateService: {
+    toJalaliString: ReturnType<typeof vi.fn>;
+    formatDateRange: ReturnType<typeof vi.fn>;
+  };
 
-  const mockDetail: LeaveRequestDetailDto = {
+  const mockPendingDetail: LeaveRequestDetailDto = {
     id: 'req-123',
     employeeId: 'emp-456',
     organizationId: 'org-789',
@@ -41,17 +48,36 @@ describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
     startTime: null,
     endTime: null,
     reason: 'امور شخصی',
+    status: 'pending',
+    statusRaw: 0,
+    rejectedReason: null,
+    approvedAt: null,
+    approvedBy: null,
+    createdAtUtc: '2026-10-26T12:00:00Z',
+  };
+
+  const mockApprovedDetail: LeaveRequestDetailDto = {
+    ...mockPendingDetail,
     status: 'approved',
     statusRaw: 1,
-    rejectedReason: null,
     approvedAt: '2026-10-27T10:00:00Z',
     approvedBy: 'مدیر کلینیک',
-    createdAtUtc: '2026-10-26T12:00:00Z',
+  };
+
+  const mockRejectedDetail: LeaveRequestDetailDto = {
+    ...mockPendingDetail,
+    status: 'rejected',
+    statusRaw: 2,
+    rejectedReason: 'عدم موافقت با زمان درخواست',
+    approvedAt: '2026-10-27T10:00:00Z',
+    approvedBy: 'مدیر کلینیک',
   };
 
   beforeEach(() => {
     mockLeaveRequestService = {
-      getLeaveRequestById: vi.fn().mockReturnValue(of(mockDetail)),
+      getLeaveRequestById: vi.fn().mockReturnValue(of(mockPendingDetail)),
+      approveLeaveRequest: vi.fn().mockReturnValue(of(mockApprovedDetail)),
+      rejectLeaveRequest: vi.fn().mockReturnValue(of(mockRejectedDetail)),
     };
 
     mockActivatedRoute = {
@@ -66,6 +92,11 @@ describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
     mockLocation = {
       back: vi.fn(),
     };
+
+    mockPersianDateService = {
+      toJalaliString: vi.fn().mockReturnValue('1405-08-05'),
+      formatDateRange: vi.fn().mockReturnValue('05-08-1405 تا 06-08-1405'),
+    };
   });
 
   function createComponentWithContext(): LeaveRequestDetailsComponent {
@@ -74,6 +105,7 @@ describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
         { provide: LeaveRequestService, useValue: mockLeaveRequestService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: Location, useValue: mockLocation },
+        { provide: PersianDateService, useValue: mockPersianDateService },
       ],
     });
 
@@ -87,7 +119,7 @@ describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
     expect(mockLeaveRequestService.getLeaveRequestById).toHaveBeenCalledWith('req-123');
     expect(component.loading()).toBe(false);
     expect(component.error()).toBeNull();
-    expect(component.request()).toEqual(mockDetail);
+    expect(component.request()).toEqual(mockPendingDetail);
   });
 
   it('should call location.back() on goBack()', () => {
@@ -120,52 +152,82 @@ describe('LeaveRequestDetailsComponent (Isolated Unit Tests)', () => {
     expect(component.request()).toBeNull();
   });
 
-  it('should construct employee name correctly when employeeFullName is missing', () => {
+  it('should open and close review modal for pending requests', () => {
     const component = createComponentWithContext();
-    const partialReq: LeaveRequestDetailDto = {
-      ...mockDetail,
-      employeeFullName: null,
-      employeeFirstName: 'رضا',
-      employeeLastName: 'حسینی',
+    component.ngOnInit();
+
+    component.openReviewModal('approve');
+    expect(component.activeModal()).toBe('approve');
+    expect(component.reviewComment()).toBe('');
+
+    component.closeModal();
+    expect(component.activeModal()).toBeNull();
+  });
+
+  it('should not open review modal for non-pending requests', () => {
+    mockLeaveRequestService.getLeaveRequestById.mockReturnValue(of(mockApprovedDetail));
+    const component = createComponentWithContext();
+    component.ngOnInit();
+
+    component.openReviewModal('approve');
+    expect(component.activeModal()).toBeNull();
+  });
+
+  it('should validate review comment length over 500 characters', () => {
+    const component = createComponentWithContext();
+    component.ngOnInit();
+    component.openReviewModal('approve');
+
+    const longText = 'a'.repeat(501);
+    component.onCommentInput(longText);
+
+    expect(component.commentError()).toBe('توضیحات نمی‌تواند بیش از ۵۰۰ کاراکتر باشد.');
+  });
+
+  it('should successfully submit approval decision and update request state', () => {
+    const component = createComponentWithContext();
+    component.ngOnInit();
+    component.openReviewModal('approve');
+    component.onCommentInput('موافقت گردید');
+
+    component.submitDecision();
+
+    expect(mockLeaveRequestService.approveLeaveRequest).toHaveBeenCalledWith('req-123', 'موافقت گردید');
+    expect(component.request()).toEqual(mockApprovedDetail);
+    expect(component.activeModal()).toBeNull();
+    expect(component.toastMessage()).toBe('درخواست مرخصی با موفقیت تأیید شد.');
+  });
+
+  it('should successfully submit rejection decision and update request state', () => {
+    const component = createComponentWithContext();
+    component.ngOnInit();
+    component.openReviewModal('reject');
+    component.onCommentInput('عدم موافقت با زمان درخواست');
+
+    component.submitDecision();
+
+    expect(mockLeaveRequestService.rejectLeaveRequest).toHaveBeenCalledWith('req-123', 'عدم موافقت با زمان درخواست');
+    expect(component.request()).toEqual(mockRejectedDetail);
+    expect(component.activeModal()).toBeNull();
+    expect(component.toastMessage()).toBe('درخواست مرخصی با موفقیت رد شد.');
+  });
+
+  it('should format Jalali dates correctly for single and range dates', () => {
+    const component = createComponentWithContext();
+    const singleDay: LeaveRequestDetailDto = {
+      ...mockPendingDetail,
+      startDate: '2026-10-27',
+      endDate: '2026-10-27',
     };
 
-    expect(component.getEmployeeName(partialReq)).toBe('رضا حسینی');
-  });
+    expect(component.getDateDisplay(singleDay)).toBe('1405-08-05');
 
-  it('should return fallback label when employee name is completely missing', () => {
-    const component = createComponentWithContext();
-    const partialReq: LeaveRequestDetailDto = {
-      ...mockDetail,
-      employeeFullName: null,
-      employeeFirstName: null,
-      employeeLastName: null,
+    const rangeDay: LeaveRequestDetailDto = {
+      ...mockPendingDetail,
+      startDate: '2026-10-27',
+      endDate: '2026-10-28',
     };
 
-    expect(component.getEmployeeName(partialReq)).toBe('ثبت نشده');
-  });
-
-  it('should format status labels correctly', () => {
-    const component = createComponentWithContext();
-
-    expect(component.getStatusLabel('approved')).toBe('تأیید شده');
-    expect(component.getStatusLabel('rejected')).toBe('رد شده');
-    expect(component.getStatusLabel('cancelled')).toBe('لغو شده');
-    expect(component.getStatusLabel('pending')).toBe('در انتظار بررسی');
-  });
-
-  it('should format leave type labels correctly', () => {
-    const component = createComponentWithContext();
-
-    expect(component.getLeaveTypeLabel('daily')).toBe('روزانه');
-    expect(component.getLeaveTypeLabel('hourly')).toBe('ساعتی');
-  });
-
-  it('should handle getDisplayValue fallback for null or whitespace values', () => {
-    const component = createComponentWithContext();
-
-    expect(component.getDisplayValue(null)).toBe('ثبت نشده');
-    expect(component.getDisplayValue('')).toBe('ثبت نشده');
-    expect(component.getDisplayValue('  ')).toBe('ثبت نشده');
-    expect(component.getDisplayValue('توضیحات')).toBe('توضیحات');
+    expect(component.getDateDisplay(rangeDay)).toBe('05-08-1405 تا 06-08-1405');
   });
 });

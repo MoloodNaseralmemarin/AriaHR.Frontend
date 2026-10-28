@@ -90,6 +90,29 @@ export class LeaveRequestService {
   }
 
   /**
+   * Approves a pending leave request.
+   * Endpoint: POST /api/requests/{id}/approve
+   */
+  approveLeaveRequest(id: string, comment?: string): Observable<LeaveRequestDetailDto> {
+    const payload = { comment: comment ? comment.trim() : null };
+    return this.http.post<any>(`${this.requestsBaseUrl}/${id}/approve`, payload).pipe(
+      map((res) => this.normalizeLeaveRequestDetail(res))
+    );
+  }
+
+  /**
+   * Rejects a pending leave request.
+   * Endpoint: POST /api/requests/{id}/reject
+   */
+  rejectLeaveRequest(id: string, reason?: string): Observable<LeaveRequestDetailDto> {
+    const trimmed = reason ? reason.trim() : null;
+    const payload = { reason: trimmed, rejectedReason: trimmed };
+    return this.http.post<any>(`${this.requestsBaseUrl}/${id}/reject`, payload).pipe(
+      map((res) => this.normalizeLeaveRequestDetail(res))
+    );
+  }
+
+  /**
    * Safely normalizes raw API response objects for request details GET /api/requests/{id}
    */
   normalizeLeaveRequestDetail(raw: any): LeaveRequestDetailDto {

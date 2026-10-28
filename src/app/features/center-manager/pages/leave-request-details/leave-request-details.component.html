@@ -1,8 +1,13 @@
-<div class="space-y-6">
+<div class="space-y-6 relative">
+  <!-- Toast Feedback -->
+  <div *ngIf="toastMessage()" class="fixed top-5 left-5 z-50">
+    <app-toast [message]="toastMessage()!" [tone]="toastTone()"></app-toast>
+  </div>
+
   <!-- Page Header -->
   <app-page-header
     title="جزئیات درخواست مرخصی"
-    subtitle="مشاهده کامل اطلاعات و وضعیت درخواست مرخصی پرسنل"
+    subtitle="مشاهده کامل اطلاعات و مدیریت وضعیت درخواست مرخصی پرسنل"
   >
     <div actions class="flex items-center gap-3">
       <button
@@ -45,9 +50,9 @@
 
   <!-- Content State -->
   <div *ngIf="!loading() && !error() && request() as req" class="space-y-6">
-    <!-- Status & Primary Summary Banner -->
+    <!-- Primary Status & Action Header Banner -->
     <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-3">
           <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -55,53 +60,54 @@
               <polyline points="14 2 14 8 20 8"></polyline>
               <line x1="16" y1="13" x2="8" y2="13"></line>
               <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
           </div>
           <div>
-            <h2 class="text-base font-bold text-slate-800">
-              درخواست مرخصی {{ getLeaveTypeLabel(req.leaveType) }}
-            </h2>
-            <p class="text-xs text-slate-400 mt-0.5">
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-bold text-slate-800">
+                درخواست مرخصی {{ getLeaveTypeLabel(req.leaveType) }}
+              </h2>
+              <app-status-badge
+                [tone]="getStatusBadgeTone(req.status)"
+                [label]="getStatusLabel(req.status)"
+              ></app-status-badge>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">
               کد پیگیری: <span class="font-mono text-slate-600"><bdi dir="ltr">{{ req.id }}</bdi></span>
             </p>
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <app-status-badge
-            [tone]="getStatusBadgeTone(req.status)"
-            [label]="getStatusLabel(req.status)"
-          ></app-status-badge>
-        </div>
-      </div>
+        <!-- Action Buttons (Shown only when pending) -->
+        <div *ngIf="req.status === 'pending'" class="flex items-center gap-3 pt-2 sm:pt-0">
+          <button
+            type="button"
+            (click)="openReviewModal('reject')"
+            class="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50 hover:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            رد درخواست
+          </button>
 
-      <!-- Quick Metrics -->
-      <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
-          <span class="block text-xs font-medium text-slate-400">نام متقاضی</span>
-          <span class="mt-1 block text-sm font-bold text-slate-800">
-            {{ getEmployeeName(req) }}
-          </span>
-        </div>
-
-        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
-          <span class="block text-xs font-medium text-slate-400">نوع مرخصی</span>
-          <span class="mt-1 block text-sm font-bold text-slate-800">
-            {{ getLeaveTypeLabel(req.leaveType) }}
-          </span>
-        </div>
-
-        <div class="rounded-xl bg-slate-50 p-4 border border-slate-100">
-          <span class="block text-xs font-medium text-slate-400">دسته‌بندی مرخصی</span>
-          <span class="mt-1 block text-sm font-bold text-slate-800">
-            {{ getDisplayValue(req.leaveCategoryName) }}
-          </span>
+          <button
+            type="button"
+            (click)="openReviewModal('approve')"
+            class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            تأیید درخواست
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Main Grid Details -->
+    <!-- Main Grid Details (No duplicate metrics) -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <!-- Section 1: Employee & Information -->
       <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
@@ -128,11 +134,6 @@
             <dt class="text-slate-500">دسته‌بندی مرخصی:</dt>
             <dd class="font-medium text-slate-800">{{ getDisplayValue(req.leaveCategoryName) }}</dd>
           </div>
-
-          <div class="flex justify-between pt-3">
-            <dt class="text-slate-500">شناسه مرکز / سازمان:</dt>
-            <dd class="font-mono text-xs text-slate-700"><bdi dir="ltr">{{ getDisplayValue(req.organizationId) }}</bdi></dd>
-          </div>
         </dl>
       </div>
 
@@ -155,22 +156,9 @@
           </div>
 
           <div class="flex justify-between pt-3">
-            <dt class="text-slate-500">تاریخ شروع:</dt>
+            <dt class="text-slate-500">تاریخ:</dt>
             <dd class="font-medium text-slate-800">
-              <ng-container *ngIf="req.startDate">
-                <bdi dir="ltr">{{ req.startDate | jalali:'ascii':'YYYY-MM-DD' | persianDigits }}</bdi>
-              </ng-container>
-              <ng-container *ngIf="!req.startDate">ثبت نشده</ng-container>
-            </dd>
-          </div>
-
-          <div class="flex justify-between pt-3">
-            <dt class="text-slate-500">تاریخ پایان:</dt>
-            <dd class="font-medium text-slate-800">
-              <ng-container *ngIf="req.endDate">
-                <bdi dir="ltr">{{ req.endDate | jalali:'ascii':'YYYY-MM-DD' | persianDigits }}</bdi>
-              </ng-container>
-              <ng-container *ngIf="!req.endDate">ثبت نشده</ng-container>
+              <bdi dir="ltr">{{ getDateDisplay(req) | persianDigits }}</bdi>
             </dd>
           </div>
 
@@ -234,12 +222,88 @@
         </div>
 
         <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
-          <dt class="text-xs font-medium text-slate-400">دلیل رد (در صورت وجود):</dt>
-          <dd class="mt-1 font-semibold text-rose-700">
+          <dt class="text-xs font-medium text-slate-400">توضیحات / دلیل رد:</dt>
+          <dd class="mt-1 font-semibold" [class.text-rose-700]="req.status === 'rejected'" [class.text-slate-800]="req.status !== 'rejected'">
             {{ getDisplayValue(req.rejectedReason) }}
           </dd>
         </div>
       </dl>
+    </div>
+  </div>
+
+  <!-- Review Modal Dialog -->
+  <div *ngIf="activeModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <h3 class="text-base font-bold text-slate-800">
+          {{ activeModal() === 'approve' ? 'تأیید درخواست مرخصی' : 'رد درخواست مرخصی' }}
+        </h3>
+        <button
+          type="button"
+          (click)="closeModal()"
+          [disabled]="isSubmitting()"
+          class="text-slate-400 hover:text-slate-600 transition disabled:opacity-50"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <p class="text-sm text-slate-600">
+        {{ activeModal() === 'approve' ? 'آیا از تأیید این درخواست مرخصی اطمینان دارید؟ در صورت نیاز می‌توانید توضیحات اختیاری وارد کنید.' : 'آیا از رد این درخواست مرخصی اطمینان دارید؟ در صورت نیاز می‌توانید دلیل رد درخواست را وارد کنید.' }}
+      </p>
+
+      <div class="space-y-1.5">
+        <label for="reviewComment" class="block text-xs font-semibold text-slate-700">
+          {{ activeModal() === 'approve' ? 'توضیحات تأیید (اختیاری)' : 'دلیل رد درخواست (اختیاری)' }}
+        </label>
+        <textarea
+          id="reviewComment"
+          rows="3"
+          [ngModel]="reviewComment()"
+          (ngModelChange)="onCommentInput($event)"
+          [disabled]="isSubmitting()"
+          placeholder="توضیحات خود را اینجا بنویسید..."
+          class="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-50"
+        ></textarea>
+        <div class="flex justify-between items-center text-xs">
+          <span *ngIf="commentError()" class="text-rose-600 font-medium">{{ commentError() }}</span>
+          <span *ngIf="!commentError()" class="text-slate-400">حداکثر ۵۰۰ کاراکتر</span>
+          <span class="text-slate-400 font-mono">{{ reviewComment().length }}/500</span>
+        </div>
+      </div>
+
+      <!-- Server Error Banner inside modal -->
+      <div *ngIf="submitError()" class="rounded-xl bg-rose-50 border border-rose-100 p-3 text-xs font-medium text-rose-700">
+        {{ submitError() }}
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          (click)="closeModal()"
+          [disabled]="isSubmitting()"
+          class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        >
+          انصراف
+        </button>
+
+        <button
+          type="button"
+          (click)="submitDecision()"
+          [disabled]="isSubmitting() || !!commentError()"
+          [ngClass]="activeModal() === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500/20' : 'bg-rose-600 hover:bg-rose-700 focus:ring-rose-500/20'"
+          class="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition focus:outline-none focus:ring-2 disabled:opacity-50"
+        >
+          <svg *ngIf="isSubmitting()" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>{{ activeModal() === 'approve' ? 'تأیید نهایی' : 'رد نهایی' }}</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
