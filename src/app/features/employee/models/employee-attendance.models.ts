@@ -4,6 +4,19 @@ export interface ShiftInfoDto {
   endTime: string;
 }
 
+export interface ActiveLeaveInfoDto {
+  id: string;
+  leaveType: 'daily' | 'hourly';
+  startDate?: string;
+  endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  categoryName?: string;
+  countdownEndTimeUtc?: string | null;
+  isEffectiveToday: boolean;
+  isCurrentlyActive: boolean;
+}
+
 export interface TodayAttendanceDto {
   isCheckedIn: boolean;
   isCheckedOut: boolean;
@@ -13,6 +26,9 @@ export interface TodayAttendanceDto {
   shift?: ShiftInfoDto | null;
   status?: 'notCheckedIn' | 'checkedIn' | 'checkedOut' | string;
   workLocationName?: string | null;
+  activeLeave?: ActiveLeaveInfoDto | null;
+  isAttendanceBlockedByLeave?: boolean;
+  leaveRestrictionMessage?: string | null;
 }
 
 export interface RegisterAttendanceDto {

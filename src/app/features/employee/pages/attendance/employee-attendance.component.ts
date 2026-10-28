@@ -35,6 +35,9 @@ export class EmployeeAttendanceComponent implements OnInit {
 
   readonly errorMessage = signal<string | null>(null);
 
+  readonly isAttendanceBlocked = signal<boolean>(false);
+  readonly leaveRestrictionMessage = signal<string | null>(null);
+
   readonly lastResult = signal<RegisterAttendanceResponseDto | null>(null);
 
   private scannedQrCode: string | null = null;
@@ -50,6 +53,12 @@ export class EmployeeAttendanceComponent implements OnInit {
     this.attendanceService.getTodayAttendance().subscribe({
       next: (data) => {
         this.todayAttendance.set(data);
+        if (data.isAttendanceBlockedByLeave) {
+          this.isAttendanceBlocked.set(true);
+          this.leaveRestrictionMessage.set(
+            data.leaveRestrictionMessage || 'ثبت تردد شما در زمان مرخصی فعال امکان‌پذیر نمی‌باشد.'
+          );
+        }
         this.viewState.set('ready');
       },
       error: (err) => {
@@ -65,6 +74,15 @@ export class EmployeeAttendanceComponent implements OnInit {
 
   onStartScan(): void {
     this.errorMessage.set(null);
+
+    if (this.isAttendanceBlocked()) {
+      this.errorMessage.set(
+        this.leaveRestrictionMessage() || 'امکان ثبت حضور یا خروج در بازه مرخصی تایید شده وجود ندارد.'
+      );
+      this.viewState.set('error');
+      return;
+    }
+
     this.scannedQrCode = null;
     this.viewState.set('scanner');
   }

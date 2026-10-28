@@ -155,6 +155,47 @@ export class EmployeeDashboardComponent implements OnInit {
     }
   });
 
+  readonly activeLeaveInfo = computed(() => {
+    const att = this.todayAttendance();
+    if (att?.activeLeave) {
+      return att.activeLeave;
+    }
+
+    // Fallback search from recent approved leave requests
+    const list = this.recentLeaveRequests();
+    const approved = list.filter((r) => r.status === 'approved');
+    if (approved.length === 0) return null;
+
+    // Check for today's approved leave
+    const todayGreg = new Date().toISOString().split('T')[0];
+    const match = approved.find((r) => {
+      if (r.leaveType === 'daily') {
+        const start = r.startDate || r.date;
+        const end = r.endDate || r.startDate || r.date;
+        return start && end && todayGreg >= start && todayGreg <= end;
+      } else if (r.leaveType === 'hourly') {
+        const date = r.date || r.startDate;
+        return date === todayGreg;
+      }
+      return false;
+    });
+
+    if (!match) return null;
+
+    return {
+      id: match.id,
+      leaveType: match.leaveType,
+      startDate: match.startDate,
+      endDate: match.endDate,
+      startTime: match.startTime,
+      endTime: match.endTime,
+      categoryName: match.categoryName,
+      countdownEndTimeUtc: null,
+      isEffectiveToday: true,
+      isCurrentlyActive: true,
+    };
+  });
+
   readonly latestLeaveRequest = computed(() => {
     const list = this.recentLeaveRequests();
     return list.length > 0 ? list[0] : null;

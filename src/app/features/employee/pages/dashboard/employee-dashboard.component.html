@@ -22,6 +22,36 @@
     </div>
   </div>
 
+  <!-- Active Leave Banner (Phase 3 Requirement) -->
+  @if (activeLeaveInfo(); as activeLeave) {
+    <div class="rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-50 to-blue-50 p-5 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500 text-white shadow-xs">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <path d="M16 2v4M8 2v4M3 10h18"/>
+              <path d="m9 16 2 2 4-4"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-sky-950">
+              شما امروز مرخصی {{ activeLeave.leaveType === 'hourly' ? 'ساعتی' : 'روزانه' }} فعال دارید
+            </h3>
+            <p class="mt-0.5 text-xs text-sky-700">
+              @if (activeLeave.leaveType === 'hourly' && activeLeave.startTime && activeLeave.endTime) {
+                بازه مرخصی: <span dir="ltr" class="font-mono font-bold">{{ activeLeave.startTime | persianDigits }} تا {{ activeLeave.endTime | persianDigits }}</span>
+              } @else {
+                مرخصی روزانه ثبت‌شده برای امروز (ثبت تردد عادی در بازه مرخصی محدود می‌باشد)
+              }
+            </p>
+          </div>
+        </div>
+        <app-status-badge label="مرخصی فعال" tone="info"></app-status-badge>
+      </div>
+    </div>
+  }
+
   <!-- Summary KPI Section -->
   <section>
     <h2 class="mb-3 text-sm font-semibold text-slate-500">خلاصه وضعیت مرخصی و تردد</h2>
