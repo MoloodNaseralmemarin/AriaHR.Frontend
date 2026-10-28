@@ -64,7 +64,21 @@ export class EmployeeDashboardComponent implements OnInit, OnDestroy {
     if (approved.length === 0) return null;
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayLeave = approved.find((r) => r.startDate <= todayStr && r.endDate >= todayStr);
+    const todayLeave = approved.find((r) => {
+      if (r.leaveType === 'hourly') {
+        const reqDate = r.date || r.startDate;
+        if (!reqDate) return false;
+        const normDate = reqDate.trim().split('T')[0];
+        return normDate === todayStr;
+      }
+
+      if (!r.startDate) return false;
+      const normStart = r.startDate.trim().split('T')[0];
+      const normEnd = (r.endDate || r.startDate).trim().split('T')[0];
+      if (!normStart || !normEnd) return false;
+
+      return normStart <= todayStr && normEnd >= todayStr;
+    });
     if (!todayLeave) return null;
 
     return {
@@ -73,7 +87,7 @@ export class EmployeeDashboardComponent implements OnInit, OnDestroy {
       endDate: todayLeave.endDate,
       startTime: todayLeave.startTime || null,
       endTime: todayLeave.endTime || null,
-      leaveCategoryName: todayLeave.leaveCategoryName || null,
+      leaveCategoryName: todayLeave.categoryName || null,
     };
   });
 
