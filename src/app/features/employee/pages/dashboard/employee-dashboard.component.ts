@@ -64,16 +64,16 @@ export class EmployeeDashboardComponent implements OnInit, OnDestroy {
     if (approved.length === 0) return null;
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayLeave = approved.find((r) => r.startDate <= todayStr && r.endDate >= todayStr);
+    const todayLeave = approved.find((r) => (r.startDate ?? '') <= todayStr && (r.endDate ?? '') >= todayStr);
     if (!todayLeave) return null;
 
     return {
       isHourly: todayLeave.leaveType === 'hourly',
-      startDate: todayLeave.startDate,
-      endDate: todayLeave.endDate,
+      startDate: todayLeave.startDate ?? '',
+      endDate: todayLeave.endDate ?? '',
       startTime: todayLeave.startTime || null,
       endTime: todayLeave.endTime || null,
-      leaveCategoryName: todayLeave.leaveCategoryName || null,
+      leaveCategoryName: todayLeave.categoryName || null,
     };
   });
 
