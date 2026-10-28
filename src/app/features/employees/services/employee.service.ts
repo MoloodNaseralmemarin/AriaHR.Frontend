@@ -28,7 +28,6 @@ export class EmployeeService {
     formData.append('firstName', request.firstName);
     formData.append('lastName', request.lastName);
     formData.append('phoneNumber', request.phoneNumber);
-    if (request.email) formData.append('email', request.email);
     formData.append('personnelCode', request.personnelCode);
     formData.append('nationalCode', request.nationalCode);
     formData.append('birthDate', request.birthDate);
