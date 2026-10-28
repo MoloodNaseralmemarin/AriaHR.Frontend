@@ -6,8 +6,6 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { SummaryCardComponent } from '../../../../shared/components/summary-card/summary-card.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
-import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
 import { CenterManagerDashboardService } from '../../services/center-manager-dashboard.service';
 import { CenterManagerDashboardDto } from '../../models/center-manager-dashboard.dto';
@@ -34,8 +32,6 @@ import { attendanceStatusMap, shiftStatusMap } from '../../../../shared/utils/st
     RouterLink,
     SummaryCardComponent,
     StatusBadgeComponent,
-    EmptyStateComponent,
-    SkeletonLoaderComponent,
     PersianDigitsPipe,
   ],
   templateUrl: './dashboard.component.html',
