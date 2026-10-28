@@ -5,7 +5,7 @@ export const attendanceStatusMap: Record<AttendanceStatus, { label: string; tone
   present: { label: 'حاضر', tone: 'success' },
   late: { label: 'تأخیر', tone: 'warning' },
   absent: { label: 'غایب', tone: 'danger' },
-  onLeave: { label: 'مرخصی', tone: 'info' },
+  onLeave: { label: 'در مرخصی', tone: 'info' },
   pendingCheckIn: { label: 'در انتظار ورود', tone: 'neutral' },
 };
 

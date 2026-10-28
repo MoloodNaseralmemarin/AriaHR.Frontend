@@ -4,6 +4,15 @@ export interface ShiftInfoDto {
   endTime: string;
 }
 
+export interface ActiveLeaveInfoDto {
+  isHourly: boolean;
+  startDate?: string | null;
+  endDate?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  leaveCategoryName?: string | null;
+}
+
 export interface TodayAttendanceDto {
   isCheckedIn: boolean;
   isCheckedOut: boolean;
@@ -13,6 +22,9 @@ export interface TodayAttendanceDto {
   shift?: ShiftInfoDto | null;
   status?: 'notCheckedIn' | 'checkedIn' | 'checkedOut' | string;
   workLocationName?: string | null;
+  isAttendanceBlockedByLeave?: boolean;
+  leaveRestrictionMessage?: string | null;
+  activeLeave?: ActiveLeaveInfoDto | null;
 }
 
 export interface RegisterAttendanceDto {
@@ -29,4 +41,5 @@ export interface RegisterAttendanceResponseDto {
   checkOutTime?: string | null;
   workLocationName?: string | null;
   message?: string | null;
+  errorCode?: string | null;
 }

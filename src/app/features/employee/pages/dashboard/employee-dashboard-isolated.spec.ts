@@ -166,4 +166,52 @@ describe('EmployeeDashboardComponent (Isolated Tests)', () => {
       expect(component.getLeaveStatusTone('cancelled')).toBe('neutral');
     });
   });
+
+  it('should detect when attendance is blocked by daily leave and format message correctly', () => {
+    mockAttendanceService.getTodayAttendance.mockReturnValue(of({
+      isCheckedIn: false,
+      isCheckedOut: false,
+      isAttendanceBlockedByLeave: true,
+      leaveRestrictionMessage: 'شما امروز در مرخصی هستید و امکان ثبت تردد ندارید.',
+      activeLeave: {
+        isHourly: false,
+        startDate: '2026-03-30',
+        endDate: '2026-03-30',
+        leaveCategoryName: 'مرخصی استحقاقی',
+      },
+    } as TodayAttendanceDto));
+
+    runInInjectionContext(injector, () => {
+      const component = new EmployeeDashboardComponent();
+      component.ngOnInit();
+
+      expect(component.isAttendanceBlocked()).toBe(true);
+      expect(component.leaveRestrictionBannerMessage()).toBe('شما امروز در مرخصی هستید و امکان ثبت تردد ندارید.');
+      expect(component.activeLeaveInfo()?.leaveCategoryName).toBe('مرخصی استحقاقی');
+    });
+  });
+
+  it('should setup countdown timer when on hourly leave', () => {
+    const futureEndTime = '23:59:59';
+    mockAttendanceService.getTodayAttendance.mockReturnValue(of({
+      isCheckedIn: false,
+      isCheckedOut: false,
+      isAttendanceBlockedByLeave: true,
+      activeLeave: {
+        isHourly: true,
+        startTime: '10:00',
+        endTime: futureEndTime,
+        leaveCategoryName: 'مرخصی ساعتی',
+      },
+    } as TodayAttendanceDto));
+
+    runInInjectionContext(injector, () => {
+      const component = new EmployeeDashboardComponent();
+      component.ngOnInit();
+
+      expect(component.isAttendanceBlocked()).toBe(true);
+      expect(component.remainingCountdown()).not.toBeNull();
+      component.ngOnDestroy();
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -32,7 +32,7 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
   styleUrl: './employee-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EmployeeDashboardComponent implements OnInit {
+export class EmployeeDashboardComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly attendanceService = inject(AttendanceService);
   private readonly leaveRequestService = inject(LeaveRequestService);
@@ -46,6 +46,61 @@ export class EmployeeDashboardComponent implements OnInit {
   readonly todayAttendance = signal<TodayAttendanceDto | null>(null);
   readonly isLoadingAttendance = signal<boolean>(true);
   readonly attendanceError = signal<boolean>(false);
+
+  // Hourly leave countdown timer state
+  readonly remainingCountdown = signal<string | null>(null);
+  private countdownInterval: ReturnType<typeof setInterval> | null = null;
+
+  // Active leave computed helpers
+  readonly activeLeaveInfo = computed(() => {
+    const att = this.todayAttendance();
+    if (att && att.isAttendanceBlockedByLeave && att.activeLeave) {
+      return att.activeLeave;
+    }
+
+    // Fallback check against loaded recent leave requests if backend todayAttendance activeLeave is omitted
+    const requests = this.recentLeaveRequests();
+    const approved = requests.filter((r) => r.status === 'approved');
+    if (approved.length === 0) return null;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayLeave = approved.find((r) => r.startDate <= todayStr && r.endDate >= todayStr);
+    if (!todayLeave) return null;
+
+    return {
+      isHourly: todayLeave.leaveType === 'hourly',
+      startDate: todayLeave.startDate,
+      endDate: todayLeave.endDate,
+      startTime: todayLeave.startTime || null,
+      endTime: todayLeave.endTime || null,
+      leaveCategoryName: todayLeave.leaveCategoryName || null,
+    };
+  });
+
+  readonly isAttendanceBlocked = computed(() => {
+    const att = this.todayAttendance();
+    if (att?.isAttendanceBlockedByLeave !== undefined) {
+      return att.isAttendanceBlockedByLeave;
+    }
+    return !!this.activeLeaveInfo();
+  });
+
+  readonly leaveRestrictionBannerMessage = computed(() => {
+    const att = this.todayAttendance();
+    if (att?.leaveRestrictionMessage) {
+      return att.leaveRestrictionMessage;
+    }
+
+    const leave = this.activeLeaveInfo();
+    if (!leave) return null;
+
+    if (leave.isHourly) {
+      const timeText = leave.startTime && leave.endTime ? ` (${leave.startTime} تا ${leave.endTime})` : '';
+      return `شما در مرخصی ساعتی ${timeText} هستید و امکان ثبت تردد در این بازه وجود ندارد.`;
+    }
+
+    return 'شما امروز در مرخصی هستید و امکان ثبت تردد ندارید.';
+  });
 
   // Leave signals
   readonly leaveSummary = signal<LeaveSummaryDto | null>(null);
@@ -173,6 +228,10 @@ export class EmployeeDashboardComponent implements OnInit {
     this.loadLeaveData();
   }
 
+  ngOnDestroy(): void {
+    this.stopCountdown();
+  }
+
   loadTodayAttendance(): void {
     this.isLoadingAttendance.set(true);
     this.attendanceError.set(false);
@@ -181,6 +240,7 @@ export class EmployeeDashboardComponent implements OnInit {
       next: (data) => {
         this.todayAttendance.set(data);
         this.isLoadingAttendance.set(false);
+        this.setupHourlyLeaveTimer();
       },
       error: (err) => {
         console.error('Failed to load today attendance:', err);
@@ -188,6 +248,50 @@ export class EmployeeDashboardComponent implements OnInit {
         this.isLoadingAttendance.set(false);
       },
     });
+  }
+
+  private setupHourlyLeaveTimer(): void {
+    this.stopCountdown();
+
+    const leave = this.activeLeaveInfo();
+    if (!leave || !leave.isHourly || !leave.endTime) {
+      this.remainingCountdown.set(null);
+      return;
+    }
+
+    const updateTimer = () => {
+      const now = new Date();
+      const [endH, endM, endS] = leave.endTime!.split(':').map((v) => parseInt(v, 10) || 0);
+
+      const target = new Date(now);
+      target.setHours(endH, endM, endS || 0, 0);
+
+      const diffMs = target.getTime() - now.getTime();
+      if (diffMs <= 0) {
+        this.remainingCountdown.set('00:00:00');
+        this.stopCountdown();
+        this.loadTodayAttendance();
+        return;
+      }
+
+      const totalSec = Math.floor(diffMs / 1000);
+      const hrs = Math.floor(totalSec / 3600);
+      const mins = Math.floor((totalSec % 3600) / 60);
+      const secs = totalSec % 60;
+
+      const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+      this.remainingCountdown.set(`${pad(hrs)}:${pad(mins)}:${pad(secs)}`);
+    };
+
+    updateTimer();
+    this.countdownInterval = setInterval(updateTimer, 1000);
+  }
+
+  private stopCountdown(): void {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+      this.countdownInterval = null;
+    }
   }
 
   loadLeaveData(): void {
