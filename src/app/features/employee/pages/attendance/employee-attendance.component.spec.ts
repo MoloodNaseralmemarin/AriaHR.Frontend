@@ -167,4 +167,25 @@ describe('EmployeeAttendanceComponent (Isolated Unit Tests)', () => {
     expect(component.viewState()).toBe('error');
     expect(component.errorMessage()).toBe('QR منقضی شده است. لطفاً QR جدید محل کار را اسکن کنید.');
   });
+
+  it('should handle ATTENDANCE_BLOCKED_BY_APPROVED_LEAVE API error gracefully', () => {
+    (component as any).scannedQrCode = 'leave-blocked-qr';
+    mockAttendanceService.getTodayAttendance.mockReturnValue(of({ isCheckedIn: false, isCheckedOut: false }));
+
+    mockAttendanceService.registerAttendance.mockReturnValue(
+      throwError(() => ({
+        status: 400,
+        error: {
+          errorCode: 'ATTENDANCE_BLOCKED_BY_APPROVED_LEAVE',
+          message: 'شما در مرخصی هستید.',
+        },
+      }))
+    );
+
+    (component as any).submitAttendance(35.6892, 51.389);
+
+    expect(component.viewState()).toBe('error');
+    expect(component.errorMessage()).toBe('شما در مرخصی هستید.');
+    expect(mockAttendanceService.getTodayAttendance).toHaveBeenCalled();
+  });
 });

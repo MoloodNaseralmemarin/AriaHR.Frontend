@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { PersianDateService } from '../../../../core/services/persian-date.service';
@@ -36,6 +36,16 @@ export class EmployeeAttendanceComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   readonly lastResult = signal<RegisterAttendanceResponseDto | null>(null);
+
+  readonly isAttendanceBlocked = computed(() => {
+    return !!this.todayAttendance()?.isAttendanceBlockedByLeave;
+  });
+
+  readonly leaveRestrictionMessage = computed(() => {
+    const customMsg = this.todayAttendance()?.leaveRestrictionMessage;
+    if (customMsg) return customMsg;
+    return 'امکان ثبت حضور و غیاب در زمان مرخصی وجود ندارد.';
+  });
 
   private scannedQrCode: string | null = null;
 
@@ -162,11 +172,15 @@ export class EmployeeAttendanceComponent implements OnInit {
     let message = 'ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.';
 
     if (err && typeof err === 'object') {
-      const httpErr = err as { status?: number; error?: { message?: string; code?: string } };
+      const httpErr = err as { status?: number; error?: { message?: string; errorCode?: string; code?: string } };
       const status = httpErr.status;
+      const errorCode = httpErr.error?.errorCode || httpErr.error?.code || '';
       const backendMsg = httpErr.error?.message || '';
 
-      if (status === 400 || status === 422) {
+      if (errorCode === 'ATTENDANCE_BLOCKED_BY_APPROVED_LEAVE' || backendMsg.includes('مرخصی')) {
+        message = backendMsg || 'امکان ثبت حضور و غیاب در زمان مرخصی وجود ندارد.';
+        this.loadTodayAttendance();
+      } else if (status === 400 || status === 422) {
         if (backendMsg.includes('expired') || backendMsg.includes('منقضی')) {
           message = 'QR منقضی شده است. لطفاً QR جدید محل کار را اسکن کنید.';
         } else if (backendMsg.includes('outside') || backendMsg.includes('محدوده')) {
