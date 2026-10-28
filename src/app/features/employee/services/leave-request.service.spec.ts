@@ -115,4 +115,45 @@ describe('LeaveRequestService', () => {
     expect(normalized.leaveType).toBe('hourly');
     expect(normalized.durationText).toBe('2 ساعت و 30 دقیقه');
   });
+
+  it('should approve leave request via POST /api/requests/{id}/approve', () => {
+    const rawResponse = {
+      id: 'req-123',
+      status: 1,
+      approvedBy: 'مدیر کلینیک',
+      approvedAt: '2026-10-27T10:00:00Z',
+    };
+    httpClientMock.post.mockReturnValue(of(rawResponse));
+
+    service.approveLeaveRequest('req-123', 'موافقت شد').subscribe((res) => {
+      expect(res.id).toBe('req-123');
+      expect(res.status).toBe('approved');
+      expect(res.approvedBy).toBe('مدیر کلینیک');
+    });
+
+    expect(httpClientMock.post).toHaveBeenCalledWith(
+      `${environment.apiUrl}/api/requests/req-123/approve`,
+      { comment: 'موافقت شد' }
+    );
+  });
+
+  it('should reject leave request via POST /api/requests/{id}/reject', () => {
+    const rawResponse = {
+      id: 'req-123',
+      status: 2,
+      rejectedReason: 'عدم حضور جایگزین',
+    };
+    httpClientMock.post.mockReturnValue(of(rawResponse));
+
+    service.rejectLeaveRequest('req-123', 'عدم حضور جایگزین').subscribe((res) => {
+      expect(res.id).toBe('req-123');
+      expect(res.status).toBe('rejected');
+      expect(res.rejectedReason).toBe('عدم حضور جایگزین');
+    });
+
+    expect(httpClientMock.post).toHaveBeenCalledWith(
+      `${environment.apiUrl}/api/requests/req-123/reject`,
+      { reason: 'عدم حضور جایگزین', rejectedReason: 'عدم حضور جایگزین' }
+    );
+  });
 });

@@ -373,4 +373,23 @@ export class PersianDateService {
 
     return `${gyStr}-${gmStr}-${gdStr}`;
   }
+
+  /**
+   * Formats a start and end Jalali date range into `DD-MM-YYYY تا DD-MM-YYYY` format with ASCII digits.
+   * Example: "05-08-1405 تا 06-08-1405"
+   */
+  formatDateRange(startDateStr: string | null | undefined, endDateStr: string | null | undefined): string {
+    if (!startDateStr && !endDateStr) return 'ثبت نشده';
+    const startJalali = this.toJalaliString(startDateStr, false, 'DD-MM-YYYY');
+    const endJalali = this.toJalaliString(endDateStr, false, 'DD-MM-YYYY');
+
+    if (startJalali && endJalali) {
+      if (startJalali === endJalali) {
+        return startJalali;
+      }
+      return `${startJalali} تا ${endJalali}`;
+    }
+
+    return startJalali || endJalali || 'ثبت نشده';
+  }
 }

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 import { LeaveRequestService } from '../../../employee/services/leave-request.service';
 import { LeaveRequestDetailDto } from '../../../employee/models/leave-request.model';
@@ -8,19 +9,25 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { BadgeTone, StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ToastComponent, ToastTone } from '../../../../shared/components/toast/toast.component';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
 import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
+import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { formatTimeRange } from '../../../../shared/utils/time.util';
+
+export type ReviewActionType = 'approve' | 'reject';
 
 @Component({
   selector: 'app-leave-request-details',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     PageHeaderComponent,
     StatusBadgeComponent,
     SkeletonLoaderComponent,
     EmptyStateComponent,
+    ToastComponent,
     PersianDigitsPipe,
     JalaliPipe,
   ],
@@ -32,10 +39,24 @@ export class LeaveRequestDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly leaveRequestService = inject(LeaveRequestService);
   private readonly location = inject(Location);
+  private readonly dateService = inject(PersianDateService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly request = signal<LeaveRequestDetailDto | null>(null);
+
+  // Review modal state
+  readonly activeModal = signal<ReviewActionType | null>(null);
+  readonly isSubmitting = signal(false);
+  readonly reviewComment = signal('');
+  readonly commentError = signal<string | null>(null);
+  readonly submitError = signal<string | null>(null);
+
+  // Toast state
+  readonly toastMessage = signal<string | null>(null);
+  readonly toastTone = signal<ToastTone>('success');
+
+  private toastTimeout: any;
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(() => {
@@ -78,6 +99,92 @@ export class LeaveRequestDetailsComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  openReviewModal(action: ReviewActionType): void {
+    const current = this.request();
+    if (!current || current.status !== 'pending') {
+      return;
+    }
+    this.activeModal.set(action);
+    this.reviewComment.set('');
+    this.commentError.set(null);
+    this.submitError.set(null);
+  }
+
+  closeModal(): void {
+    if (this.isSubmitting()) return;
+    this.activeModal.set(null);
+    this.reviewComment.set('');
+    this.commentError.set(null);
+    this.submitError.set(null);
+  }
+
+  onCommentInput(val: string): void {
+    this.reviewComment.set(val);
+    if (val.length > 500) {
+      this.commentError.set('توضیحات نمی‌تواند بیش از ۵۰۰ کاراکتر باشد.');
+    } else {
+      this.commentError.set(null);
+    }
+  }
+
+  submitDecision(): void {
+    const action = this.activeModal();
+    const current = this.request();
+
+    if (!action || !current || current.status !== 'pending' || this.isSubmitting()) {
+      return;
+    }
+
+    const commentVal = this.reviewComment().trim();
+
+    if (commentVal.length > 500) {
+      this.commentError.set('توضیحات نمی‌تواند بیش از ۵۰۰ کاراکتر باشد.');
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    this.submitError.set(null);
+
+    if (action === 'approve') {
+      this.leaveRequestService.approveLeaveRequest(current.id, commentVal).subscribe({
+        next: (updated) => {
+          this.request.set(updated);
+          this.isSubmitting.set(false);
+          this.activeModal.set(null);
+          this.showToast('درخواست مرخصی با موفقیت تأیید شد.', 'success');
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          const msg = err?.error?.message || err?.error?.title || 'خطا در ثبت تأیید درخواست. لطفاً مجدداً تلاش کنید.';
+          this.submitError.set(msg);
+        },
+      });
+    } else if (action === 'reject') {
+      this.leaveRequestService.rejectLeaveRequest(current.id, commentVal).subscribe({
+        next: (updated) => {
+          this.request.set(updated);
+          this.isSubmitting.set(false);
+          this.activeModal.set(null);
+          this.showToast('درخواست مرخصی با موفقیت رد شد.', 'success');
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          const msg = err?.error?.message || err?.error?.title || 'خطا در ثبت رد درخواست. لطفاً مجدداً تلاش کنید.';
+          this.submitError.set(msg);
+        },
+      });
+    }
+  }
+
+  showToast(msg: string, tone: ToastTone = 'success'): void {
+    this.toastMessage.set(msg);
+    this.toastTone.set(tone);
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastTimeout = setTimeout(() => {
+      this.toastMessage.set(null);
+    }, 4000);
   }
 
   getDisplayValue(value: string | null | undefined): string {
@@ -136,8 +243,15 @@ export class LeaveRequestDetailsComponent implements OnInit {
     return formatTimeRange(startTime, endTime);
   }
 
-  formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return 'ثبت نشده';
-    return dateStr;
+  getDateDisplay(req: LeaveRequestDetailDto): string {
+    if (req.leaveType === 'hourly') {
+      return req.startDate ? this.dateService.toJalaliString(req.startDate) : 'ثبت نشده';
+    }
+
+    if (req.startDate && req.endDate && req.startDate !== req.endDate) {
+      return this.dateService.formatDateRange(req.startDate, req.endDate);
+    }
+
+    return req.startDate ? this.dateService.toJalaliString(req.startDate) : 'ثبت نشده';
   }
 }

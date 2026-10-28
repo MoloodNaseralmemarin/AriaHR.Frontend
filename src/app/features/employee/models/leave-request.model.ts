@@ -52,6 +52,15 @@ export interface LeaveSummaryDto {
 /**
  * Detailed leave request response DTO returned from GET /api/requests/{id}
  */
+export interface ApproveLeaveRequestDto {
+  comment?: string | null;
+}
+
+export interface RejectLeaveRequestDto {
+  reason?: string | null;
+  rejectedReason?: string | null;
+}
+
 export interface LeaveRequestDetailDto {
   id: string;
   employeeId: string;
