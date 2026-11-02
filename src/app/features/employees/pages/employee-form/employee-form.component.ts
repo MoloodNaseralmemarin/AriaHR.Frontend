@@ -35,7 +35,6 @@ export type EmployeeFormControlName =
   | 'firstName'
   | 'lastName'
   | 'phoneNumber'
-  | 'email'
   | 'personnelCode'
   | 'nationalCode'
   | 'birthDate'
@@ -97,7 +96,6 @@ export class EmployeeFormComponent implements OnInit {
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     phoneNumber: ['', [Validators.required, iranianMobileValidator]],
-    email: ['', [Validators.email]],
     personnelCode: ['', Validators.required],
     nationalCode: ['', [Validators.required, nationalCodeValidator]],
     birthDate: ['', Validators.required],
@@ -126,7 +124,6 @@ export class EmployeeFormComponent implements OnInit {
       'phoneNumber',
       'nationalCode',
       'personnelCode',
-      'email',
     ];
 
     fields.forEach((fieldName) => {
@@ -151,7 +148,6 @@ export class EmployeeFormComponent implements OnInit {
       { keyword: 'شماره موبایل', controlName: 'phoneNumber' },
       { keyword: 'کد ملی', controlName: 'nationalCode' },
       { keyword: 'کد پرسنلی', controlName: 'personnelCode' },
-      { keyword: 'ایمیل', controlName: 'email' },
     ];
 
     const errorsList: string[] = [];
@@ -210,7 +206,6 @@ export class EmployeeFormComponent implements OnInit {
           firstName: firstName,
           lastName: lastName,
           phoneNumber: employee.phoneNumber ? toPersianDigits(employee.phoneNumber) : '',
-          email: employee.email || '',
           personnelCode: employee.personnelCode ? toPersianDigits(employee.personnelCode) : '',
           nationalCode: employee.nationalCode ? toPersianDigits(employee.nationalCode) : '',
           birthDate: employee.birthDate ? employee.birthDate.substring(0, 10) : '',
@@ -323,7 +318,6 @@ export class EmployeeFormComponent implements OnInit {
     const normalizedPhone = normalizeMobileNumber(raw.phoneNumber);
     const normalizedNationalCode = normalizeMobileNumber(raw.nationalCode);
     const normalizedPersonnelCode = normalizePersianDigits(raw.personnelCode).trim();
-    const emailVal = raw.email.trim() ? raw.email.trim() : null;
     const genderVal = raw.gender ? raw.gender : null;
 
     if (this.isEditMode() && this.employeeId) {
@@ -357,7 +351,6 @@ export class EmployeeFormComponent implements OnInit {
         firstName: raw.firstName.trim(),
         lastName: raw.lastName.trim(),
         phoneNumber: normalizedPhone,
-        email: emailVal,
         personnelCode: normalizedPersonnelCode,
         nationalCode: normalizedNationalCode,
         birthDate: raw.birthDate,

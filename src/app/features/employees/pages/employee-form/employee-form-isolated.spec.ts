@@ -71,7 +71,7 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
     expect(comp.form.controls.phoneNumber.value).toBe('۰۹۱۲۱۲۳۴۵۶۷');
   });
 
-  it('should create employee with unselected gender (gender = null) and empty email (email = null)', () => {
+  it('should create employee with unselected gender (gender = null) without email field', () => {
     const comp = createComponent();
     comp.ngOnInit();
 
@@ -79,7 +79,6 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
       firstName: 'علی',
       lastName: 'محمدی',
       phoneNumber: '۰۹۱۲۱۲۳۴۵۶۷',
-      email: '',
       personnelCode: '۱۰-۰۴',
       nationalCode: '۱۲۳۴۵۶۷۸۹۰',
       birthDate: '1990-01-01',
@@ -92,7 +91,6 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
 
     expect(mockEmployeeService.createEmployee).toHaveBeenCalledWith(
       expect.objectContaining({
-        email: null,
         gender: null,
         phoneNumber: '09121234567',
         personnelCode: '10-04',
@@ -102,7 +100,7 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
     );
   });
 
-  it('should update employee with unselected gender (gender = undefined/null) and empty email', () => {
+  it('should update employee with unselected gender (gender = undefined/null)', () => {
     const comp = createComponent();
     comp.ngOnInit();
     comp.isEditMode.set(true);
@@ -129,23 +127,6 @@ describe('EmployeeFormComponent (Isolated Unit Tests)', () => {
         removeProfileImage: false,
       })
     );
-  });
-
-  it('should validate email format when non-empty string is provided', () => {
-    const comp = createComponent();
-    comp.ngOnInit();
-
-    comp.form.patchValue({
-      email: 'invalid-email-string',
-    });
-
-    expect(comp.form.controls.email.invalid).toBe(true);
-    expect(comp.form.controls.email.errors?.['email']).toBe(true);
-
-    comp.form.patchValue({
-      email: 'valid@example.com',
-    });
-    expect(comp.form.controls.email.valid).toBe(true);
   });
 
   it('should create employee with selected image file', () => {
