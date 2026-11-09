@@ -1,0 +1,54 @@
+<div
+  role="status"
+  aria-live="polite"
+  dir="rtl"
+  lang="fa"
+  class="fixed inset-0 z-[9999] flex flex-col items-center justify-between bg-slate-50 text-slate-900 transition-opacity duration-300"
+  [class.opacity-0]="pwaStartupService.isSplashFading()"
+  [class.pointer-events-none]="pwaStartupService.isSplashFading()"
+  style="padding-top: max(1.5rem, env(safe-area-inset-top)); padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right));"
+>
+  <!-- Top decorative spacer -->
+  <div class="h-6 w-full" aria-hidden="true"></div>
+
+  <!-- Center Branding -->
+  <div class="flex flex-col items-center text-center animate-fade-in px-4">
+    <!-- Brand Logo Card with Subtle Elevation -->
+    <div
+      class="mb-6 flex items-center justify-center p-4 bg-white rounded-3xl shadow-sm border border-slate-200/80 ring-4 ring-slate-100"
+      aria-hidden="true"
+    >
+      <img
+        src="/assets/logo/logo.png"
+        alt="AriaHR"
+        class="h-14 w-14 object-contain select-none"
+        priority
+      />
+    </div>
+
+    <!-- Application Persian Title -->
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl leading-snug">
+      حضور و غیاب هوشمند آریا
+    </h1>
+
+    <!-- Application Subtitle -->
+    <p class="mt-2 text-sm font-medium text-slate-500 sm:text-base">
+      سامانه هوشمند مدیریت پرسنل و تردد
+    </p>
+
+    <!-- Subtle, Elegant Loading Animation -->
+    <div class="mt-8 flex flex-col items-center gap-3">
+      <div
+        class="h-7 w-7 rounded-full border-3 border-slate-200 border-t-blue-600 animate-spin"
+        aria-hidden="true"
+      ></div>
+      <span class="text-xs font-medium text-slate-400">در حال راه‌اندازی سامانه...</span>
+    </div>
+  </div>
+
+  <!-- Bottom Brand & Version Footer -->
+  <div class="flex flex-col items-center gap-1 text-center" aria-hidden="true">
+    <span class="text-xs font-semibold text-slate-400 tracking-wider">AriaHR Enterprise</span>
+    <div class="h-1 w-12 rounded-full bg-slate-200"></div>
+  </div>
+</div>

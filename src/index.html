@@ -1,13 +1,116 @@
 <!doctype html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <title>حضور وغیاب هوشمند آریا</title>
+  <title>حضور و غیاب هوشمند آریا</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="manifest" href="/manifest.webmanifest">
+
+  <!-- iOS PWA meta tags & Safe Area configuration -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="آریا اچ‌آر">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="apple-touch-icon" href="/assets/logo/logo.png">
+
+  <!-- Zero-flash inline splash screen styles before Angular loads -->
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      height: 100%;
+      overflow-x: hidden;
+    }
+    #initial-splash-placeholder {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      box-sizing: border-box;
+    }
+    .splash-logo-box {
+      background-color: #ffffff;
+      padding: 18px;
+      border-radius: 24px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .splash-logo-img {
+      width: 56px;
+      height: 56px;
+      object-fit: contain;
+    }
+    .splash-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 6px 0;
+      text-align: center;
+    }
+    .splash-subtitle {
+      font-size: 13px;
+      font-weight: 500;
+      color: #64748b;
+      margin: 0;
+      text-align: center;
+    }
+    .splash-spinner {
+      margin-top: 36px;
+      width: 28px;
+      height: 28px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: splash-spin 0.8s linear infinite;
+    }
+    @keyframes splash-spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-  <app-root></app-root>
+  <app-root>
+    <div id="initial-splash-placeholder" aria-hidden="true">
+      <div class="splash-logo-box">
+        <img src="/assets/logo/logo.png" alt="AriaHR" class="splash-logo-img" width="56" height="56">
+      </div>
+      <h1 class="splash-title">حضور و غیاب هوشمند آریا</h1>
+      <p class="splash-subtitle">سامانه هوشمند مدیریت پرسنل</p>
+      <div class="splash-spinner"></div>
+    </div>
+  </app-root>
+
+  <!-- Register Service Worker safely if supported -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js').catch(function(err) {
+          console.warn('[PWA] Service worker registration failed:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
