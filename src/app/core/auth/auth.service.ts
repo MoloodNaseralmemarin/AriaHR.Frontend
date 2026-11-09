@@ -223,6 +223,29 @@ AuthService {
       localStorage.removeItem(USER_KEY);
       localStorage.removeItem(CURRENT_USER_KEY);
     }
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+      sessionStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem(CURRENT_USER_KEY);
+    }
+  }
+
+  /**
+   * Performs an immediate, synchronous cleanup of all authentication data on PWA cold restart,
+   * firing a non-blocking best-effort logout request to the backend if an active token was present.
+   */
+  invalidateSessionOnStartup(): void {
+    const activeToken = this.token();
+    // Synchronously clear all credentials & signals before any routes or guards run
+    this.clearClientSession();
+
+    if (activeToken) {
+      // Fire non-blocking best-effort logout to invalidate backend token
+      this.authApiService.logout().pipe(
+        catchError(() => of(null))
+      ).subscribe();
+    }
   }
 
   private getStoredToken(): string | null {

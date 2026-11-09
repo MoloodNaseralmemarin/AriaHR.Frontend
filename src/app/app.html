@@ -1,1 +1,23 @@
+<!-- Professional PWA Splash Screen during Startup -->
+@if (pwaStartupService.isSplashVisible()) {
+  <app-splash-screen />
+}
+
+<!-- iOS App Switcher Privacy Screen when app is in the background -->
+@if (pwaStartupService.isAppHidden() && pwaStartupService.isStandalone()) {
+  <div
+    class="fixed inset-0 z-[9998] flex flex-col items-center justify-center bg-slate-100/95 backdrop-blur-md"
+    aria-hidden="true"
+  >
+    <div class="flex flex-col items-center p-6 bg-white rounded-3xl shadow-sm border border-slate-200">
+      <img
+        src="/assets/logo/logo.png"
+        alt="AriaHR"
+        class="h-12 w-12 object-contain"
+      />
+      <span class="mt-3 text-sm font-bold text-slate-800">حضور و غیاب هوشمند آریا</span>
+    </div>
+  </div>
+}
+
 <router-outlet />
