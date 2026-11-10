@@ -25,7 +25,7 @@ interface NavItem {
         </div>
         <div>
           <p class="text-sm font-bold text-slate-800">آریا اچ‌آر</p>
-          <p class="text-xs font-medium text-slate-400">مدیریت سیستم</p>
+          <p class="text-xs font-medium text-slate-400">مدیریت سامانه HR</p>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ interface NavItem {
             </div>
             <div class="min-w-0">
               <p class="truncate text-xs font-semibold text-slate-700">{{ userName() }}</p>
-              <p class="truncate text-[11px] text-slate-400">مدیر کل سیستم</p>
+              <p class="truncate text-[11px] text-slate-400">مدیریت سامانه HR</p>
             </div>
           </div>
           <button
