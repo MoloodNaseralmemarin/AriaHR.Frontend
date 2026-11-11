@@ -1,49 +1,29 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { AccountInfoCardComponent } from '../../../../shared/components/account-info-card/account-info-card.component';
+import { LogoutButtonComponent } from '../../../../shared/components/logout-button/logout-button.component';
 
 @Component({
   selector: 'app-employee-settings',
   standalone: true,
-  imports: [CommonModule, PersianDigitsPipe],
+  imports: [AccountInfoCardComponent, LogoutButtonComponent],
   template: `
     <div class="space-y-6">
       <!-- Header -->
       <div>
         <h1 class="text-xl font-bold text-slate-900 sm:text-2xl">تنظیمات حساب کاربری</h1>
-        <p class="mt-1 text-xs text-slate-500 sm:text-sm">مدیریت نشست کاری، امنیت و اطلاعات فنی حساب</p>
+        <p class="mt-1 text-xs text-slate-500 sm:text-sm">اطلاعات حساب، نشست کاری و امنیت ورود به سامانه</p>
       </div>
 
       <!-- Settings Cards Container -->
       <div class="space-y-4">
-        <!-- Security & Account Info Card -->
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
-          <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
-            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 text-base">
-              🔒
-            </div>
-            <div>
-              <h2 class="text-sm font-bold text-slate-900">امنیت و نحوه ورود</h2>
-              <p class="text-[11px] text-slate-500">احراز هویت و ورود یکبار مصرف به سیستم</p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
-              <span class="block text-slate-500 mb-1">روش ورود به سامانه</span>
-              <strong class="font-bold text-slate-800">رمز یکبار مصرف پیامکی (OTP)</strong>
-            </div>
-
-            <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
-              <span class="block text-slate-500 mb-1">شماره همراه تایید شده</span>
-              <strong class="font-bold text-slate-800 dir-ltr text-right">
-                {{ (userPhone() || '---') | persianDigits }}
-              </strong>
-            </div>
-          </div>
-        </div>
+        <!-- Account & Profile Information (shared card, identical across the three dashboards) -->
+        <app-account-info-card
+          subtitle="اطلاعات حساب کارمند و پروفایل ثبت شده در سازمان"
+          [showProfileLink]="true"
+          profileRoute="/employee/profile"
+        ></app-account-info-card>
 
         <!-- Session & Application Details Card -->
         <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
@@ -70,34 +50,36 @@ import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe'
           </div>
         </div>
 
-        <!-- Actions Card -->
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs flex items-center justify-between gap-4">
-          <div>
-            <h3 class="text-xs font-bold text-slate-900">خروج از حساب کاربری</h3>
-            <p class="text-[11px] text-slate-500 mt-0.5">پایان نشست فعلی در این مرورگر</p>
+        <!-- Session Action Card (shared logout control) -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
+          <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-lg text-rose-600">
+              🚪
+            </div>
+            <div>
+              <h2 class="text-base font-bold text-slate-900">خروج از حساب کاربری</h2>
+              <p class="mt-0.5 text-xs text-slate-500">پایان نشست فعلی در این مرورگر</p>
+            </div>
           </div>
 
-          <button
-            type="button"
-            (click)="onLogout()"
-            class="px-4 py-2 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 transition cursor-pointer"
-          >
-            خروج از حساب
-          </button>
+          <app-logout-button></app-logout-button>
         </div>
       </div>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EmployeeSettingsComponent {
+export class EmployeeSettingsComponent implements OnInit {
   private readonly authService = inject(AuthService);
 
-  readonly userPhone = computed(() => {
-    return this.authService.userDetails()?.phoneNumber || this.authService.currentUser()?.mobileNumber || '';
-  });
-
-  onLogout(): void {
-    this.authService.logout();
+  /**
+   * The shared account card reads AuthService signals, so a deep link (or a hard refresh)
+   * on this page has no /api/auth/me payload yet and would render placeholder values.
+   * Refresh the profile once, the same way the center-manager sidebar does.
+   */
+  ngOnInit(): void {
+    if (!this.authService.userDetails() && this.authService.isAuthenticated()) {
+      this.authService.getCurrentUser().subscribe();
+    }
   }
 }

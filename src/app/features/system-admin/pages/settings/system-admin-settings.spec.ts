@@ -24,7 +24,6 @@ describe('SystemAdminSettingsComponent', () => {
     mockAuthService = {
       userDetails: vi.fn().mockReturnValue(mockUser),
       getCurrentUser: vi.fn().mockReturnValue(of(mockUser)),
-      logout: vi.fn(),
     };
 
     injector = Injector.create({
@@ -36,15 +35,33 @@ describe('SystemAdminSettingsComponent', () => {
     });
   });
 
-  it('should initialize and load administrator details on init', () => {
+  it('should load the current administrator profile on init', () => {
     component.ngOnInit();
 
     expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
     expect(component.isLoading()).toBe(false);
     expect(component.hasError()).toBe(false);
-    expect(component.adminName()).toBe('امیر رضایی');
-    expect(component.adminPhone()).toBe('09123456789');
-    expect(component.adminRole()).toBe('مدیر سیستم (SystemAdmin)');
+    expect(component.errorMessage()).toBe('');
+  });
+
+  it('should fall back to the cached user details when the API returns null', () => {
+    mockAuthService.getCurrentUser.mockReturnValue(of(null));
+
+    component.ngOnInit();
+
+    expect(component.isLoading()).toBe(false);
+    expect(component.hasError()).toBe(false);
+  });
+
+  it('should report an error state when neither the API nor the cache has a user', () => {
+    mockAuthService.getCurrentUser.mockReturnValue(of(null));
+    mockAuthService.userDetails.mockReturnValue(null);
+
+    component.ngOnInit();
+
+    expect(component.isLoading()).toBe(false);
+    expect(component.hasError()).toBe(true);
+    expect(component.errorMessage()).toContain('یافت نشد');
   });
 
   it('should handle profile load error gracefully', () => {
@@ -57,22 +74,16 @@ describe('SystemAdminSettingsComponent', () => {
     expect(component.errorMessage()).toContain('خطا در دریافت اطلاعات');
   });
 
-  it('should open and close logout confirmation modal', () => {
-    expect(component.showLogoutModal()).toBe(false);
+  it('should clear the error state when the profile is reloaded successfully', () => {
+    mockAuthService.getCurrentUser.mockReturnValue(throwError(() => new Error('API Error')));
+    component.ngOnInit();
+    expect(component.hasError()).toBe(true);
 
-    component.promptLogout();
-    expect(component.showLogoutModal()).toBe(true);
+    mockAuthService.getCurrentUser.mockReturnValue(of(mockUser));
+    component.loadProfile();
 
-    component.cancelLogout();
-    expect(component.showLogoutModal()).toBe(false);
-  });
-
-  it('should execute logout via AuthService when confirmed', () => {
-    component.promptLogout();
-    expect(component.showLogoutModal()).toBe(true);
-
-    component.confirmLogout();
-    expect(mockAuthService.logout).toHaveBeenCalled();
-    expect(component.showLogoutModal()).toBe(false);
+    expect(component.isLoading()).toBe(false);
+    expect(component.hasError()).toBe(false);
+    expect(component.errorMessage()).toBe('');
   });
 });

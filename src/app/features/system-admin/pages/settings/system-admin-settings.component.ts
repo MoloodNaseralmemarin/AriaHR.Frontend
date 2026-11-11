@@ -1,18 +1,11 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
-import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { AccountInfoCardComponent } from '../../../../shared/components/account-info-card/account-info-card.component';
+import { LogoutButtonComponent } from '../../../../shared/components/logout-button/logout-button.component';
 
 @Component({
   selector: 'app-system-admin-settings',
@@ -21,7 +14,8 @@ import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe'
     CommonModule,
     PageHeaderComponent,
     SkeletonLoaderComponent,
-    PersianDigitsPipe,
+    AccountInfoCardComponent,
+    LogoutButtonComponent,
   ],
   templateUrl: './system-admin-settings.component.html',
   styleUrls: ['./system-admin-settings.component.css'],
@@ -33,39 +27,15 @@ export class SystemAdminSettingsComponent implements OnInit {
   readonly isLoading = signal(true);
   readonly hasError = signal(false);
   readonly errorMessage = signal('');
-  readonly showLogoutModal = signal(false);
-
-  readonly user = signal<CurrentUserDto | null>(null);
-
-  readonly adminName = computed(() => {
-    const u = this.user();
-    if (!u) return '—';
-    const name = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
-    return name || 'مدیر سیستم';
-  });
-
-  readonly adminPhone = computed(() => {
-    return this.user()?.phoneNumber || '—';
-  });
-
-  readonly adminRole = computed(() => {
-    const roles = this.user()?.roles;
-    if (roles && roles.length > 0) {
-      return roles[0] === 'SystemAdmin'
-        ? 'مدیر سیستم (SystemAdmin)'
-        : roles.join(', ');
-    }
-    return 'مدیر سیستم (SystemAdmin)';
-  });
-
-  readonly nationalCode = computed(() => {
-    return '—';
-  });
 
   ngOnInit(): void {
     this.loadProfile();
   }
 
+  /**
+   * Refreshes the current administrator profile. The account card renders straight from
+   * AuthService signals, so this only drives the loading / error states of the page.
+   */
   loadProfile(): void {
     this.isLoading.set(true);
     this.hasError.set(false);
@@ -74,17 +44,9 @@ export class SystemAdminSettingsComponent implements OnInit {
     this.authService.getCurrentUser().subscribe({
       next: (userData) => {
         this.isLoading.set(false);
-        if (userData) {
-          this.user.set(userData);
-        } else {
-          // Fallback to cached userDetails if getCurrentUser returned null
-          const cached = this.authService.userDetails();
-          if (cached) {
-            this.user.set(cached);
-          } else {
-            this.hasError.set(true);
-            this.errorMessage.set('اطلاعات حساب کاربری یافت نشد.');
-          }
+        if (!userData && !this.authService.userDetails()) {
+          this.hasError.set(true);
+          this.errorMessage.set('اطلاعات حساب کاربری یافت نشد.');
         }
       },
       error: (err) => {
@@ -95,18 +57,5 @@ export class SystemAdminSettingsComponent implements OnInit {
         );
       },
     });
-  }
-
-  promptLogout(): void {
-    this.showLogoutModal.set(true);
-  }
-
-  cancelLogout(): void {
-    this.showLogoutModal.set(false);
-  }
-
-  confirmLogout(): void {
-    this.showLogoutModal.set(false);
-    this.authService.logout();
   }
 }
