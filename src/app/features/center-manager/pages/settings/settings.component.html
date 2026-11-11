@@ -11,6 +11,11 @@
   </app-page-header>
 
   <div class="space-y-5">
+    <!-- Account & Session (shared card, identical across the three dashboards) -->
+    <app-account-info-card
+      subtitle="مشخصات حساب مدیر مرکز و مرکز تحت مدیریت"
+    ></app-account-info-card>
+
     <!-- Center Information -->
     <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 class="mb-4 text-sm font-semibold text-slate-700">اطلاعات مرکز</h2>
@@ -171,6 +176,21 @@
           </button>
         </div>
       </div>
+    </section>
+
+    <!-- Session Action (shared logout control) -->
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
+      <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-lg text-rose-600">
+          🚪
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-slate-900">خروج از حساب</h2>
+          <p class="mt-0.5 text-xs text-slate-500">پایان نشست کاری فعلی در این مرورگر</p>
+        </div>
+      </div>
+
+      <app-logout-button></app-logout-button>
     </section>
   </div>
 

@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
+import { AccountInfoCardComponent } from '../../../../shared/components/account-info-card/account-info-card.component';
+import { LogoutButtonComponent } from '../../../../shared/components/logout-button/logout-button.component';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../../organizations/models/organization-type.enum';
 
 /**
@@ -15,7 +17,14 @@ import { ORGANIZATION_TYPE_OPTIONS } from '../../../organizations/models/organiz
 @Component({
   selector: 'app-center-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageHeaderComponent, ToastComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    PageHeaderComponent,
+    ToastComponent,
+    AccountInfoCardComponent,
+    LogoutButtonComponent,
+  ],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.css'],
 })
