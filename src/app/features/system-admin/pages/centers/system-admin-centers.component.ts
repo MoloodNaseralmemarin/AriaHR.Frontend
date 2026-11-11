@@ -7,11 +7,9 @@ import { OrganizationService } from '../../../organizations/services/organizatio
 import { OrganizationResponseDto } from '../../../organizations/models/organization-response.dto';
 import { getOrganizationTypeLabel } from '../../../organizations/models/organization-type.enum';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
-import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
 
 @Component({
   selector: 'app-system-admin-centers',
@@ -21,11 +19,9 @@ import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
     FormsModule,
     RouterLink,
     PageHeaderComponent,
-    StatusBadgeComponent,
     EmptyStateComponent,
     SkeletonLoaderComponent,
     PersianDigitsPipe,
-    JalaliPipe,
   ],
   templateUrl: './system-admin-centers.component.html',
   styleUrl: './system-admin-centers.component.css',
@@ -95,13 +91,5 @@ export class SystemAdminCentersComponent implements OnInit {
 
   getCenterPhone(org: OrganizationResponseDto): string {
     return org.centerPhone || org.phone || '—';
-  }
-
-  getCreatedAtUtc(org: OrganizationResponseDto): string | null {
-    return org.createdAtUtc || org.createdAt || null;
-  }
-
-  getStatusLabel(isActive: boolean): string {
-    return isActive ? 'فعال' : 'غیرفعال';
   }
 }

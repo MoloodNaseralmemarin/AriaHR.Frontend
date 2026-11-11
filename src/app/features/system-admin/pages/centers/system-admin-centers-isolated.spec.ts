@@ -120,20 +120,15 @@ describe('SystemAdminCentersComponent (Isolated Tests)', () => {
     expect(component.organizations().length).toBe(2);
   });
 
-  it('should format labels, phones, dates, and managers correctly via helper methods', () => {
+  it('should format type labels, manager names, and phones correctly via helper methods', () => {
     expect(component.getTypeLabel(mockOrgs[0])).toBe('کلینیک');
     expect(component.getTypeLabel(mockOrgs[1])).toBe('مرکز تصویربرداری');
-    expect(component.getStatusLabel(true)).toBe('فعال');
-    expect(component.getStatusLabel(false)).toBe('غیرفعال');
 
     expect(component.getManagerFullName(mockOrgs[0])).toBe('علی رضایی');
     expect(component.getManagerFullName(mockOrgs[1])).toBe('مریم احمدی');
 
     expect(component.getCenterPhone(mockOrgs[0])).toBe('02188888888');
     expect(component.getCenterPhone(mockOrgs[1])).toBe('07133333333');
-
-    expect(component.getCreatedAtUtc(mockOrgs[0])).toBe('2026-10-21T09:25:16.108Z');
-    expect(component.getCreatedAtUtc(mockOrgs[1])).toBe('2026-05-10T10:00:00Z');
 
     const emptyOrg: OrganizationResponseDto = {
       id: '99',
@@ -142,6 +137,5 @@ describe('SystemAdminCentersComponent (Isolated Tests)', () => {
     };
     expect(component.getManagerFullName(emptyOrg)).toBe('—');
     expect(component.getCenterPhone(emptyOrg)).toBe('—');
-    expect(component.getCreatedAtUtc(emptyOrg)).toBeNull();
   });
 });
