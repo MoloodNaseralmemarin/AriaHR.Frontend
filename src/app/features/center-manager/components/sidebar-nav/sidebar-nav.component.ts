@@ -2,6 +2,7 @@ import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { LogoutButtonComponent } from '../../../../shared/components/logout-button/logout-button.component';
 
 interface NavItem {
   label: string;
@@ -12,7 +13,7 @@ interface NavItem {
 @Component({
   selector: 'app-sidebar-nav',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, LogoutButtonComponent],
   template: `
     <aside
       class="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-l border-slate-200 bg-white md:flex"
@@ -51,7 +52,7 @@ interface NavItem {
       </nav>
 
       <div class="border-t border-slate-100 px-4 py-4 space-y-2">
-        <div class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3">
+        <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
           <div class="flex items-center gap-2 min-w-0">
             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
               {{ avatarInitials }}
@@ -61,10 +62,8 @@ interface NavItem {
               <p class="truncate text-[11px] text-slate-400">مرکز: {{ centerName }}</p>
             </div>
           </div>
-          <button type="button" (click)="onLogout()" class="rounded-lg p-1.5 text-rose-600 transition hover:bg-rose-50" title="خروج">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </button>
         </div>
+        <app-logout-button></app-logout-button>
       </div>
     </aside>
   `,
@@ -145,7 +144,4 @@ export class SidebarNavComponent implements OnInit {
     }
   }
 
-  onLogout(): void {
-    this.authService.logout();
-  }
 }

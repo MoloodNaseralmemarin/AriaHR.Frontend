@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NotificationService } from '../../../notifications/services/notification.service';
+import { LogoutButtonComponent } from '../../../../shared/components/logout-button/logout-button.component';
 
 interface BottomNavItem {
   label: string;
@@ -13,7 +14,7 @@ interface BottomNavItem {
 @Component({
   selector: 'app-employee-bottom-nav',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, LogoutButtonComponent],
   template: `
     <nav
       class="fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around border-t border-slate-200 bg-white/95 px-1 pb-[max(env(safe-area-inset-bottom),0.25rem)] backdrop-blur md:hidden"
@@ -42,6 +43,7 @@ interface BottomNavItem {
         </span>
         {{ item.label }}
       </a>
+      <app-logout-button variant="nav"></app-logout-button>
     </nav>
   `,
 })
