@@ -1,13 +1,13 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 
+import { AuthService } from '../../../../core/auth/auth.service';
 import { AccountInfoCardComponent } from '../../../../shared/components/account-info-card/account-info-card.component';
 import { LogoutButtonComponent } from '../../../../shared/components/logout-button/logout-button.component';
 
 @Component({
   selector: 'app-employee-settings',
   standalone: true,
-  imports: [CommonModule, AccountInfoCardComponent, LogoutButtonComponent],
+  imports: [AccountInfoCardComponent, LogoutButtonComponent],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -69,4 +69,17 @@ import { LogoutButtonComponent } from '../../../../shared/components/logout-butt
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EmployeeSettingsComponent {}
+export class EmployeeSettingsComponent implements OnInit {
+  private readonly authService = inject(AuthService);
+
+  /**
+   * The shared account card reads AuthService signals, so a deep link (or a hard refresh)
+   * on this page has no /api/auth/me payload yet and would render placeholder values.
+   * Refresh the profile once, the same way the center-manager sidebar does.
+   */
+  ngOnInit(): void {
+    if (!this.authService.userDetails() && this.authService.isAuthenticated()) {
+      this.authService.getCurrentUser().subscribe();
+    }
+  }
+}
