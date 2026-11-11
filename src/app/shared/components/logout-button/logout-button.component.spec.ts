@@ -29,9 +29,25 @@ describe('LogoutButtonComponent', () => {
     expect(component.variant).toBe('nav');
   });
 
-  it('should delegate logout to AuthService so session cleanup stays in one place', () => {
-    component.onLogout();
+  it('should accept menu-item variant', () => {
+    component.variant = 'menu-item';
+    expect(component.variant).toBe('menu-item');
+  });
 
+  it('should open confirmation modal on trigger and not logout immediately', () => {
+    expect(component.showModal()).toBe(false);
+    component.onLogout();
+    expect(component.showModal()).toBe(true);
+    expect(mockAuthService.logout).not.toHaveBeenCalled();
+  });
+
+  it('should delegate logout to AuthService upon confirmed logout', () => {
+    component.openModal();
+    expect(component.showModal()).toBe(true);
+
+    component.onConfirmedLogout();
+
+    expect(component.showModal()).toBe(false);
     expect(mockAuthService.logout).toHaveBeenCalledTimes(1);
   });
 });

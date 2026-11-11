@@ -1,34 +1,66 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { AccountInfoCardComponent } from '../../../../shared/components/account-info-card/account-info-card.component';
 import { LogoutButtonComponent } from '../../../../shared/components/logout-button/logout-button.component';
 
 @Component({
   selector: 'app-employee-settings',
   standalone: true,
-  imports: [AccountInfoCardComponent, LogoutButtonComponent],
+  imports: [CommonModule, RouterLink, PageHeaderComponent, AccountInfoCardComponent, LogoutButtonComponent],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
-      <div>
-        <h1 class="text-xl font-bold text-slate-900 sm:text-2xl">تنظیمات حساب کاربری</h1>
-        <p class="mt-1 text-xs text-slate-500 sm:text-sm">اطلاعات حساب، نشست کاری و امنیت ورود به سامانه</p>
-      </div>
+      <!-- Standardized Page Header -->
+      <app-page-header
+        title="تنظیمات حساب کاربری"
+        subtitle="اطلاعات حساب، مشخصات شغلی و امنیت ورود به سامانه"
+      ></app-page-header>
 
       <!-- Settings Cards Container -->
-      <div class="space-y-4">
-        <!-- Account & Profile Information (shared card, identical across the three dashboards) -->
+      <div class="space-y-5">
+        <!-- Account & Profile Information (shared card across the three dashboards) -->
         <app-account-info-card
-          subtitle="اطلاعات حساب کارمند و پروفایل ثبت شده در سازمان"
+          title="پروفایل و اطلاعات کاربری"
+          subtitle="اطلاعات حساب کارمند و مشخصات ثبت شده در سامانه آریا"
           [showProfileLink]="true"
           profileRoute="/employee/profile"
+          profileLinkLabel="مشاهده پروفایل کامل"
         ></app-account-info-card>
+
+        <!-- Quick Access to Profile Details Banner -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">مشاهده مشخصات شغلی و پرسنلی</h3>
+                <p class="text-xs text-slate-500 mt-0.5">شناسه کاربری، مرکز سازمانی و جزئیات دسترسی</p>
+              </div>
+            </div>
+            <a
+              routerLink="/employee/profile"
+              class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 active:bg-blue-800"
+            >
+              <span>مشاهده و بررسی پروفایل</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rotate-180">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </a>
+          </div>
+        </div>
 
         <!-- Session & Application Details Card -->
         <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
           <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
-            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 text-base">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 text-lg">
               💻
             </div>
             <div>
@@ -72,11 +104,6 @@ import { LogoutButtonComponent } from '../../../../shared/components/logout-butt
 export class EmployeeSettingsComponent implements OnInit {
   private readonly authService = inject(AuthService);
 
-  /**
-   * The shared account card reads AuthService signals, so a deep link (or a hard refresh)
-   * on this page has no /api/auth/me payload yet and would render placeholder values.
-   * Refresh the profile once, the same way the center-manager sidebar does.
-   */
   ngOnInit(): void {
     if (!this.authService.userDetails() && this.authService.isAuthenticated()) {
       this.authService.getCurrentUser().subscribe();

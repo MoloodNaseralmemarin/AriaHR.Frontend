@@ -6,21 +6,27 @@ import { of, throwError } from 'rxjs';
 import { SidebarNavComponent } from './sidebar-nav.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CurrentUserDto } from '../../../../core/auth/auth.models';
+import { NotificationService } from '../../../notifications/services/notification.service';
 
 describe('SidebarNavComponent (isolated)', () => {
   let component: SidebarNavComponent;
   let userDetailsSignal: ReturnType<typeof signal<CurrentUserDto | null>>;
   let currentUserSignal: ReturnType<typeof signal<any>>;
+  let unreadCountSignal: ReturnType<typeof signal<number>>;
   let mockAuthService: {
     userDetails: ReturnType<typeof signal<CurrentUserDto | null>>;
     currentUser: ReturnType<typeof signal<any>>;
     getCurrentUser: ReturnType<typeof vi.fn>;
     logout: ReturnType<typeof vi.fn>;
   };
+  let mockNotificationService: {
+    unreadCount: ReturnType<typeof signal<number>>;
+  };
 
   beforeEach(() => {
     userDetailsSignal = signal<CurrentUserDto | null>(null);
     currentUserSignal = signal<any>(null);
+    unreadCountSignal = signal<number>(3);
 
     mockAuthService = {
       userDetails: userDetailsSignal,
@@ -29,8 +35,15 @@ describe('SidebarNavComponent (isolated)', () => {
       logout: vi.fn(),
     };
 
+    mockNotificationService = {
+      unreadCount: unreadCountSignal,
+    };
+
     const injector = Injector.create({
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: NotificationService, useValue: mockNotificationService },
+      ],
     });
 
     runInInjectionContext(injector, () => {
@@ -40,6 +53,12 @@ describe('SidebarNavComponent (isolated)', () => {
 
   it('should create component instance', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should display unread badge on notification nav item', () => {
+    const notifItem = component.items.find((i) => i.icon === 'notifications');
+    expect(notifItem).toBeDefined();
+    expect(notifItem?.badge).toBe(3);
   });
 
   it('should call authService.getCurrentUser on init if userDetails is null', () => {
