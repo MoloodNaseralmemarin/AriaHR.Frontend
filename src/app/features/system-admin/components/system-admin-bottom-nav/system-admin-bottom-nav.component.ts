@@ -1,8 +1,8 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NotificationService } from '../../../notifications/services/notification.service';
-import { LogoutButtonComponent } from '../../../../shared/components/logout-button/logout-button.component';
+import { MobileNavDrawerComponent, MobileDrawerNavItem } from '../../../../shared/components/mobile-nav-drawer/mobile-nav-drawer.component';
 
 interface BottomNavItem {
   label: string;
@@ -14,13 +14,13 @@ interface BottomNavItem {
 @Component({
   selector: 'app-system-admin-bottom-nav',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, LogoutButtonComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, MobileNavDrawerComponent],
   template: `
     <nav
       class="fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around border-t border-slate-200 bg-white/95 px-1 pb-[max(env(safe-area-inset-bottom),0.25rem)] backdrop-blur md:hidden"
     >
       <a
-        *ngFor="let item of items()"
+        *ngFor="let item of primaryItems()"
         [routerLink]="item.route"
         routerLinkActive="text-blue-600 font-semibold"
         class="relative flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-slate-500 transition-colors"
@@ -40,19 +40,58 @@ interface BottomNavItem {
         </span>
         {{ item.label }}
       </a>
-      <app-logout-button variant="nav"></app-logout-button>
+
+      <!-- 5th Item: "More" Menu Toggle -->
+      <button
+        type="button"
+        (click)="openMoreDrawer()"
+        class="relative flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-slate-500 transition-colors hover:text-slate-700 cursor-pointer"
+        aria-label="سایر بخش‌ها"
+      >
+        <span class="relative flex h-5 w-5 items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="1"/>
+            <circle cx="19" cy="12" r="1"/>
+            <circle cx="5" cy="12" r="1"/>
+          </svg>
+        </span>
+        <span>بیشتر</span>
+      </button>
     </nav>
+
+    <!-- Drawer with quick admin shortcuts and logout -->
+    <app-mobile-nav-drawer
+      [isOpen]="isMoreOpen()"
+      title="منوی مدیر سیستم"
+      [items]="drawerItems()"
+      (close)="closeMoreDrawer()"
+    ></app-mobile-nav-drawer>
   `,
 })
 export class SystemAdminBottomNavComponent {
   private readonly notificationService = inject(NotificationService);
 
+  readonly isMoreOpen = signal(false);
   readonly unreadCount = this.notificationService.unreadCount;
 
-  readonly items = computed<BottomNavItem[]>(() => [
+  readonly primaryItems = computed<BottomNavItem[]>(() => [
     { label: 'داشبورد', route: '/system-admin/dashboard', icon: 'dashboard' },
     { label: 'مراکز', route: '/system-admin/centers', icon: 'centers' },
     { label: 'اعلان‌ها', route: '/system-admin/notifications', icon: 'notifications', badge: this.unreadCount() },
     { label: 'تنظیمات', route: '/system-admin/settings', icon: 'settings' },
   ]);
+
+  readonly drawerItems = computed<MobileDrawerNavItem[]>(() => [
+    { label: 'ثبت مرکز جدید', route: '/system-admin/centers/create', icon: 'centers' },
+    { label: 'مشاهده لیست مراکز', route: '/system-admin/centers', icon: 'centers' },
+    { label: 'تنظیمات و مشخصات سیستم', route: '/system-admin/settings', icon: 'settings' },
+  ]);
+
+  openMoreDrawer(): void {
+    this.isMoreOpen.set(true);
+  }
+
+  closeMoreDrawer(): void {
+    this.isMoreOpen.set(false);
+  }
 }

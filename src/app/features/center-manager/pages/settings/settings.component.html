@@ -1,24 +1,34 @@
-<div class="relative">
+<div class="space-y-6">
   <app-page-header title="تنظیمات مرکز" subtitle="مدیریت اطلاعات، ساعات کاری و اعلان‌های مرکز">
     <button
       actions
       type="button"
       (click)="onSave()"
-      class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+      class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 cursor-pointer shadow-xs"
     >
       ذخیره تغییرات
     </button>
   </app-page-header>
 
   <div class="space-y-5">
-    <!-- Account & Session (shared card, identical across the three dashboards) -->
+    <!-- Account & Session (shared card across the three dashboards) -->
     <app-account-info-card
+      title="پروفایل و اطلاعات کاربری"
       subtitle="مشخصات حساب مدیر مرکز و مرکز تحت مدیریت"
     ></app-account-info-card>
 
     <!-- Center Information -->
-    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 class="mb-4 text-sm font-semibold text-slate-700">اطلاعات مرکز</h2>
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
+      <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold text-lg">
+          🏢
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-slate-900">اطلاعات مرکز</h2>
+          <p class="text-xs text-slate-500 mt-0.5">مشخصات هویتی و آدرس مرکز درمانی یا سازمانی</p>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label class="block">
           <span class="mb-1.5 block text-xs font-medium text-slate-500">نام مرکز</span>
@@ -65,8 +75,17 @@
     </section>
 
     <!-- Work Settings -->
-    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 class="mb-4 text-sm font-semibold text-slate-700">تنظیمات کاری</h2>
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
+      <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 font-bold text-lg">
+          ⏰
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-slate-900">تنظیمات کاری و تردد</h2>
+          <p class="text-xs text-slate-500 mt-0.5">ساعات کاری مجاز و پارامترهای حضور و غیاب پرسنل</p>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label class="block">
           <span class="mb-1.5 block text-xs font-medium text-slate-500">محدوده جغرافیایی حضور (متر)</span>
@@ -113,20 +132,29 @@
     </section>
 
     <!-- Notification Settings -->
-    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 class="mb-4 text-sm font-semibold text-slate-700">تنظیمات اعلان‌ها</h2>
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
+      <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 font-bold text-lg">
+          🔔
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-slate-900">تنظیمات اعلان‌ها</h2>
+          <p class="text-xs text-slate-500 mt-0.5">دریافت هشدارها و رویدادهای مهم پرسنلی</p>
+        </div>
+      </div>
+
       <div class="divide-y divide-slate-100">
         <div class="flex items-center justify-between py-3">
           <div>
             <p class="text-sm font-medium text-slate-700">اعلان درخواست‌ها</p>
-            <p class="mt-0.5 text-xs text-slate-400">دریافت اعلان هنگام ثبت درخواست جدید</p>
+            <p class="mt-0.5 text-xs text-slate-400">دریافت اعلان هنگام ثبت درخواست جدید توسط کارکنان</p>
           </div>
           <button
             type="button"
             role="switch"
             [attr.aria-checked]="notifyRequests()"
             (click)="toggle('notifyRequests')"
-            class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+            class="relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer"
             [ngClass]="notifyRequests() ? 'bg-blue-600' : 'bg-slate-200'"
           >
             <span
@@ -139,14 +167,14 @@
         <div class="flex items-center justify-between py-3">
           <div>
             <p class="text-sm font-medium text-slate-700">اعلان غیبت</p>
-            <p class="mt-0.5 text-xs text-slate-400">دریافت اعلان در صورت غیبت کارمند</p>
+            <p class="mt-0.5 text-xs text-slate-400">دریافت اعلان در صورت عدم ثبت ورود و غیبت کارمند</p>
           </div>
           <button
             type="button"
             role="switch"
             [attr.aria-checked]="notifyAbsence()"
             (click)="toggle('notifyAbsence')"
-            class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+            class="relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer"
             [ngClass]="notifyAbsence() ? 'bg-blue-600' : 'bg-slate-200'"
           >
             <span
@@ -159,14 +187,14 @@
         <div class="flex items-center justify-between py-3">
           <div>
             <p class="text-sm font-medium text-slate-700">اعلان تأخیر</p>
-            <p class="mt-0.5 text-xs text-slate-400">دریافت اعلان در صورت تأخیر کارمند</p>
+            <p class="mt-0.5 text-xs text-slate-400">دریافت اعلان در صورت ورود کارمند بعد از مهلت مجاز</p>
           </div>
           <button
             type="button"
             role="switch"
             [attr.aria-checked]="notifyLate()"
             (click)="toggle('notifyLate')"
-            class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+            class="relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer"
             [ngClass]="notifyLate() ? 'bg-blue-600' : 'bg-slate-200'"
           >
             <span
@@ -179,7 +207,7 @@
     </section>
 
     <!-- Session Action (shared logout control) -->
-    <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
       <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-lg text-rose-600">
           🚪
