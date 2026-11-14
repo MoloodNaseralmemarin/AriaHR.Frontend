@@ -46,6 +46,7 @@ describe('CreateWorkLocationComponent', () => {
         })
       ),
       reverseGeocode: vi.fn().mockReturnValue(of('تهران، خیابان ولیعصر')),
+      hasReverseGeocodingKey: true,
     };
 
     userDetailsSignal.set(mockUserDetails);

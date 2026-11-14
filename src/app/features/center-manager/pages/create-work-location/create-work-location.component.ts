@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   OnDestroy,
   OnInit,
@@ -11,11 +12,14 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, Observable, finalize, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { QrCodeModalComponent } from '../../../../shared/components/qr-code-modal/qr-code-modal.component';
 import { environment } from '../../../../../environments/environment';
@@ -41,6 +45,20 @@ const HAMEDAN_DEFAULT_ZOOM = 13;
 const CURRENT_LOCATION_ZOOM = 16;
 const GEOLOCATION_TIMEOUT_MS = 15000;
 
+/**
+ * Backend validation bounds. The server rejects values outside the WGS-84 range,
+ * so the form mirrors them to fail fast with a Persian message instead of a 400.
+ */
+const MIN_LATITUDE = -90;
+const MAX_LATITUDE = 90;
+const MIN_LONGITUDE = -180;
+const MAX_LONGITUDE = 180;
+const MIN_RADIUS_METERS = 1;
+const MAX_RADIUS_METERS = 50000;
+const DEFAULT_RADIUS_METERS = 200;
+
+const ASSET_LOAD_TIMEOUT_MS = 20000;
+
 declare const L: any;
 
 @Component({
@@ -57,6 +75,7 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly workLocationService = inject(WorkLocationService);
   private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly submitState = signal<SubmitState>('idle');
   readonly errorMessage = signal<string | null>(null);
@@ -73,14 +92,21 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
   readonly selectedLocation = signal<{ lat: number; lng: number } | null>(null);
 
   readonly isSubmitting = computed(() => this.submitState() === 'submitting');
+  readonly isSubmitted = computed(() => this.submitState() === 'success');
 
   readonly createdWorkLocationId = signal<string | null>(null);
   readonly isGeneratingQr = signal(false);
   readonly qrData = signal<{ code: string; expiresAtUtc: string } | null>(null);
   readonly showQrModal = signal(false);
 
+  readonly minRadius = MIN_RADIUS_METERS;
+  readonly maxRadius = MAX_RADIUS_METERS;
+
   readonly form = this.fb.group({
-    radiusInMeters: [200, [Validators.required, Validators.min(1)]],
+    radiusInMeters: [
+      DEFAULT_RADIUS_METERS,
+      [Validators.required, Validators.min(MIN_RADIUS_METERS), Validators.max(MAX_RADIUS_METERS)],
+    ],
     isActive: [true],
   });
 
@@ -92,15 +118,13 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
   private accuracyCircle: any = null;
 
   ngOnInit(): void {
-    if (!this.authService.userDetails()) {
-      this.authService.getCurrentUser().subscribe({
-        error: () => {},
-      });
-    }
+    this.loadCurrentUserIfMissing();
 
-    this.form.controls.radiusInMeters.valueChanges.subscribe((val) => {
-      this.updateRadiusCircle(val);
-    });
+    this.form.controls.radiusInMeters.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((val) => {
+        this.updateRadiusCircle(val);
+      });
   }
 
   ngAfterViewInit(): void {
@@ -112,6 +136,20 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       this.mapInstance.remove();
       this.mapInstance = null;
     }
+  }
+
+  /**
+   * The organization of a work location comes from the authenticated manager's
+   * profile (`/api/auth/me`), never from user input, so a manager can only create
+   * locations for the center they belong to.
+   */
+  private loadCurrentUserIfMissing(): Observable<CurrentUserDto | null> {
+    const existing = this.authService.userDetails();
+    if (existing) {
+      return of(existing);
+    }
+
+    return this.authService.getCurrentUser();
   }
 
   private initMap(): void {
@@ -160,9 +198,15 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
           this.selectLocation(lat, lng);
         });
 
+        // A container that was hidden or resized while the SDK loaded keeps a stale
+        // size, which shows only part of the map. Recompute once after mounting.
+        if (typeof this.mapInstance.invalidateSize === 'function') {
+          setTimeout(() => this.mapInstance?.invalidateSize?.(), 0);
+        }
+
         this.isMapLoading.set(false);
       })
-      .catch((err) => {
+      .catch(() => {
         this.isMapLoading.set(false);
         this.mapError.set(
           'خطا در بارگذاری نقشه نشان. لطفاً اتصال اینترنت یا تنظیمات کلید API را بررسی کنید.'
@@ -186,26 +230,57 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
         document.head.appendChild(link);
       }
 
+      let settled = false;
+      const settleResolve = () => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        if (typeof L === 'undefined') {
+          reject(new Error('Neshan SDK did not expose the Leaflet global.'));
+          return;
+        }
+        resolve();
+      };
+      const settleReject = () => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        reject(new Error('Neshan SDK assets could not be loaded.'));
+      };
+
+      // A previous visit may have left the script tag behind (for example after an
+      // SPA navigation) and its `load` event never fires again, so the promise would
+      // hang forever. Resolve immediately when the tag already finished loading.
+      const timeoutId = window.setTimeout(settleReject, ASSET_LOAD_TIMEOUT_MS);
+
       const jsId = 'neshan-sdk-js';
-      if (document.getElementById(jsId)) {
-        const existingScript = document.getElementById(jsId) as HTMLScriptElement;
-        existingScript.addEventListener('load', () => resolve());
-        existingScript.addEventListener('error', (e) => reject(e));
+      const existingScript = document.getElementById(jsId) as HTMLScriptElement | null;
+
+      if (existingScript) {
+        if (existingScript.getAttribute('data-neshan-loaded') === 'true') {
+          settleResolve();
+          return;
+        }
+        existingScript.addEventListener('load', settleResolve);
+        existingScript.addEventListener('error', settleReject);
         return;
       }
 
       const script = document.createElement('script');
       script.id = jsId;
       script.src = NESHAN_SDK_JS_URL;
-      script.onload = () => resolve();
-      script.onerror = (err) => reject(err);
+      script.addEventListener('load', () => {
+        script.setAttribute('data-neshan-loaded', 'true');
+        settleResolve();
+      });
+      script.addEventListener('error', settleReject);
       document.head.appendChild(script);
     });
   }
 
   /**
-   * Moves the map to the browser-reported position and selects it, so the
-   * coordinates, address and radius follow the marker.
+   * Moves the map to the browser-reported position and marks it with its own dot
+   * and accuracy circle, leaving the selection marker under the user's control.
    */
   useCurrentLocation(): void {
     if (this.isLocatingCurrentPosition()) {
@@ -323,6 +398,12 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
   }
 
   selectLocation(lat: number, lng: number): void {
+    if (this.isSubmitted()) {
+      // The current point belongs to a saved location; a new registration must be
+      // started explicitly so the same center is never saved twice by accident.
+      return;
+    }
+
     this.selectedLocation.set({ lat, lng });
 
     if (this.mapInstance) {
@@ -345,11 +426,18 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
     this.resolveAddress(lat, lng);
   }
 
-  private updateRadiusCircle(radius: number): void {
+  private updateRadiusCircle(radius: number | null): void {
     const loc = this.selectedLocation();
-    if (!loc || !this.mapInstance || !radius || radius <= 0) {
+    if (
+      !loc ||
+      !this.mapInstance ||
+      radius === null ||
+      !Number.isFinite(radius) ||
+      radius < MIN_RADIUS_METERS ||
+      radius > MAX_RADIUS_METERS
+    ) {
       if (this.circleInstance) {
-        this.mapInstance.removeLayer(this.circleInstance);
+        this.mapInstance?.removeLayer(this.circleInstance);
         this.circleInstance = null;
       }
       return;
@@ -404,7 +492,38 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
     return control.invalid && (control.touched || control.dirty);
   }
 
+  /** Persian message for the current radius validation error, if any. */
+  radiusMessage(): string | null {
+    const control = this.form.controls.radiusInMeters;
+    if (control.hasError('required')) {
+      return 'وارد کردن شعاع محدودهٔ مجاز الزامی است.';
+    }
+    if (control.hasError('min')) {
+      return 'شعاع محدوده باید حداقل ۱ متر باشد.';
+    }
+    if (control.hasError('max')) {
+      return 'شعاع محدوده نمی‌تواند بیشتر از ۵۰٬۰۰۰ متر باشد.';
+    }
+    return null;
+  }
+
+  private coordinateError(lat: number, lng: number): string | null {
+    if (!Number.isFinite(lat) || lat < MIN_LATITUDE || lat > MAX_LATITUDE) {
+      return 'عرض جغرافیایی انتخاب‌شده معتبر نیست. لطفاً نقطهٔ دیگری روی نقشه انتخاب کنید.';
+    }
+    if (!Number.isFinite(lng) || lng < MIN_LONGITUDE || lng > MAX_LONGITUDE) {
+      return 'طول جغرافیایی انتخاب‌شده معتبر نیست. لطفاً نقطهٔ دیگری روی نقشه انتخاب کنید.';
+    }
+    return null;
+  }
+
   onSubmit(): void {
+    // Guard against double clicks and duplicate records: a submission that is in
+    // flight or already succeeded must not post again.
+    if (this.isSubmitting() || this.isSubmitted()) {
+      return;
+    }
+
     this.errorMessage.set(null);
 
     if (this.form.invalid) {
@@ -418,28 +537,35 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       return;
     }
 
-    const userDetails = this.authService.userDetails();
-    const orgId = userDetails?.organizationId;
-
-    if (!orgId) {
-      this.errorMessage.set('شما به هیچ مرکزی متصل نیستید و امکان ثبت محل کار را ندارید.');
+    const coordinatesError = this.coordinateError(loc.lat, loc.lng);
+    if (coordinatesError) {
+      this.errorMessage.set(coordinatesError);
       return;
     }
 
     const value = this.form.getRawValue();
-    const request: CreateWorkLocationDto = {
-      organizationId: orgId,
-      latitude: loc.lat,
-      longitude: loc.lng,
-      radiusInMeters: value.radiusInMeters,
-      isActive: value.isActive,
-    };
-
     this.submitState.set('submitting');
 
-    this.workLocationService
-      .createWorkLocation(request)
+    this.loadCurrentUserIfMissing()
       .pipe(
+        switchMap((user) => {
+          const orgId = user?.organizationId;
+
+          if (!orgId) {
+            this.errorMessage.set('شما به هیچ مرکزی متصل نیستید و امکان ثبت محل کار را ندارید.');
+            return EMPTY;
+          }
+
+          const request: CreateWorkLocationDto = {
+            organizationId: orgId,
+            latitude: loc.lat,
+            longitude: loc.lng,
+            radiusInMeters: value.radiusInMeters,
+            isActive: value.isActive,
+          };
+
+          return this.workLocationService.createWorkLocation(request);
+        }),
         finalize(() => {
           if (this.submitState() === 'submitting') {
             this.submitState.set('idle');
@@ -456,11 +582,108 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
         },
         error: (err) => {
           this.submitState.set('error');
-          this.errorMessage.set(
-            err?.error?.message || 'ثبت محل کار با خطا مواجه شد. لطفاً دوباره تلاش کنید.'
-          );
+          this.errorMessage.set(this.resolveSubmitError(err));
         },
       });
+  }
+
+  /** Maps backend/network failures to an actionable Persian message. */
+  private resolveSubmitError(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      if (err.status === 0) {
+        return 'ارتباط با سرور برقرار نشد. اتصال اینترنت یا دسترسی به سرویس را بررسی کنید.';
+      }
+      // A 2xx/3xx response that is not the expected JSON means the request never
+      // reached the API (wrong base URL or a proxy fallback). Never surface the
+      // raw parser message to the user.
+      if (err.status < 400) {
+        return 'پاسخ نامعتبر از سرور دریافت شد. لطفاً تنظیمات آدرس سرویس را بررسی کنید.';
+      }
+      if (err.status === 401) {
+        return 'نشست شما منقضی شده است. لطفاً دوباره وارد حساب خود شوید.';
+      }
+      if (err.status === 403) {
+        return 'دسترسی لازم برای ثبت محل کار در این مرکز را ندارید.';
+      }
+      if (err.status === 409) {
+        return 'این محل کار قبلاً ثبت شده است.';
+      }
+      if (err.status === 400 || err.status === 422) {
+        const validationMessage = this.extractValidationMessage(err.error);
+        return validationMessage ?? 'اطلاعات ارسالی نامعتبر است. لطفاً مقادیر فرم را بررسی کنید.';
+      }
+      if (err.status >= 500) {
+        return 'خطا در سرور رخ داد. لطفاً چند لحظه بعد دوباره تلاش کنید.';
+      }
+    }
+
+    const body = (err as { error?: unknown } | null)?.error;
+    if (body instanceof Error) {
+      return 'ثبت محل کار با خطا مواجه شد. لطفاً دوباره تلاش کنید.';
+    }
+
+    const message = (body as { message?: unknown } | null)?.message;
+    if (typeof message === 'string' && message.trim()) {
+      return message;
+    }
+
+    return 'ثبت محل کار با خطا مواجه شد. لطفاً دوباره تلاش کنید.';
+  }
+
+  /** Supports both `{ message }` and ASP.NET Core `ProblemDetails.errors`. */
+  private extractValidationMessage(body: unknown): string | null {
+    // Parser/network failures arrive as Error instances and carry no user-facing text.
+    if (!body || typeof body !== 'object' || body instanceof Error) {
+      return null;
+    }
+
+    const record = body as { message?: unknown; errors?: Record<string, unknown> };
+    if (typeof record.message === 'string' && record.message.trim()) {
+      return record.message;
+    }
+
+    if (record.errors && typeof record.errors === 'object') {
+      for (const value of Object.values(record.errors)) {
+        if (Array.isArray(value) && typeof value[0] === 'string' && value[0].trim()) {
+          return value[0];
+        }
+        if (typeof value === 'string' && value.trim()) {
+          return value;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /** Clears the saved registration so another work location can be added. */
+  startNewRegistration(): void {
+    this.submitState.set('idle');
+    this.errorMessage.set(null);
+    this.showSuccessToast.set(false);
+    this.createdWorkLocationId.set(null);
+    this.qrData.set(null);
+    this.showQrModal.set(false);
+    this.resolvedAddress.set(null);
+    this.isResolvingAddress.set(false);
+    this.locationError.set(null);
+
+    this.selectedLocation.set(null);
+
+    if (this.mapInstance) {
+      if (this.markerInstance) {
+        this.mapInstance.removeLayer(this.markerInstance);
+        this.markerInstance = null;
+      }
+      if (this.circleInstance) {
+        this.mapInstance.removeLayer(this.circleInstance);
+        this.circleInstance = null;
+      }
+    }
+
+    this.form.reset({ radiusInMeters: DEFAULT_RADIUS_METERS, isActive: true });
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
   }
 
   onGenerateQrCode(): void {

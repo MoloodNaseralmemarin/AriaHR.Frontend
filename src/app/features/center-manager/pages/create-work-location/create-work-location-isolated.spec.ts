@@ -77,6 +77,56 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
     });
   });
 
+  it('should not post a duplicate record when the form is submitted twice', () => {
+    mockWorkLocationService.createWorkLocation.mockClear();
+    const comp = createComponent();
+    comp.selectLocation(35.7, 51.3);
+
+    comp.onSubmit();
+    comp.onSubmit();
+
+    expect(mockWorkLocationService.createWorkLocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('should keep the saved point and block further changes until a new registration starts', () => {
+    const comp = createComponent();
+    comp.selectLocation(35.7, 51.3);
+    comp.onSubmit();
+
+    comp.selectLocation(36.1, 52.1);
+    expect(comp.selectedLocation()).toEqual({ lat: 35.7, lng: 51.3 });
+
+    comp.startNewRegistration();
+    expect(comp.selectedLocation()).toBeNull();
+    expect(comp.isSubmitted()).toBe(false);
+    expect(comp.form.controls.radiusInMeters.value).toBe(200);
+  });
+
+  it('should explain radius validation errors in Persian', () => {
+    const comp = createComponent();
+    const radius = comp.form.controls.radiusInMeters;
+
+    radius.setValue(0);
+    expect(comp.radiusMessage()).toBe('شعاع محدوده باید حداقل ۱ متر باشد.');
+
+    radius.setValue(60000);
+    expect(comp.radiusMessage()).toBe('شعاع محدوده نمی‌تواند بیشتر از ۵۰٬۰۰۰ متر باشد.');
+
+    radius.setValue(250);
+    expect(comp.radiusMessage()).toBeNull();
+  });
+
+  it('should reject out-of-range coordinates before calling the API', () => {
+    mockWorkLocationService.createWorkLocation.mockClear();
+    const comp = createComponent();
+    (comp as any).selectedLocation.set({ lat: 120, lng: 51.3 });
+
+    comp.onSubmit();
+
+    expect(mockWorkLocationService.createWorkLocation).not.toHaveBeenCalled();
+    expect(comp.errorMessage()).toContain('عرض جغرافیایی');
+  });
+
   it('should handle generateQrCode 404 error with appropriate Persian error message', () => {
     mockWorkLocationService.generateQrCode.mockReturnValueOnce(
       throwError(() => ({ status: 404, error: { message: 'محل کار یافت نشد.' } }))
