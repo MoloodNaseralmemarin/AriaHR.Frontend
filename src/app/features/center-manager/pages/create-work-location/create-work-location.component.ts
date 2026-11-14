@@ -34,6 +34,13 @@ const NESHAN_SDK_CSS_URL =
 const NESHAN_SDK_JS_URL =
   'https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.js';
 
+/** Default viewport: Hamedan city, Hamedan Province, Iran. */
+const HAMEDAN_CENTER: [number, number] = [34.7983, 48.5147];
+const HAMEDAN_DEFAULT_ZOOM = 13;
+/** Close enough to distinguish streets once the user's own position is known. */
+const CURRENT_LOCATION_ZOOM = 16;
+const GEOLOCATION_TIMEOUT_MS = 15000;
+
 declare const L: any;
 
 @Component({
@@ -59,6 +66,9 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
   readonly mapError = signal<string | null>(null);
   readonly isResolvingAddress = signal(false);
   readonly resolvedAddress = signal<string | null>(null);
+
+  readonly isLocatingCurrentPosition = signal(false);
+  readonly locationError = signal<string | null>(null);
 
   readonly selectedLocation = signal<{ lat: number; lng: number } | null>(null);
 
@@ -118,16 +128,13 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       .then(() => {
         if (!this.mapContainer || !this.mapContainer.nativeElement) return;
 
-        // Default viewport center: Tehran
-        const tehranCenter = [35.6997, 51.338];
-
         this.mapInstance = L.map(this.mapContainer.nativeElement, {
           key: apiKey,
           maptype: 'neshan',
           poi: true,
           traffic: false,
-          center: tehranCenter,
-          zoom: 14,
+          center: HAMEDAN_CENTER,
+          zoom: HAMEDAN_DEFAULT_ZOOM,
         });
 
         // The official Neshan SDK renders the Neshan basemap itself (host, tile
@@ -191,6 +198,80 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       script.onerror = (err) => reject(err);
       document.head.appendChild(script);
     });
+  }
+
+  /**
+   * Moves the map to the browser-reported position and selects it, so the
+   * coordinates, address and radius follow the marker.
+   */
+  useCurrentLocation(): void {
+    if (this.isLocatingCurrentPosition()) {
+      return;
+    }
+
+    this.locationError.set(null);
+
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      this.locationError.set('مرورگر شما از قابلیت موقعیت مکانی پشتیبانی نمی‌کند.');
+      return;
+    }
+
+    // The Geolocation API is only exposed on secure origins (HTTPS or localhost).
+    if (typeof window !== 'undefined' && window.isSecureContext === false) {
+      this.locationError.set(
+        'دریافت موقعیت مکانی فقط روی اتصال امن (HTTPS) امکان‌پذیر است. لطفاً آدرس سایت را با https باز کنید.'
+      );
+      return;
+    }
+
+    this.isLocatingCurrentPosition.set(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.isLocatingCurrentPosition.set(false);
+        const lat = parseFloat(position.coords.latitude.toFixed(6));
+        const lng = parseFloat(position.coords.longitude.toFixed(6));
+
+        this.focusMapOn(lat, lng, CURRENT_LOCATION_ZOOM);
+        this.selectLocation(lat, lng);
+      },
+      (error) => {
+        this.isLocatingCurrentPosition.set(false);
+
+        if (error.code === error.PERMISSION_DENIED) {
+          this.locationError.set(
+            'دسترسی به موقعیت مکانی رد شده است. برای استفاده از این قابلیت، از تنظیمات مرورگر اجازهٔ دسترسی به موقعیت مکانی را برای این سایت فعال کنید.'
+          );
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          this.locationError.set(
+            'موقعیت مکانی شما در دسترس نیست. لطفاً اتصال اینترنت یا GPS دستگاه را بررسی کنید.'
+          );
+        } else if (error.code === error.TIMEOUT) {
+          this.locationError.set(
+            'زمان دریافت موقعیت مکانی به پایان رسید. لطفاً دوباره تلاش کنید.'
+          );
+        } else {
+          this.locationError.set('دریافت موقعیت مکانی با خطا مواجه شد. لطفاً دوباره تلاش کنید.');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: GEOLOCATION_TIMEOUT_MS,
+        maximumAge: 0,
+      }
+    );
+  }
+
+  private focusMapOn(lat: number, lng: number, zoom: number): void {
+    if (!this.mapInstance) {
+      return;
+    }
+
+    if (typeof this.mapInstance.flyTo === 'function') {
+      this.mapInstance.flyTo([lat, lng], zoom, { animate: true, duration: 0.8 });
+    } else {
+      this.mapInstance.setView([lat, lng], zoom);
+    }
   }
 
   selectLocation(lat: number, lng: number): void {
