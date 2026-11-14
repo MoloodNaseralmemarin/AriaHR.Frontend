@@ -90,4 +90,154 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
     expect(comp.showQrModal()).toBe(false);
     expect(comp.errorMessage()).toBe('محل کار یافت نشد.');
   });
+
+  describe('map viewport defaults', () => {
+    it('should create the map centered on Hamedan at city zoom', async () => {
+      const created: { element: unknown; options: any }[] = [];
+      const mapStub = {
+        on: vi.fn(),
+        remove: vi.fn(),
+        setView: vi.fn(),
+        flyTo: vi.fn(),
+      };
+
+      (globalThis as any).L = {
+        map: (element: unknown, options: any) => {
+          created.push({ element, options });
+          return mapStub;
+        },
+      };
+
+      try {
+        const comp = createComponent();
+        comp.mapContainer = { nativeElement: {} } as any;
+        comp.ngAfterViewInit();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(created).toHaveLength(1);
+        // Hamedan city, not the previously hardcoded Tehran viewport.
+        expect(created[0].options.center).toEqual([34.7983, 48.5147]);
+        expect(created[0].options.zoom).toBe(13);
+        expect(created[0].options.key).toBeTruthy();
+        expect(comp.mapError()).toBeNull();
+        expect(comp.isMapLoading()).toBe(false);
+      } finally {
+        delete (globalThis as any).L;
+      }
+    });
+  });
+
+  describe('current location', () => {
+    function stubGeolocation(value: unknown): void {
+      Object.defineProperty(globalThis.navigator, 'geolocation', {
+        value,
+        configurable: true,
+        writable: true,
+      });
+    }
+
+    it('should move the map to the reported position and select it', () => {
+      let success: ((pos: any) => void) | undefined;
+      const getCurrentPosition = vi.fn((onSuccess: (pos: any) => void) => {
+        success = onSuccess;
+      });
+      stubGeolocation({ getCurrentPosition });
+
+      const markerStub = { addTo: vi.fn().mockReturnThis(), on: vi.fn(), setLatLng: vi.fn() };
+      (globalThis as any).L = {
+        marker: vi.fn(() => markerStub),
+        circle: vi.fn(() => ({ addTo: vi.fn() })),
+      };
+
+      try {
+        const comp = createComponent();
+        const mapStub = { flyTo: vi.fn() };
+        (comp as any).mapInstance = mapStub;
+
+        comp.useCurrentLocation();
+
+        expect(getCurrentPosition).toHaveBeenCalledTimes(1);
+        expect(comp.isLocatingCurrentPosition()).toBe(true);
+
+        success!({ coords: { latitude: 34.806_512, longitude: 48.516_334, accuracy: 15 } });
+
+        expect(comp.isLocatingCurrentPosition()).toBe(false);
+        expect(comp.locationError()).toBeNull();
+        expect(comp.selectedLocation()).toEqual({ lat: 34.806512, lng: 48.516334 });
+        expect(mapStub.flyTo).toHaveBeenCalledWith([34.806512, 48.516334], 16, expect.any(Object));
+      } finally {
+        delete (globalThis as any).L;
+      }
+    });
+
+    it('should ask the user to allow location access when permission is denied', () => {
+      let failure: ((err: any) => void) | undefined;
+      stubGeolocation({
+        getCurrentPosition: vi.fn((_s: unknown, onError: (err: any) => void) => {
+          failure = onError;
+        }),
+      });
+
+      const comp = createComponent();
+      comp.useCurrentLocation();
+      failure!({ code: 1, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
+
+      expect(comp.isLocatingCurrentPosition()).toBe(false);
+      expect(comp.selectedLocation()).toBeNull();
+      expect(comp.locationError()).toContain('تنظیمات مرورگر');
+    });
+
+    it('should show a friendly message when the position is unavailable', () => {
+      let failure: ((err: any) => void) | undefined;
+      stubGeolocation({
+        getCurrentPosition: vi.fn((_s: unknown, onError: (err: any) => void) => {
+          failure = onError;
+        }),
+      });
+
+      const comp = createComponent();
+      comp.useCurrentLocation();
+      failure!({ code: 2, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
+
+      expect(comp.locationError()).toContain('در دسترس نیست');
+      expect(comp.selectedLocation()).toBeNull();
+    });
+
+    it('should show a retry message when detection times out', () => {
+      let failure: ((err: any) => void) | undefined;
+      stubGeolocation({
+        getCurrentPosition: vi.fn((_s: unknown, onError: (err: any) => void) => {
+          failure = onError;
+        }),
+      });
+
+      const comp = createComponent();
+      comp.useCurrentLocation();
+      failure!({ code: 3, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
+
+      expect(comp.locationError()).toContain('زمان دریافت موقعیت مکانی');
+      expect(comp.isLocatingCurrentPosition()).toBe(false);
+    });
+
+    it('should report unsupported browsers instead of throwing', () => {
+      stubGeolocation(undefined);
+
+      const comp = createComponent();
+      comp.useCurrentLocation();
+
+      expect(comp.locationError()).toContain('پشتیبانی نمی‌کند');
+      expect(comp.isLocatingCurrentPosition()).toBe(false);
+    });
+
+    it('should ignore repeated clicks while a detection is in progress', () => {
+      const getCurrentPosition = vi.fn();
+      stubGeolocation({ getCurrentPosition });
+
+      const comp = createComponent();
+      comp.useCurrentLocation();
+      comp.useCurrentLocation();
+
+      expect(getCurrentPosition).toHaveBeenCalledTimes(1);
+    });
+  });
 });
