@@ -186,17 +186,20 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
       });
     }
 
-    it('should move the map to the reported position and select it', () => {
+    it('should mark the detected position with its own dot and accuracy circle', () => {
       let success: ((pos: any) => void) | undefined;
       const getCurrentPosition = vi.fn((onSuccess: (pos: any) => void) => {
         success = onSuccess;
       });
       stubGeolocation({ getCurrentPosition });
 
-      const markerStub = { addTo: vi.fn().mockReturnThis(), on: vi.fn(), setLatLng: vi.fn() };
+      const dotStub = { addTo: vi.fn().mockReturnThis(), setLatLng: vi.fn() };
+      const accuracyStub = { addTo: vi.fn().mockReturnThis(), setLatLng: vi.fn(), setRadius: vi.fn() };
+      const selectionMarkerSpy = vi.fn();
       (globalThis as any).L = {
-        marker: vi.fn(() => markerStub),
-        circle: vi.fn(() => ({ addTo: vi.fn() })),
+        marker: selectionMarkerSpy,
+        circleMarker: vi.fn(() => dotStub),
+        circle: vi.fn(() => accuracyStub),
       };
 
       try {
@@ -213,8 +216,21 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
 
         expect(comp.isLocatingCurrentPosition()).toBe(false);
         expect(comp.locationError()).toBeNull();
-        expect(comp.selectedLocation()).toEqual({ lat: 34.806512, lng: 48.516334 });
         expect(mapStub.flyTo).toHaveBeenCalledWith([34.806512, 48.516334], 16, expect.any(Object));
+
+        // Dedicated blue dot for "where I am"...
+        expect((globalThis as any).L.circleMarker).toHaveBeenCalledWith(
+          [34.806512, 48.516334],
+          expect.objectContaining({ fillColor: '#2563eb', fillOpacity: 1 })
+        );
+        // ...and an accuracy circle sized from position.coords.accuracy.
+        expect((globalThis as any).L.circle).toHaveBeenCalledWith(
+          [34.806512, 48.516334],
+          expect.objectContaining({ radius: 15 })
+        );
+        // The draggable selection marker stays where the user left it.
+        expect(selectionMarkerSpy).not.toHaveBeenCalled();
+        expect(comp.selectedLocation()).toBeNull();
       } finally {
         delete (globalThis as any).L;
       }
