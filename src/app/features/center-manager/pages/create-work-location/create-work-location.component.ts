@@ -87,6 +87,9 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
   private mapInstance: any = null;
   private markerInstance: any = null;
   private circleInstance: any = null;
+  /** Detected device position — deliberately separate from the draggable selection marker. */
+  private currentPositionMarker: any = null;
+  private accuracyCircle: any = null;
 
   ngOnInit(): void {
     if (!this.authService.userDetails()) {
@@ -232,8 +235,11 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
         const lat = parseFloat(position.coords.latitude.toFixed(6));
         const lng = parseFloat(position.coords.longitude.toFixed(6));
 
+        // Show the detected position as its own marker instead of moving the
+        // draggable selection marker, so "where I am" and "the work location I
+        // picked" stay visually distinguishable.
+        this.showCurrentPosition(lat, lng, position.coords.accuracy);
         this.focusMapOn(lat, lng, CURRENT_LOCATION_ZOOM);
-        this.selectLocation(lat, lng);
       },
       (error) => {
         this.isLocatingCurrentPosition.set(false);
@@ -260,6 +266,48 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
         maximumAge: 0,
       }
     );
+  }
+
+  /**
+   * Renders the detected position as a blue dot (vector circle marker, so it
+   * cannot be confused with the pin icon of the selection marker) plus a circle
+   * whose radius is the accuracy reported by the browser.
+   */
+  private showCurrentPosition(lat: number, lng: number, accuracy: number): void {
+    if (!this.mapInstance) {
+      return;
+    }
+
+    const point: [number, number] = [lat, lng];
+
+    if (this.currentPositionMarker) {
+      this.currentPositionMarker.setLatLng(point);
+    } else {
+      this.currentPositionMarker = L.circleMarker(point, {
+        radius: 7,
+        color: '#ffffff',
+        weight: 3,
+        fillColor: '#2563eb',
+        fillOpacity: 1,
+        interactive: false,
+      }).addTo(this.mapInstance);
+    }
+
+    if (Number.isFinite(accuracy) && accuracy > 0) {
+      if (this.accuracyCircle) {
+        this.accuracyCircle.setLatLng(point);
+        this.accuracyCircle.setRadius(accuracy);
+      } else {
+        this.accuracyCircle = L.circle(point, {
+          radius: accuracy,
+          color: '#2563eb',
+          weight: 1,
+          fillColor: '#3b82f6',
+          fillOpacity: 0.12,
+          interactive: false,
+        }).addTo(this.mapInstance);
+      }
+    }
   }
 
   private focusMapOn(lat: number, lng: number, zoom: number): void {
