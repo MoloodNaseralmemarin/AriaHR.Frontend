@@ -24,6 +24,16 @@ import { WorkLocationService } from '../../services/work-location.service';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
+/**
+ * Official Neshan Leaflet SDK (Leaflet 1.9.4 + Neshan map integration).
+ * The SDK loads the Neshan basemap itself, so the application must not configure
+ * a tile URL by hand (the previous raster.neshan.org host no longer resolves).
+ */
+const NESHAN_SDK_CSS_URL =
+  'https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.css';
+const NESHAN_SDK_JS_URL =
+  'https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.js';
+
 declare const L: any;
 
 @Component({
@@ -120,11 +130,19 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
           zoom: 14,
         });
 
-        // Add standard tile layer with Web Map API key query parameter
-        L.tileLayer(`https://raster.neshan.org/v2/Standard/current/{z}/{x}/{y}.png?apiKey=${apiKey}`, {
-          maxZoom: 19,
-          attribution: '&copy; <a href="https://neshan.org">Neshan</a>',
-        }).addTo(this.mapInstance);
+        // The official Neshan SDK renders the Neshan basemap itself (host, tile
+        // encoding and styling are owned by the SDK), so no manual tile URL is
+        // configured here.
+        let tileErrorReported = false;
+        this.mapInstance.on('tileerror', () => {
+          if (tileErrorReported) {
+            return;
+          }
+          tileErrorReported = true;
+          this.mapError.set(
+            'بارگذاری تایل‌های نقشه نشان انجام نشد. دسترسی دامنه یا اتصال شبکه را بررسی کنید.'
+          );
+        });
 
         this.mapInstance.on('click', (e: any) => {
           const lat = parseFloat(e.latlng.lat.toFixed(6));
@@ -149,16 +167,16 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
         return;
       }
 
-      const cssId = 'neshan-leaflet-css';
+      const cssId = 'neshan-sdk-css';
       if (!document.getElementById(cssId)) {
         const link = document.createElement('link');
         link.id = cssId;
         link.rel = 'stylesheet';
-        link.href = 'https://static.neshan.org/sdk/leaflet/1.4.0/leaflet.css';
+        link.href = NESHAN_SDK_CSS_URL;
         document.head.appendChild(link);
       }
 
-      const jsId = 'neshan-leaflet-js';
+      const jsId = 'neshan-sdk-js';
       if (document.getElementById(jsId)) {
         const existingScript = document.getElementById(jsId) as HTMLScriptElement;
         existingScript.addEventListener('load', () => resolve());
@@ -168,7 +186,7 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
 
       const script = document.createElement('script');
       script.id = jsId;
-      script.src = 'https://static.neshan.org/sdk/leaflet/1.4.0/leaflet.js';
+      script.src = NESHAN_SDK_JS_URL;
       script.onload = () => resolve();
       script.onerror = (err) => reject(err);
       document.head.appendChild(script);
@@ -224,6 +242,16 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
   private resolveAddress(lat: number, lng: number): void {
     this.isResolvingAddress.set(true);
     this.resolvedAddress.set(null);
+
+    // Reverse geocoding requires a "Services" key; a Web Map key is rejected by
+    // api.neshan.org with HTTP 483, so skip the call and say why instead of failing silently.
+    if (!this.workLocationService.hasReverseGeocodingKey) {
+      this.isResolvingAddress.set(false);
+      this.resolvedAddress.set(
+        'سرویس تبدیل موقعیت به آدرس فعال نیست؛ کلید سرویس نقشه نشان (Reverse Geocoding) تنظیم نشده است.'
+      );
+      return;
+    }
 
     this.workLocationService
       .reverseGeocode(lat, lng)
