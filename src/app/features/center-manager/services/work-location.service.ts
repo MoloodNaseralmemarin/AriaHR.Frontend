@@ -18,6 +18,15 @@ export class WorkLocationService {
   private readonly apiUrl = `${environment.apiUrl}/api/organizations/work-locations`;
 
   /**
+   * Neshan reverse geocoding requires a dedicated "Services" key (Reverse Geocoding
+   * service). A Web Map key is rejected with HTTP 483 ("API Key type not suitable for
+   * this service"), so the map key must never be used here.
+   */
+  get hasReverseGeocodingKey(): boolean {
+    return !!environment.neshanServiceApiKey;
+  }
+
+  /**
    * Posts the creation request for a new work location.
    * Endpoint: POST /api/organizations/work-locations
    */
@@ -34,7 +43,9 @@ export class WorkLocationService {
   }
 
   /**
-   * Fetches reverse geocoded address for coordinates using Neshan API.
+   * Converts coordinates into a readable Persian address using Neshan Reverse
+   * Geocoding v5. Returns `null` when no services key is configured, when the
+   * coordinates cannot be resolved, or when the request fails.
    */
   reverseGeocode(lat: number, lng: number): Observable<string | null> {
     const apiKey = environment.neshanServiceApiKey;
@@ -42,22 +53,32 @@ export class WorkLocationService {
       return of(null);
     }
 
-    const url = `https://api.neshan.org/v2/reverse?lat=${lat}&lng=${lng}`;
+    const url = `https://api.neshan.org/v5/reverse?lat=${lat}&lng=${lng}`;
     const headers = new HttpHeaders({
       'Api-Key': apiKey,
     });
 
     return this.http.get<NeshanReverseGeocodeResponse>(url, { headers }).pipe(
-      map((res) => {
-        if (res.formatted_address) {
-          return res.formatted_address;
-        }
-        if (res.address) {
-          return res.address;
-        }
-        return null;
-      }),
+      map((res) => this.toReadableAddress(res)),
       catchError(() => of(null))
     );
+  }
+
+  private toReadableAddress(res: NeshanReverseGeocodeResponse | null | undefined): string | null {
+    const formatted = res?.formatted_address?.trim();
+    if (formatted) {
+      return formatted;
+    }
+
+    const parts = [res?.neighbourhood, res?.city, res?.state]
+      .map((part) => part?.trim())
+      .filter((part): part is string => !!part);
+
+    if (parts.length > 0) {
+      return Array.from(new Set(parts)).join('، ');
+    }
+
+    const legacyAddress = res?.address?.trim();
+    return legacyAddress || null;
   }
 }

@@ -58,6 +58,40 @@
         <div class="relative h-80 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 sm:h-96">
           <div #mapContainer class="h-full w-full"></div>
 
+          @if (!isMapLoading() && !mapError()) {
+            <button
+              type="button"
+              (click)="useCurrentLocation()"
+              [disabled]="isLocatingCurrentPosition()"
+              aria-label="موقعیت فعلی من"
+              class="absolute top-3 right-3 z-[600] inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white/95 px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-md transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-70 sm:px-4"
+            >
+              @if (isLocatingCurrentPosition()) {
+                <div class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                <span>در حال یافتن موقعیت...</span>
+              } @else {
+                <svg
+                  class="h-4.5 w-4.5 shrink-0 text-blue-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="8" />
+                  <circle cx="12" cy="12" r="2.5" />
+                  <line x1="12" y1="2" x2="12" y2="4" />
+                  <line x1="12" y1="20" x2="12" y2="22" />
+                  <line x1="2" y1="12" x2="4" y2="12" />
+                  <line x1="20" y1="12" x2="22" y2="12" />
+                </svg>
+                <span>موقعیت فعلی من</span>
+              }
+            </button>
+          }
+
           @if (isMapLoading()) {
             <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/80 backdrop-blur-xs">
               <div class="h-8 w-8 animate-spin rounded-full border-3 border-blue-600 border-t-transparent"></div>
@@ -77,8 +111,31 @@
           }
         </div>
         <p class="mt-2 text-xs text-slate-500">
-          برای تعیین محل دقیق، روی نقشه کلیک کنید یا نشانگر را بکشید.
+          دکمهٔ «موقعیت فعلی من» موقعیت شما را با نقطهٔ آبی و دایرهٔ دقت نشان می‌دهد؛ برای ثبت محل کار، روی نقشه کلیک کنید یا نشانگر را بکشید.
         </p>
+
+        @if (locationError()) {
+          <div
+            class="mt-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800"
+            role="alert"
+          >
+            <svg
+              class="mt-0.5 h-4 w-4 shrink-0 text-amber-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>{{ locationError() }}</span>
+          </div>
+        }
       </div>
 
       <!-- Selected Coordinates Display -->
@@ -132,8 +189,13 @@
             id="radiusInMeters"
             type="number"
             formControlName="radiusInMeters"
-            min="1"
+            inputmode="numeric"
+            [min]="minRadius"
+            [max]="maxRadius"
+            step="1"
             placeholder="200"
+            [attr.aria-invalid]="isControlInvalid('radiusInMeters')"
+            [attr.aria-describedby]="isControlInvalid('radiusInMeters') ? 'radiusInMeters-error' : null"
             class="w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-800 transition focus:outline-none focus:ring-2"
             [ngClass]="{
               'border-rose-300 focus:border-rose-500 focus:ring-rose-200': isControlInvalid('radiusInMeters'),
@@ -143,8 +205,8 @@
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">متر</span>
         </div>
         @if (isControlInvalid('radiusInMeters')) {
-          <p class="mt-1 text-xs text-rose-600">
-            لطفاً یک عدد معتبر بزرگتر از zero برای شعاع وارد کنید.
+          <p id="radiusInMeters-error" class="mt-1 text-xs text-rose-600" role="alert">
+            {{ radiusMessage() }}
           </p>
         }
       </div>
@@ -160,6 +222,42 @@
           <div class="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:top-[2px] after:right-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
         </label>
       </div>
+
+      <!-- Saved Registration Summary -->
+      @if (isSubmitted()) {
+        <div
+          class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900"
+          role="status"
+          aria-live="polite"
+        >
+          <p class="font-semibold">محل کار مرکز با موفقیت ثبت شد.</p>
+          <div class="mt-2 space-y-1 text-xs text-emerald-800">
+            <p>
+              مختصات ثبت‌شده:
+              <span class="font-mono" dir="ltr">
+                {{ selectedLocation()?.lat }}, {{ selectedLocation()?.lng }}
+              </span>
+            </p>
+            <p>
+              شعاع محدوده: {{ form.controls.radiusInMeters.value }} متر — وضعیت:
+              {{ form.controls.isActive.value ? 'فعال' : 'غیرفعال' }}
+            </p>
+            @if (createdWorkLocationId()) {
+              <p>
+                شناسه محل کار:
+                <span class="font-mono" dir="ltr">{{ createdWorkLocationId() }}</span>
+              </p>
+            }
+          </div>
+          <button
+            type="button"
+            (click)="startNewRegistration()"
+            class="mt-3 inline-flex w-full sm:hidden items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white px-4 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
+          >
+            ثبت محل کار جدید
+          </button>
+        </div>
+      }
 
       <!-- Actions -->
       <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-100 pt-5">
@@ -188,14 +286,29 @@
         </div>
 
         <div class="flex items-center justify-end gap-3">
+          @if (isSubmitted()) {
+            <button
+              type="button"
+              (click)="startNewRegistration()"
+              [disabled]="isSubmitting()"
+              class="hidden sm:inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              ثبت محل کار جدید
+            </button>
+          }
           <button
             type="submit"
-            [disabled]="isSubmitting() || !selectedLocation() || form.invalid"
+            [disabled]="isSubmitting() || isSubmitted() || !selectedLocation() || form.invalid"
             class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             @if (isSubmitting()) {
               <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
               <span>در حال ذخیره...</span>
+            } @else if (isSubmitted()) {
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>محل کار ثبت شد</span>
             } @else {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
