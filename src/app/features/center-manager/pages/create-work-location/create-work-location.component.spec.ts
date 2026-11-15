@@ -35,14 +35,19 @@ describe('CreateWorkLocationComponent', () => {
           organizationId: 'org-123',
           latitude: 35.7219,
           longitude: 51.3347,
-          radiusInMeters: 200,
+          name: 'مرکز ولیعصر',
+          allowedRadiusInMeters: 200,
           isActive: true,
+          qrCodeMode: 1,
+          qrCodeEnabled: true,
         })
       ),
       generateQrCode: vi.fn().mockReturnValue(
         of({
-          code: 'sample-qr-token',
+          token: 'sample-qr-token',
           expiresAtUtc: '2026-10-03T12:00:00Z',
+          refreshAfterUtc: null,
+          rotationIntervalMinutes: 5,
         })
       ),
       reverseGeocode: vi.fn().mockReturnValue(of('تهران، خیابان ولیعصر')),
@@ -99,6 +104,7 @@ describe('CreateWorkLocationComponent', () => {
   });
 
   it('should require selecting a location before submission', () => {
+    component.form.controls.name.setValue('مرکز ولیعصر');
     component.onSubmit();
 
     expect(component.errorMessage()).toBe('لطفاً ابتدا محل مرکز را روی نقشه انتخاب کنید.');
@@ -114,6 +120,7 @@ describe('CreateWorkLocationComponent', () => {
       of({ ...mockUserDetails, organizationId: null })
     );
 
+    component.form.controls.name.setValue('مرکز ولیعصر');
     component.selectLocation(35.7219, 51.3347);
     component.onSubmit();
 
@@ -125,6 +132,7 @@ describe('CreateWorkLocationComponent', () => {
   it('should re-check /api/auth/me when the cached profile has no center', () => {
     userDetailsSignal.set({ ...mockUserDetails, organizationId: null });
 
+    component.form.controls.name.setValue('مرکز ولیعصر');
     component.selectLocation(35.7219, 51.3347);
     component.onSubmit();
 
@@ -138,6 +146,7 @@ describe('CreateWorkLocationComponent', () => {
     userDetailsSignal.set(null);
     vi.mocked(mockAuthService.getCurrentUser!).mockReturnValueOnce(of(null));
 
+    component.form.controls.name.setValue('مرکز ولیعصر');
     component.selectLocation(35.7219, 51.3347);
     component.onSubmit();
 
@@ -147,15 +156,20 @@ describe('CreateWorkLocationComponent', () => {
   });
 
   it('should submit valid work location successfully and show success toast', () => {
+    component.form.controls.name.setValue('مرکز ولیعصر');
     component.selectLocation(35.7219, 51.3347);
     component.onSubmit();
 
     expect(mockWorkLocationService.createWorkLocation).toHaveBeenCalledWith({
+      name: 'مرکز ولیعصر',
       organizationId: 'org-123',
       latitude: 35.7219,
       longitude: 51.3347,
-      radiusInMeters: 200,
+      allowedRadiusInMeters: 200,
       isActive: true,
+      qrCodeMode: 1,
+      qrCodeEnabled: true,
+      qrRotationIntervalMinutes: null,
     });
     expect(component.showSuccessToast()).toBe(true);
     expect(component.submitState()).toBe('success');
@@ -169,7 +183,7 @@ describe('CreateWorkLocationComponent', () => {
     expect(mockWorkLocationService.generateQrCode).toHaveBeenCalledWith('wl-1');
     expect(component.showQrModal()).toBe(true);
     expect(component.qrData()).toEqual({
-      code: 'sample-qr-token',
+      token: 'sample-qr-token',
       expiresAtUtc: '2026-10-03T12:00:00Z',
     });
   });
@@ -191,6 +205,7 @@ describe('CreateWorkLocationComponent', () => {
       throwError(() => ({ error: { message: 'محل کار تکراری است.' } }))
     );
 
+    component.form.controls.name.setValue('مرکز ولیعصر');
     component.selectLocation(35.7219, 51.3347);
     component.onSubmit();
 

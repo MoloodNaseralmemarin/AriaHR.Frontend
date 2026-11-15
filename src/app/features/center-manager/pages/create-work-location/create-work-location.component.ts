@@ -170,10 +170,12 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
    */
   private loadCurrentUserIfMissing(): Observable<CurrentUserDto | null> {
     const existing = this.authService.userDetails();
-    if (existing) {
+    if (existing?.organizationId) {
       return of(existing);
     }
 
+    // A cached profile without a center can be stale, so ask /api/auth/me again
+    // instead of reporting the manager as disconnected based on cached data.
     return this.authService.getCurrentUser();
   }
 
@@ -596,8 +598,16 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
     this.loadCurrentUserIfMissing()
       .pipe(
         switchMap((user) => {
-          const orgId = user?.organizationId;
+          if (!user) {
+            // AuthService maps a failed /api/auth/me to null; that is not the same
+            // as a manager who belongs to no center, so do not claim the latter.
+            this.errorMessage.set(
+              'دریافت اطلاعات حساب شما انجام نشد. اتصال به سرور و وضعیت نشست را بررسی کنید و دوباره تلاش کنید.'
+            );
+            return EMPTY;
+          }
 
+          const orgId = user.organizationId;
           if (!orgId) {
             this.errorMessage.set('شما به هیچ مرکزی متصل نیستید و امکان ثبت محل کار را ندارید.');
             return EMPTY;
