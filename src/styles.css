@@ -42,6 +42,33 @@ th {
   outline-offset: 2px;
 }
 
+/*
+ * Application overlay layers.
+ *
+ * Leaflet (the Neshan basemap on the work-location page) paints its panes with
+ * z-index 400-800 and its control corners (`.leaflet-top` / `.leaflet-bottom`,
+ * which hold the zoom and attribution controls) with z-index 1000. Layout
+ * containers such as the sticky sidebar also create their own stacking
+ * contexts. Dialogs are rendered at the app root and use this layer, which sits
+ * just above Leaflet's highest layer and below the splash/privacy screens.
+ */
+.app-modal-layer {
+  z-index: 1100;
+}
+
+/*
+ * Keep every map layer inside the map.
+ *
+ * The Neshan SDK injects its watermark as an absolutely positioned element with
+ * an inline `z-index: 999999`. Because the Leaflet container was not a stacking
+ * context, that watermark escaped above the whole page (including dialogs).
+ * Isolating the container confines such vendor layers to the map without hiding
+ * or changing the map itself.
+ */
+.leaflet-container {
+  isolation: isolate;
+}
+
 /* Ensure smooth transitions for cards and interactive inputs */
 .card-hover-effect {
   transition: all 0.2s ease-in-out;

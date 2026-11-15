@@ -2,17 +2,17 @@ import '@angular/compiler';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { LogoutButtonComponent } from './logout-button.component';
-import { AuthService } from '../../../core/auth/auth.service';
+import { LogoutModalService } from '../../../core/services/logout-modal.service';
 
 describe('LogoutButtonComponent', () => {
   let component: LogoutButtonComponent;
-  let mockAuthService: { logout: ReturnType<typeof vi.fn> };
+  let mockLogoutModal: { open: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    mockAuthService = { logout: vi.fn() };
+    mockLogoutModal = { open: vi.fn() };
 
     const injector = Injector.create({
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [{ provide: LogoutModalService, useValue: mockLogoutModal }],
     });
 
     runInInjectionContext(injector, () => {
@@ -34,20 +34,13 @@ describe('LogoutButtonComponent', () => {
     expect(component.variant).toBe('menu-item');
   });
 
-  it('should open confirmation modal on trigger and not logout immediately', () => {
-    expect(component.showModal()).toBe(false);
+  it('should open the shared confirmation modal on trigger without logging out', () => {
     component.onLogout();
-    expect(component.showModal()).toBe(true);
-    expect(mockAuthService.logout).not.toHaveBeenCalled();
+    expect(mockLogoutModal.open).toHaveBeenCalledTimes(1);
   });
 
-  it('should delegate logout to AuthService upon confirmed logout', () => {
+  it('should open the shared confirmation modal from the button handler', () => {
     component.openModal();
-    expect(component.showModal()).toBe(true);
-
-    component.onConfirmedLogout();
-
-    expect(component.showModal()).toBe(false);
-    expect(mockAuthService.logout).toHaveBeenCalledTimes(1);
+    expect(mockLogoutModal.open).toHaveBeenCalledTimes(1);
   });
 });

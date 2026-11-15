@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 
 import { AuthService } from './core/auth/auth.service';
+import { LogoutModalService } from './core/services/logout-modal.service';
 import { PwaStartupService } from './core/services/pwa-startup.service';
 import { SplashScreenComponent } from './shared/components/splash-screen/splash-screen.component';
+import { LogoutModalComponent } from './shared/components/logout-modal/logout-modal.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, SplashScreenComponent],
+  imports: [CommonModule, RouterOutlet, SplashScreenComponent, LogoutModalComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -17,6 +19,7 @@ export class App implements OnInit {
   protected readonly title = signal('AriaHR.Frontend');
   protected readonly authService = inject(AuthService);
   protected readonly pwaStartupService = inject(PwaStartupService);
+  protected readonly logoutModal = inject(LogoutModalService);
   private readonly router = inject(Router);
 
   ngOnInit(): void {
