@@ -1,10 +1,13 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   ElementRef,
   OnDestroy,
   OnInit,
+  ViewChild,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -19,6 +22,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { environment } from '../../../../../environments/environment';
+import { CreateWorkLocationDto } from '../../models/create-work-location.dto';
 import { WorkLocationResponseDto } from '../../models/work-location-response.dto';
 import { WorkLocationService } from '../../services/work-location.service';
 
@@ -54,7 +58,7 @@ declare const L: any;
   styleUrls: ['./work-location-edit.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CenterManagerWorkLocationEditComponent implements OnInit, OnDestroy {
+export class CenterManagerWorkLocationEditComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly workLocationService = inject(WorkLocationService);
   private readonly authService = inject(AuthService);
@@ -73,6 +77,8 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, OnDestroy
   readonly locationError = signal<string | null>(null);
 
   readonly selectedLocation = signal<{ lat: number; lng: number } | null>(null);
+
+  readonly isGeneratingQr = signal(false);
 
   readonly isSubmitting = computed(() => this.submitState() === 'submitting');
   readonly isSubmitted = computed(() => this.submitState() === 'success');
@@ -94,9 +100,13 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, OnDestroy
 
     this.form.controls.radiusInMeters.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((val) => {
+      .subscribe((val: number) => {
         this.updateRadiusCircle(val);
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.initMap();
   }
 
   private loadCurrentUserIfMissing(): Observable<CurrentUserDto | null> {
@@ -670,3 +680,4 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, OnDestroy
       });
   }
 }
+export { CenterManagerWorkLocationEditComponent as WorkLocationEditComponent };

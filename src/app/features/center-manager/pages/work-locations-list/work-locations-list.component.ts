@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map, takeUntil } from 'rxjs/operators';
 
+import { RouterLink } from '@angular/router';
 import { WorkLocationService } from '../../services/work-location.service';
 import { WorkLocationResponseDto } from '../../models/work-location-response.dto';
-import { TableComponent } from '../../../../shared/components/table/table.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { DeleteConfirmationComponent } from '../../../../shared/components/delete-confirmation/delete-confirmation.component';
 import { environment } from '../../../../../environments/environment';
 
@@ -25,10 +25,12 @@ export interface WorkLocationTableItem {
 @Component({
   selector: 'app-work-locations-list',
   standalone: true,
-  imports: [CommonModule, TableComponent, EmptyStateComponent, ToastComponent, DeleteConfirmationComponent],
+  imports: [CommonModule, RouterLink, EmptyStateComponent, DeleteConfirmationComponent],
+  templateUrl: './work-locations-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CenterManagerWorkLocationsListComponent {
+  private readonly router = inject(Router);
   private readonly workLocationService = inject(WorkLocationService);
 
   readonly workLocations = signal<WorkLocationTableItem[]>([]);
@@ -100,4 +102,10 @@ export class CenterManagerWorkLocationsListComponent {
     this.showDeleteConfirmation.set(false);
     this.deletingId.set(null);
   }
+
+  navigateToCreate(): void {
+    this.router.navigate(['/center-manager/work-locations/create']);
+  }
 }
+
+export { CenterManagerWorkLocationsListComponent as WorkLocationsListComponent };

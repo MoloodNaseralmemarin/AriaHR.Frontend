@@ -21,6 +21,7 @@ import { EMPTY, Observable, finalize, of, switchMap } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
+import { QrCodeModalComponent } from '../../../../shared/components/qr-code-modal/qr-code-modal.component';
 import { environment } from '../../../../../environments/environment';
 import { CreateWorkLocationDto } from '../../models/create-work-location.dto';
 import { WorkLocationService } from '../../services/work-location.service';
@@ -52,7 +53,7 @@ declare const L: any;
 @Component({
   selector: 'app-create-work-location-edit',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, ToastComponent],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, ToastComponent, QrCodeModalComponent],
   templateUrl: './create-work-location-edit.component.html',
   styleUrls: ['./create-work-location-edit.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -78,6 +79,14 @@ export class CreateWorkLocationEditComponent implements OnInit, AfterViewInit, O
   readonly locationError = signal<string | null>(null);
 
   readonly selectedLocation = signal<{ lat: number; lng: number } | null>(null);
+
+  readonly form = this.fb.group({
+    radiusInMeters: [
+      DEFAULT_RADIUS_METERS,
+      [Validators.required, Validators.min(MIN_RADIUS_METERS), Validators.max(MAX_RADIUS_METERS)],
+    ],
+    isActive: [true],
+  });
 
   readonly isSubmitting = computed(() => this.submitState() === 'submitting');
   readonly isSubmitted = computed(() => this.submitState() === 'success');
@@ -105,7 +114,7 @@ export class CreateWorkLocationEditComponent implements OnInit, AfterViewInit, O
 
     this.form.controls.radiusInMeters.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((val) => {
+      .subscribe((val: number) => {
         this.updateRadiusCircle(val);
       });
 
@@ -138,20 +147,24 @@ export class CreateWorkLocationEditComponent implements OnInit, AfterViewInit, O
       next: (workLocation) => {
         if (workLocation) {
           this.workLocationId.set(id);
-          this.selectedLocation.set({ lat: workLocation.latitude, lng: workLocation.longitude });
+          const lat = workLocation.latitude ?? 0;
+          const lng = workLocation.longitude ?? 0;
+          this.selectedLocation.set({ lat, lng });
 
           this.form.patchValue({
-            radiusInMeters: workLocation.radiusInMeters,
-            isActive: workLocation.isActive,
+            radiusInMeters: workLocation.radiusInMeters ?? DEFAULT_RADIUS_METERS,
+            isActive: workLocation.isActive ?? true,
           });
 
           // Focus map on the location
-          if (this.mapInstance) {
-            this.focusMapOn(workLocation.latitude, workLocation.longitude, CURRENT_LOCATION_ZOOM);
+          if (this.mapInstance && Number.isFinite(lat) && Number.isFinite(lng)) {
+            this.focusMapOn(lat, lng, CURRENT_LOCATION_ZOOM);
           }
 
           // Trigger reverse geocoding
-          this.resolveAddress(workLocation.latitude, workLocation.longitude);
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            this.resolveAddress(lat, lng);
+          }
         }
       },
       error: (err) => {
