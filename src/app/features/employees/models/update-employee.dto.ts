@@ -1,5 +1,6 @@
 export interface UpdateEmployeeDto {
-  organizationId: string;
+  /** Omitted by the client so the backend resolves it from the caller's token. */
+  organizationId?: string;
   personnelCode: string;
   nationalCode: string;
   birthDate: string;

@@ -3,5 +3,6 @@ export interface CreateShiftDto {
   startTime: string; // 'HH:mm'
   endTime: string; // 'HH:mm'
   isActive: boolean;
-  organizationId: string;
+  /** Omitted by the client so the backend resolves it from the caller's token. */
+  organizationId?: string;
 }

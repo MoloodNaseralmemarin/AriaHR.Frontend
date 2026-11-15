@@ -15,10 +15,8 @@ import { CommonModule } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Observable, finalize, of, switchMap } from 'rxjs';
+import { finalize } from 'rxjs';
 
-import { AuthService } from '../../../../core/auth/auth.service';
-import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { QrCodeModalComponent } from '../../../../shared/components/qr-code-modal/qr-code-modal.component';
 import { environment } from '../../../../../environments/environment';
@@ -83,7 +81,6 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
 
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly workLocationService = inject(WorkLocationService);
-  private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly submitState = signal<SubmitState>('idle');
@@ -143,8 +140,6 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
   private accuracyCircle: any = null;
 
   ngOnInit(): void {
-    this.loadCurrentUserIfMissing();
-
     this.form.controls.radiusInMeters.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((val) => {
@@ -161,22 +156,6 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       this.mapInstance.remove();
       this.mapInstance = null;
     }
-  }
-
-  /**
-   * The organization of a work location comes from the authenticated manager's
-   * profile (`/api/auth/me`), never from user input, so a manager can only create
-   * locations for the center they belong to.
-   */
-  private loadCurrentUserIfMissing(): Observable<CurrentUserDto | null> {
-    const existing = this.authService.userDetails();
-    if (existing?.organizationId) {
-      return of(existing);
-    }
-
-    // A cached profile without a center can be stale, so ask /api/auth/me again
-    // instead of reporting the manager as disconnected based on cached data.
-    return this.authService.getCurrentUser();
   }
 
   private initMap(): void {
@@ -595,41 +574,26 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
     const value = this.form.getRawValue();
     this.submitState.set('submitting');
 
-    this.loadCurrentUserIfMissing()
+    // The backend derives the organization from the authenticated token's
+    // organization_id claim; /api/auth/me does not expose an organization id,
+    // so requiring one here blocked every submission.
+    const request: CreateWorkLocationDto = {
+      name: value.name.trim(),
+      latitude: loc.lat,
+      longitude: loc.lng,
+      allowedRadiusInMeters: value.radiusInMeters,
+      isActive: value.isActive,
+      qrCodeMode: value.qrCodeMode,
+      qrCodeEnabled: value.qrCodeEnabled,
+      qrRotationIntervalMinutes:
+        value.qrCodeMode === QrCodeMode.Dynamic
+          ? value.qrRotationIntervalMinutes
+          : null,
+    };
+
+    this.workLocationService
+      .createWorkLocation(request)
       .pipe(
-        switchMap((user) => {
-          if (!user) {
-            // AuthService maps a failed /api/auth/me to null; that is not the same
-            // as a manager who belongs to no center, so do not claim the latter.
-            this.errorMessage.set(
-              'دریافت اطلاعات حساب شما انجام نشد. اتصال به سرور و وضعیت نشست را بررسی کنید و دوباره تلاش کنید.'
-            );
-            return EMPTY;
-          }
-
-          const orgId = user.organizationId;
-          if (!orgId) {
-            this.errorMessage.set('شما به هیچ مرکزی متصل نیستید و امکان ثبت محل کار را ندارید.');
-            return EMPTY;
-          }
-
-          const request: CreateWorkLocationDto = {
-            name: value.name.trim(),
-            organizationId: orgId,
-            latitude: loc.lat,
-            longitude: loc.lng,
-            allowedRadiusInMeters: value.radiusInMeters,
-            isActive: value.isActive,
-            qrCodeMode: value.qrCodeMode,
-            qrCodeEnabled: value.qrCodeEnabled,
-            qrRotationIntervalMinutes:
-              value.qrCodeMode === QrCodeMode.Dynamic
-                ? value.qrRotationIntervalMinutes
-                : null,
-          };
-
-          return this.workLocationService.createWorkLocation(request);
-        }),
         finalize(() => {
           if (this.submitState() === 'submitting') {
             this.submitState.set('idle');

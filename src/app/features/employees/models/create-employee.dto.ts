@@ -8,5 +8,6 @@ export interface CreateEmployeeDto {
   hireDate: string;
   gender?: string | null;
   profileImage?: File | null;
-  organizationId: string;
+  /** Omitted by the client so the backend resolves it from the caller's token. */
+  organizationId?: string;
 }

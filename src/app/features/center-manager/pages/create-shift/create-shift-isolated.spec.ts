@@ -79,7 +79,6 @@ describe('CreateShiftComponent (Isolated Unit Tests)', () => {
       startTime: '08:00',
       endTime: '16:00',
       isActive: true,
-      organizationId: 'org-123',
     });
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/center-manager/shifts']);
   });

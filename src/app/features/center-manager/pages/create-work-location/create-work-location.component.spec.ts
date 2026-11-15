@@ -111,48 +111,31 @@ describe('CreateWorkLocationComponent', () => {
     expect(mockWorkLocationService.createWorkLocation).not.toHaveBeenCalled();
   });
 
-  it('should prevent submission if user has no organizationId', () => {
-    userDetailsSignal.set({
-      ...mockUserDetails,
-      organizationId: null,
-    });
-    vi.mocked(mockAuthService.getCurrentUser!).mockReturnValueOnce(
-      of({ ...mockUserDetails, organizationId: null })
-    );
-
-    component.form.controls.name.setValue('مرکز ولیعصر');
-    component.selectLocation(35.7219, 51.3347);
-    component.onSubmit();
-
-    expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
-    expect(component.errorMessage()).toBe('شما به هیچ مرکزی متصل نیستید و امکان ثبت محل کار را ندارید.');
-    expect(mockWorkLocationService.createWorkLocation).not.toHaveBeenCalled();
-  });
-
-  it('should re-check /api/auth/me when the cached profile has no center', () => {
+  it('should submit without an organizationId so the backend resolves it from the token', () => {
+    // /api/auth/me never returns an organization id, so this is the normal case.
     userDetailsSignal.set({ ...mockUserDetails, organizationId: null });
 
     component.form.controls.name.setValue('مرکز ولیعصر');
     component.selectLocation(35.7219, 51.3347);
     component.onSubmit();
 
-    expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
-    expect(mockWorkLocationService.createWorkLocation).toHaveBeenCalledWith(
-      expect.objectContaining({ organizationId: 'org-123' })
-    );
+    expect(mockAuthService.getCurrentUser).not.toHaveBeenCalled();
+    expect(mockWorkLocationService.createWorkLocation).toHaveBeenCalledTimes(1);
+    const createMock = mockWorkLocationService.createWorkLocation as ReturnType<typeof vi.fn>;
+    const payload = createMock.mock.calls[0]?.[0];
+    expect(payload).not.toHaveProperty('organizationId');
+    expect(component.submitState()).toBe('success');
   });
 
-  it('should not blame the center when the account profile cannot be loaded', () => {
+  it('should still submit when the cached profile is unavailable', () => {
     userDetailsSignal.set(null);
-    vi.mocked(mockAuthService.getCurrentUser!).mockReturnValueOnce(of(null));
 
     component.form.controls.name.setValue('مرکز ولیعصر');
     component.selectLocation(35.7219, 51.3347);
     component.onSubmit();
 
-    expect(component.errorMessage()).not.toContain('هیچ مرکزی');
-    expect(component.errorMessage()).toContain('دریافت اطلاعات حساب');
-    expect(mockWorkLocationService.createWorkLocation).not.toHaveBeenCalled();
+    expect(component.errorMessage()).toBeNull();
+    expect(mockWorkLocationService.createWorkLocation).toHaveBeenCalledTimes(1);
   });
 
   it('should submit valid work location successfully and show success toast', () => {
@@ -162,7 +145,6 @@ describe('CreateWorkLocationComponent', () => {
 
     expect(mockWorkLocationService.createWorkLocation).toHaveBeenCalledWith({
       name: 'مرکز ولیعصر',
-      organizationId: 'org-123',
       latitude: 35.7219,
       longitude: 51.3347,
       allowedRadiusInMeters: 200,

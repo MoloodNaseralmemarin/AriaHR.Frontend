@@ -1,12 +1,10 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { EMPTY, Observable, finalize, of, switchMap } from 'rxjs';
+import { finalize } from 'rxjs';
 
 import { ShiftService } from '../../services/shift.service';
-import { AuthService } from '../../../../core/auth/auth.service';
-import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { CreateShiftDto } from '../../models/create-shift.dto';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { extractApiErrorMessage } from '../../../../core/utils/api-error.util';
@@ -48,10 +46,9 @@ export function time24hValidator(control: AbstractControl): ValidationErrors | n
   styleUrls: ['./create-shift.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateShiftComponent implements OnInit {
+export class CreateShiftComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly shiftService = inject(ShiftService);
-  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   readonly submitState = signal<SubmitState>('idle');
@@ -66,32 +63,6 @@ export class CreateShiftComponent implements OnInit {
     endTime: ['', [Validators.required, time24hValidator]],
     isActive: [true],
   });
-
-  ngOnInit(): void {
-    this.loadCurrentUserIfMissing().subscribe({
-      error: () => {
-        // Failure handled gracefully during submission
-      },
-    });
-  }
-
-  /**
-   * The organization of a shift comes from the authenticated manager's profile
-   * (`/api/auth/me`), never from user input, so a manager can only create shifts
-   * for the center they belong to.
-   */
-  private loadCurrentUserIfMissing(): Observable<CurrentUserDto | null> {
-    const existing = this.authService.userDetails();
-    if (existing?.organizationId) {
-      return of(existing);
-    }
-
-    // A cached profile without an organization can be stale (it was stored
-    // before the manager was assigned to a center, or before the backend started
-    // returning the field), so ask /api/auth/me again instead of reporting the
-    // manager as disconnected based on cached data.
-    return this.authService.getCurrentUser();
-  }
 
   get f() {
     return this.form.controls;
@@ -138,38 +109,21 @@ export class CreateShiftComponent implements OnInit {
 
     const value = this.form.getRawValue();
 
-    this.loadCurrentUserIfMissing()
+    // The backend derives the organization from the authenticated token's
+    // organization_id claim; /api/auth/me intentionally does not expose an
+    // organization id, so requiring one here blocked every submission.
+    const request: CreateShiftDto = {
+      name: value.name.trim(),
+      startTime: normalizedStart,
+      endTime: normalizedEnd,
+      isActive: value.isActive,
+    };
+
+    this.submitState.set('submitting');
+
+    this.shiftService
+      .createShift(request)
       .pipe(
-        switchMap((user) => {
-          if (!user) {
-            // AuthService turns a failed /api/auth/me (expired session, server or
-            // network failure) into null; that is not the same as a manager who
-            // genuinely belongs to no center, so never claim the latter.
-            this.errorMessage.set(
-              'دریافت اطلاعات حساب شما انجام نشد. اتصال به سرور و وضعیت نشست را بررسی کنید و دوباره تلاش کنید.'
-            );
-            return EMPTY;
-          }
-
-          const orgId = user.organizationId;
-
-          if (!orgId) {
-            this.errorMessage.set('شما به هیچ مرکزی متصل نیستید و امکان ثبت شیفت را ندارید.');
-            return EMPTY;
-          }
-
-          const request: CreateShiftDto = {
-            name: value.name.trim(),
-            startTime: normalizedStart,
-            endTime: normalizedEnd,
-            isActive: value.isActive,
-            organizationId: orgId,
-          };
-
-          this.submitState.set('submitting');
-
-          return this.shiftService.createShift(request);
-        }),
         finalize(() => {
           if (this.submitState() === 'submitting') {
             this.submitState.set('idle');

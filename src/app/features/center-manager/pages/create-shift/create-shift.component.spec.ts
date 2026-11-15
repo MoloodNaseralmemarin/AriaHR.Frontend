@@ -103,36 +103,14 @@ describe('CreateShiftComponent', () => {
       startTime: '22:00',
       endTime: '06:00',
       isActive: true,
-      organizationId: 'org-12345',
     });
   });
 
-  it('should prevent submission and show exact Persian error when organizationId is missing', () => {
-    mockAuthService.userDetails.set({
-      ...mockUser,
-      organizationId: null,
-    });
-    mockAuthService.getCurrentUser.mockReturnValueOnce(of({ ...mockUser, organizationId: null }));
-
-    component.form.patchValue({
-      name: 'شیفت روز',
-      startTime: '08:00',
-      endTime: '16:00',
-      isActive: true,
-    });
-
-    component.onSubmit();
-
-    expect(mockShiftService.createShift).not.toHaveBeenCalled();
-    expect(component.errorMessage()).toBe(
-      'شما به هیچ مرکزی متصل نیستید و امکان ثبت شیفت را ندارید.'
-    );
-  });
-
-  it('should re-check /api/auth/me when the cached profile has no center', () => {
+  it('should submit without an organizationId so the backend resolves it from the token', () => {
     mockShiftService.createShift.mockReturnValue(
       of({ id: 'shift-1', name: 'شیفت صبح', startTime: '08:00', endTime: '16:00', isActive: true })
     );
+    // /api/auth/me never returns an organization id, so this is the normal case.
     mockAuthService.userDetails.set({ ...mockUser, organizationId: null });
 
     component.form.patchValue({
@@ -144,15 +122,18 @@ describe('CreateShiftComponent', () => {
 
     component.onSubmit();
 
-    expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
-    expect(mockShiftService.createShift).toHaveBeenCalledWith(
-      expect.objectContaining({ organizationId: 'org-12345' })
-    );
+    expect(mockShiftService.createShift).toHaveBeenCalledTimes(1);
+    const payload = mockShiftService.createShift.mock.calls[0][0];
+    expect(payload).not.toHaveProperty('organizationId');
+    expect(mockAuthService.getCurrentUser).not.toHaveBeenCalled();
+    expect(component.submitState()).toBe('success');
   });
 
-  it('should not blame the center when the account profile cannot be loaded', () => {
+  it('should still submit when the cached profile is unavailable', () => {
+    mockShiftService.createShift.mockReturnValue(
+      of({ id: 'shift-1', name: 'شیفت صبح', startTime: '08:00', endTime: '16:00', isActive: true })
+    );
     mockAuthService.userDetails.set(null);
-    mockAuthService.getCurrentUser.mockReturnValue(of(null));
 
     component.form.patchValue({
       name: 'شیفت صبح',
@@ -163,12 +144,11 @@ describe('CreateShiftComponent', () => {
 
     component.onSubmit();
 
-    expect(component.errorMessage()).not.toContain('هیچ مرکزی');
-    expect(component.errorMessage()).toContain('دریافت اطلاعات حساب');
-    expect(mockShiftService.createShift).not.toHaveBeenCalled();
+    expect(component.errorMessage()).toBeNull();
+    expect(mockShiftService.createShift).toHaveBeenCalledTimes(1);
   });
 
-  it('should normalize Persian digits and include authenticated organizationId in submission payload', () => {
+  it('should normalize Persian digits and omit the organization id from the payload', () => {
     mockShiftService.createShift.mockReturnValue(
       of({
         id: 'shift-1',
@@ -194,7 +174,6 @@ describe('CreateShiftComponent', () => {
       startTime: '08:00',
       endTime: '16:00',
       isActive: true,
-      organizationId: 'org-12345',
     });
 
     expect(component.showSuccessToast()).toBe(true);

@@ -300,13 +300,10 @@ export class EmployeeFormComponent implements OnInit {
       return;
     }
 
-    const orgId = this.authService.userDetails()?.organizationId;
-    if (!orgId) {
-      this.errorMessage.set(
-        'اطلاعات سازمان یافت نشد. لطفاً ابتدا به سیستم وارد شوید.'
-      );
-      return;
-    }
+    // The backend derives the organization from the authenticated token's
+    // organization_id claim. /api/auth/me only returns the organization name,
+    // so blocking on a client-side organization id made creation impossible.
+    const orgId = this.authService.userDetails()?.organizationId ?? undefined;
 
     this.isSubmitting.set(true);
     this.errorMessage.set(null);

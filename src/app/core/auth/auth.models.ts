@@ -23,7 +23,12 @@ export interface CurrentUserDto {
   readonly lastName: string;
   readonly phoneNumber: string;
   readonly roles: string[];
-  readonly organizationId: string | null;
+  /**
+   * Not returned by GET /api/auth/me (which only exposes the organization name).
+   * Create endpoints resolve the organization from the token's organization_id
+   * claim, so the client must not depend on this field.
+   */
+  readonly organizationId?: string | null;
   readonly organizationName?: string | null;
 }
 

@@ -33,7 +33,7 @@ export class EmployeeService {
     formData.append('birthDate', request.birthDate);
     formData.append('hireDate', request.hireDate);
     if (request.gender) formData.append('gender', request.gender);
-    formData.append('organizationId', request.organizationId);
+    if (request.organizationId) formData.append('organizationId', request.organizationId);
 
     if (request.profileImage) {
       formData.append('profileImage', request.profileImage);
@@ -47,7 +47,7 @@ export class EmployeeService {
 
   updateEmployee(id: string, request: UpdateEmployeeDto): Observable<EmployeeResponseDto> {
     const formData = new FormData();
-    formData.append('organizationId', request.organizationId);
+    if (request.organizationId) formData.append('organizationId', request.organizationId);
     formData.append('personnelCode', request.personnelCode);
     formData.append('nationalCode', request.nationalCode);
     formData.append('birthDate', request.birthDate);
