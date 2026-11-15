@@ -35,6 +35,38 @@ export class WorkLocationService {
   }
 
   /**
+   * Retrieves a work location by its ID.
+   * Endpoint: GET /api/organizations/work-locations/{id}
+   */
+  getWorkLocationById(id: string): Observable<WorkLocationResponseDto> {
+    return this.http.get<WorkLocationResponseDto>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Retrieves all work locations for the authenticated organization.
+   * Endpoint: GET /api/organizations/work-locations
+   */
+  getWorkLocations(): Observable<WorkLocationResponseDto[]> {
+    return this.http.get<WorkLocationResponseDto[]>(this.apiUrl);
+  }
+
+  /**
+   * Updates an existing work location.
+   * Endpoint: PUT /api/organizations/work-locations/{id}
+   */
+  updateWorkLocation(id: string, request: CreateWorkLocationDto): Observable<WorkLocationResponseDto> {
+    return this.http.put<WorkLocationResponseDto>(`${this.apiUrl}/${id}`, request);
+  }
+
+  /**
+   * Deletes a work location.
+   * Endpoint: DELETE /api/organizations/work-locations/{id}
+   */
+  deleteWorkLocation(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
    * Generates a QR Code for an existing work location.
    * Endpoint: POST /api/organizations/work-locations/{workLocationId}/qr
    */

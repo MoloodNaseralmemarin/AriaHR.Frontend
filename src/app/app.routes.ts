@@ -23,6 +23,8 @@ import { ShiftsComponent as CenterManagerShiftsComponent } from './features/cent
 import { CreateShiftComponent as CenterManagerCreateShiftComponent } from './features/center-manager/pages/create-shift/create-shift.component';
 import { EditShiftComponent as CenterManagerEditShiftComponent } from './features/center-manager/pages/edit-shift/edit-shift.component';
 import { CreateWorkLocationComponent as CenterManagerCreateWorkLocationComponent } from './features/center-manager/pages/create-work-location/create-work-location.component';
+import { WorkLocationsListComponent as CenterManagerWorkLocationsListComponent } from './features/center-manager/pages/work-locations-list/work-locations-list.component';
+import { WorkLocationEditComponent as CenterManagerWorkLocationEditComponent } from './features/center-manager/pages/work-location-edit/work-location-edit.component';
 import { ReportsComponent as CenterManagerReportsComponent } from './features/center-manager/pages/reports/reports.component';
 import { NotificationsComponent as CenterManagerNotificationsComponent } from './features/center-manager/pages/notifications/notifications.component';
 import { SettingsComponent as CenterManagerSettingsComponent } from './features/center-manager/pages/settings/settings.component';
@@ -87,6 +89,8 @@ export const routes: Routes = [
       { path: 'shifts/create', component: CenterManagerCreateShiftComponent },
       { path: 'shifts/:id/edit', component: CenterManagerEditShiftComponent },
       { path: 'work-locations/create', component: CenterManagerCreateWorkLocationComponent },
+      { path: 'work-locations', component: CenterManagerWorkLocationsListComponent },
+      { path: 'work-locations/:id/edit', component: CenterManagerWorkLocationEditComponent },
       { path: 'leave-requests', component: CenterManagerLeaveRequestsListComponent },
       { path: 'leave-requests/:id', component: CenterManagerLeaveRequestDetailsComponent },
       { path: 'reports', component: CenterManagerReportsComponent },
