@@ -30,8 +30,8 @@
         description="محل کار جدیدی ثبت نشده است. با استفاده از دکمه بالا محل کار جدیدی ایجاد کنید."
         actionLabel="ساخت محل کار"
         [isError]="false"
-        (action)="/center-manager/work-locations/create"
-      /></div>
+        (action)="navigateToCreate()"
+      />
     }
 
     <!-- Table -->
@@ -98,7 +98,7 @@
         description="آیا از حذف این محل کار اطمینان دارید؟ این اقدام قابل بازگشت نیست و تمام اطلاعات مرتبط با محل کار حذف خواهد شد."
         confirmText=" حذف"
         cancelText=" انصراف"
-      /></div>
+      />
     }
   </div>
 </div>
