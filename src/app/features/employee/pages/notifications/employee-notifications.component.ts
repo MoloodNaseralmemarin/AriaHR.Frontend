@@ -28,8 +28,10 @@ type ReadFilter = 'all' | 'unread';
   ],
   template: `
     <div class="space-y-6">
-      <!-- Toast Component -->
-      <app-toast [message]="toastMessage()" [tone]="toastTone()"></app-toast>
+      <!-- Toast Component (only rendered after a user action) -->
+      @if (toastMessage()) {
+        <app-toast [message]="toastMessage()" [tone]="toastTone()"></app-toast>
+      }
 
       <!-- Page Header -->
       <app-page-header
