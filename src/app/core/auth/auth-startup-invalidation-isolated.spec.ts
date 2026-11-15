@@ -41,7 +41,7 @@ describe('AuthService Startup Invalidation (Isolated Unit Tests)', () => {
     // Seed existing authentication session
     authService.saveAuthentication('mock-token-xyz', 'mock-refresh-token', {
       id: '123',
-      phoneNumber: '09123456789',
+      mobileNumber: '09123456789',
       roles: ['Employee'],
     });
 

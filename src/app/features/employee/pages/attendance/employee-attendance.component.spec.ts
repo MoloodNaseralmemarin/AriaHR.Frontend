@@ -6,13 +6,17 @@ import { of, throwError } from 'rxjs';
 import { EmployeeAttendanceComponent } from './employee-attendance.component';
 import { AttendanceService } from '../../services/attendance.service';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
-import { TodayAttendanceDto, RegisterAttendanceResponseDto } from '../../models/employee-attendance.models';
+import {
+  AttendanceScanResponseDto,
+  TodayAttendanceDto,
+} from '../../models/employee-attendance.models';
 
 describe('EmployeeAttendanceComponent (Isolated Unit Tests)', () => {
   let component: EmployeeAttendanceComponent;
   let mockAttendanceService: {
     getTodayAttendance: ReturnType<typeof vi.fn>;
-    registerAttendance: ReturnType<typeof vi.fn>;
+    scanAttendance: ReturnType<typeof vi.fn>;
+    formatTime: ReturnType<typeof vi.fn>;
   };
   let mockPersianDateService: {
     getTodayFormatted: ReturnType<typeof vi.fn>;
@@ -36,7 +40,10 @@ describe('EmployeeAttendanceComponent (Isolated Unit Tests)', () => {
   beforeEach(() => {
     mockAttendanceService = {
       getTodayAttendance: vi.fn(),
-      registerAttendance: vi.fn(),
+      scanAttendance: vi.fn(),
+      formatTime: vi.fn((value: string | null | undefined) =>
+        value ? String(value).slice(11, 16) : null
+      ),
     };
 
     mockPersianDateService = {
@@ -113,14 +120,31 @@ describe('EmployeeAttendanceComponent (Isolated Unit Tests)', () => {
   it('should submit attendance and transition to success state when location is obtained', () => {
     (component as any).scannedQrCode = 'sample-qr-code';
 
-    const mockResponse: RegisterAttendanceResponseDto = {
+    const mockResponse: AttendanceScanResponseDto = {
       success: true,
-      operationType: 'checkIn',
-      checkInTime: '08:15',
-      workLocationName: 'بیمارستان سینا',
+      code: 'OK',
+      message: 'ثبت شد',
+      data: {
+        attendanceId: 'att-1',
+        workLocationId: 'wl-1',
+        workLocationName: 'بیمارستان سینا',
+        attendanceAction: 'CheckIn',
+        distanceInMeters: 12,
+        allowedRadiusInMeters: 200,
+        gpsAccuracyInMeters: 10,
+        registeredAtUtc: '2026-11-15T05:32:00Z',
+        attendanceStatus: 'Present',
+        isLate: false,
+        isEarlyDeparture: false,
+        shiftName: null,
+        isReplay: false,
+      },
     };
 
-    mockAttendanceService.registerAttendance.mockReturnValue(of(mockResponse));
+    mockAttendanceService.scanAttendance.mockReturnValue(of(mockResponse));
+    mockAttendanceService.getTodayAttendance.mockReturnValue(
+      of({ isCheckedIn: true, isCheckedOut: false, checkInTime: '08:15' })
+    );
 
     const mockGeolocation = {
       getCurrentPosition: vi.fn((success) => {
@@ -128,7 +152,9 @@ describe('EmployeeAttendanceComponent (Isolated Unit Tests)', () => {
           coords: {
             latitude: 35.6892,
             longitude: 51.389,
+            accuracy: 12,
           },
+          timestamp: Date.now(),
         });
       }),
     };
@@ -141,28 +167,31 @@ describe('EmployeeAttendanceComponent (Isolated Unit Tests)', () => {
 
     (component as any).acquireLocationAndSubmit();
 
-    expect(mockAttendanceService.registerAttendance).toHaveBeenCalledWith({
-      qrCode: 'sample-qr-code',
-      latitude: 35.6892,
-      longitude: 51.389,
-    });
+    expect(mockAttendanceService.scanAttendance).toHaveBeenCalledWith(
+      expect.objectContaining({
+        qrCodeToken: 'sample-qr-code',
+        latitude: 35.6892,
+        longitude: 51.389,
+        gpsAccuracyInMeters: 12,
+      })
+    );
 
     expect(component.viewState()).toBe('success');
     expect(component.todayAttendance()?.isCheckedIn).toBe(true);
-    expect(component.todayAttendance()?.checkInTime).toBe('08:15');
+    expect(component.todayAttendance()?.workLocationName).toBe('بیمارستان سینا');
   });
 
   it('should handle API 400 expired error gracefully with clean Persian message', () => {
     (component as any).scannedQrCode = 'expired-qr-code';
 
-    mockAttendanceService.registerAttendance.mockReturnValue(
+    mockAttendanceService.scanAttendance.mockReturnValue(
       throwError(() => ({
         status: 400,
-        error: { message: 'QR token expired' },
+        error: { code: 'QR_CODE_EXPIRED', message: 'QR token expired' },
       }))
     );
 
-    (component as any).submitAttendance(35.6892, 51.389);
+    (component as any).submitAttendance(35.6892, 51.389, 10, Date.now());
 
     expect(component.viewState()).toBe('error');
     expect(component.errorMessage()).toBe('QR منقضی شده است. لطفاً QR جدید محل کار را اسکن کنید.');
@@ -172,20 +201,19 @@ describe('EmployeeAttendanceComponent (Isolated Unit Tests)', () => {
     (component as any).scannedQrCode = 'leave-blocked-qr';
     mockAttendanceService.getTodayAttendance.mockReturnValue(of({ isCheckedIn: false, isCheckedOut: false }));
 
-    mockAttendanceService.registerAttendance.mockReturnValue(
+    mockAttendanceService.scanAttendance.mockReturnValue(
       throwError(() => ({
         status: 400,
         error: {
-          errorCode: 'ATTENDANCE_BLOCKED_BY_APPROVED_LEAVE',
+          code: 'ATTENDANCE_BLOCKED_BY_APPROVED_LEAVE',
           message: 'شما در مرخصی هستید.',
         },
       }))
     );
 
-    (component as any).submitAttendance(35.6892, 51.389);
+    (component as any).submitAttendance(35.6892, 51.389, 10, Date.now());
 
     expect(component.viewState()).toBe('error');
     expect(component.errorMessage()).toBe('شما در مرخصی هستید.');
-    expect(mockAttendanceService.getTodayAttendance).toHaveBeenCalled();
   });
 });

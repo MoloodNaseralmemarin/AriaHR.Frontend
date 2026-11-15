@@ -9,6 +9,7 @@ import { UpdateShiftDto } from '../../models/update-shift.dto';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { extractApiErrorMessage } from '../../../../core/utils/api-error.util';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -107,7 +108,7 @@ export class EditShiftComponent implements OnInit {
       error: (err) => {
         this.isLoading.set(false);
         this.loadError.set(
-          err?.error?.message || 'دریافت اطلاعات شیفت با خطا مواجه شد.'
+          extractApiErrorMessage(err, 'دریافت اطلاعات شیفت با خطا مواجه شد.')
         );
       },
     });
@@ -184,7 +185,7 @@ export class EditShiftComponent implements OnInit {
         error: (err) => {
           this.submitState.set('error');
           this.errorMessage.set(
-            err?.error?.message || 'ویرایش شیفت با خطا مواجه شد. لطفاً دوباره تلاش کنید.'
+            extractApiErrorMessage(err, 'ویرایش شیفت با خطا مواجه شد. لطفاً دوباره تلاش کنید.')
           );
         },
       });

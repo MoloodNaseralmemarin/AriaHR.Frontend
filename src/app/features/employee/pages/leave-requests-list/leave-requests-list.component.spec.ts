@@ -160,6 +160,7 @@ describe('LeaveRequestsListComponent', () => {
       leaveType: 'daily',
       startDate: '2025-02-10',
       endDate: '2025-02-12',
+      durationText: '۳ روز',
       status: 'pending',
       createdAt: '2025-02-09T10:00:00Z',
     };

@@ -1,16 +1,12 @@
 <div class="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8" dir="rtl">
   @if (showSuccessToast()) {
-    <app-toast
-      type="success"
-      message="محل کار با موفقیت ثبت شد."
-      (closeToast)="showSuccessToast.set(false)"
-    />
+    <app-toast tone="success" message="محل کار با موفقیت ثبت شد." />
   }
 
   @if (showQrModal() && qrData()) {
     <app-qr-code-modal
-      [code]="qrData()!.code"
-      [expiresAtUtc]="qrData()!.expiresAtUtc"
+      [code]="qrData()!.token"
+      [expiresAtUtc]="qrData()!.expiresAtUtc ?? ''"
       (closeModal)="showQrModal.set(false)"
     />
   }
@@ -50,6 +46,30 @@
     }
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- Work location name -->
+      <div>
+        <label for="name" class="mb-1.5 block text-sm font-semibold text-slate-700">
+          نام محل کار <span class="text-rose-500">*</span>
+        </label>
+        <input
+          id="name"
+          type="text"
+          formControlName="name"
+          [maxlength]="maxNameLength"
+          placeholder="مثلاً دفتر مرکزی"
+          [attr.aria-invalid]="isControlInvalid('name')"
+          [attr.aria-describedby]="isControlInvalid('name') ? 'name-error' : null"
+          class="w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-800 transition focus:outline-none focus:ring-2"
+          [ngClass]="{
+            'border-rose-300 focus:border-rose-500 focus:ring-rose-200': isControlInvalid('name'),
+            'border-slate-200 focus:border-blue-500 focus:ring-blue-100': !isControlInvalid('name')
+          }"
+        />
+        @if (isControlInvalid('name')) {
+          <p id="name-error" class="mt-1 text-xs text-rose-600" role="alert">{{ nameMessage() }}</p>
+        }
+      </div>
+
       <!-- Map Section -->
       <div>
         <label class="mb-2 block text-sm font-semibold text-slate-700">
@@ -223,6 +243,60 @@
         </label>
       </div>
 
+      <!-- QR Code settings -->
+      <div class="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+        <div>
+          <p class="text-sm font-semibold text-slate-800">تنظیمات QR Code حضور و غیاب</p>
+          <p class="text-xs text-slate-500">
+            در حالت پویا، کد QR در بازه‌های مشخص منقضی و بازتولید می‌شود تا از ثبت حضور با تصویر قدیمی کد جلوگیری شود.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="qrCodeMode" class="mb-1.5 block text-xs font-semibold text-slate-600">
+              حالت QR
+            </label>
+            <select
+              id="qrCodeMode"
+              formControlName="qrCodeMode"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            >
+              @for (mode of qrCodeModes; track mode) {
+                <option [ngValue]="mode">{{ qrCodeModeLabels[mode] }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label for="qrRotationIntervalMinutes" class="mb-1.5 block text-xs font-semibold text-slate-600">
+              بازهٔ چرخش (دقیقه)
+            </label>
+            <input
+              id="qrRotationIntervalMinutes"
+              type="number"
+              formControlName="qrRotationIntervalMinutes"
+              inputmode="numeric"
+              [min]="minRotation"
+              [max]="maxRotation"
+              step="1"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100 disabled:text-slate-400"
+            />
+            <p class="mt-1 text-xs text-slate-500">
+              فقط برای QR پویا کاربرد دارد ({{ minRotation }} تا {{ maxRotation }} دقیقه).
+            </p>
+            @if (isControlInvalid('qrRotationIntervalMinutes')) {
+              <p class="mt-1 text-xs text-rose-600" role="alert">{{ rotationMessage() }}</p>
+            }
+          </div>
+        </div>
+
+        <label class="flex items-center gap-3 text-sm text-slate-700">
+          <input type="checkbox" formControlName="qrCodeEnabled" class="h-4 w-4 rounded border-slate-300" />
+          QR Code این محل کار فعال باشد
+        </label>
+      </div>
+
       <!-- Saved Registration Summary -->
       @if (isSubmitted()) {
         <div
@@ -239,7 +313,8 @@
               </span>
             </p>
             <p>
-              شعاع محدوده: {{ form.controls.radiusInMeters.value }} متر — وضعیت:
+              نام محل کار: {{ form.controls.name.value }} — شعاع محدوده:
+              {{ form.controls.radiusInMeters.value }} متر — وضعیت:
               {{ form.controls.isActive.value ? 'فعال' : 'غیرفعال' }}
             </p>
             @if (createdWorkLocationId()) {

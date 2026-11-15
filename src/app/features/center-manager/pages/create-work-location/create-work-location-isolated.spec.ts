@@ -22,8 +22,10 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
     ),
     generateQrCode: vi.fn().mockReturnValue(
       of({
-        code: 'sample-token-code',
+        token: 'sample-token-code',
         expiresAtUtc: '2026-10-03T12:00:00Z',
+        refreshAfterUtc: null,
+        rotationIntervalMinutes: 5,
       })
     ),
     reverseGeocode: vi.fn().mockReturnValue(of('آدرس تست')),
@@ -56,6 +58,7 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
 
   it('should store createdWorkLocationId when createWorkLocation succeeds', () => {
     const comp = createComponent();
+    comp.form.controls.name.setValue('مرکز تست');
     comp.selectLocation(35.7, 51.3);
     comp.onSubmit();
 
@@ -72,7 +75,7 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
     expect(mockWorkLocationService.generateQrCode).toHaveBeenCalledWith('wl-123');
     expect(comp.showQrModal()).toBe(true);
     expect(comp.qrData()).toEqual({
-      code: 'sample-token-code',
+      token: 'sample-token-code',
       expiresAtUtc: '2026-10-03T12:00:00Z',
     });
   });
@@ -80,6 +83,7 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
   it('should not post a duplicate record when the form is submitted twice', () => {
     mockWorkLocationService.createWorkLocation.mockClear();
     const comp = createComponent();
+    comp.form.controls.name.setValue('مرکز تست');
     comp.selectLocation(35.7, 51.3);
 
     comp.onSubmit();
@@ -90,6 +94,7 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
 
   it('should keep the saved point and block further changes until a new registration starts', () => {
     const comp = createComponent();
+    comp.form.controls.name.setValue('مرکز تست');
     comp.selectLocation(35.7, 51.3);
     comp.onSubmit();
 
@@ -109,8 +114,8 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
     radius.setValue(0);
     expect(comp.radiusMessage()).toBe('شعاع محدوده باید حداقل ۱ متر باشد.');
 
-    radius.setValue(60000);
-    expect(comp.radiusMessage()).toBe('شعاع محدوده نمی‌تواند بیشتر از ۵۰٬۰۰۰ متر باشد.');
+    radius.setValue(1500);
+    expect(comp.radiusMessage()).toBe('شعاع محدوده نمی‌تواند بیشتر از ۱٬۰۰۰ متر باشد.');
 
     radius.setValue(250);
     expect(comp.radiusMessage()).toBeNull();
@@ -119,6 +124,7 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
   it('should reject out-of-range coordinates before calling the API', () => {
     mockWorkLocationService.createWorkLocation.mockClear();
     const comp = createComponent();
+    comp.form.controls.name.setValue('مرکز تست');
     (comp as any).selectedLocation.set({ lat: 120, lng: 51.3 });
 
     comp.onSubmit();

@@ -1,26 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { map, takeUntil } from 'rxjs/operators';
+import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 
-import { RouterLink } from '@angular/router';
 import { WorkLocationService } from '../../services/work-location.service';
-import { WorkLocationResponseDto } from '../../models/work-location-response.dto';
+import { WorkLocationDto } from '../../models/work-location-response.dto';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { DeleteConfirmationComponent } from '../../../../shared/components/delete-confirmation/delete-confirmation.component';
-import { environment } from '../../../../../environments/environment';
-
-export interface WorkLocationTableItem {
-  id: string;
-  organizationId: string;
-  latitude: number;
-  longitude: number;
-  radiusInMeters: number;
-  isActive: boolean;
-  createdAtUtc?: string;
-  createdByUserId?: string | null;
-}
+import { extractApiErrorMessage } from '../../../../core/utils/api-error.util';
 
 @Component({
   selector: 'app-work-locations-list',
@@ -29,78 +15,79 @@ export interface WorkLocationTableItem {
   templateUrl: './work-locations-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CenterManagerWorkLocationsListComponent {
+export class CenterManagerWorkLocationsListComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly workLocationService = inject(WorkLocationService);
 
-  readonly workLocations = signal<WorkLocationTableItem[]>([]);
+  readonly workLocations = signal<WorkLocationDto[]>([]);
   readonly isLoading = signal(true);
-  readonly showDeleteConfirmation = signal(false);
-  readonly deletingId = signal<string | null>(null);
-  readonly deleteError = signal<string | null>(null);
-  readonly deleteSuccess = signal(false);
+  readonly loadError = signal<string | null>(null);
+  readonly updatingId = signal<string | null>(null);
+  readonly actionError = signal<string | null>(null);
 
   ngOnInit(): void {
     this.loadWorkLocations();
   }
 
+  reload(): void {
+    this.loadWorkLocations();
+  }
+
   private loadWorkLocations(): void {
     this.isLoading.set(true);
+    this.loadError.set(null);
 
     this.workLocationService.getWorkLocations().subscribe({
       next: (items) => {
-        this.workLocations.set(
-          items.map((item) => ({
-            id: item.id || '',
-            organizationId: item.organizationId || '',
-            latitude: item.latitude || 0,
-            longitude: item.longitude || 0,
-            radiusInMeters: item.radiusInMeters ?? 0,
-            isActive: item.isActive ?? false,
-            createdAtUtc: item.createdAtUtc,
-            createdByUserId: item.createdByUserId,
-          }))
-        );
+        this.workLocations.set(items ?? []);
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Failed to load work locations:', err);
         this.isLoading.set(false);
+        this.loadError.set(
+          extractApiErrorMessage(err, 'دریافت لیست محل‌های کار با خطا مواجه شد.')
+        );
       },
     });
   }
 
-  onDelete(id: string): void {
-    this.deletingId.set(id);
-    this.showDeleteConfirmation.set(true);
-  }
-
-  confirmDelete(): void {
-    const id = this.deletingId();
-    if (!id) {
-      this.showDeleteConfirmation.set(false);
+  /**
+   * The backend exposes no DELETE for work locations; a location is retired by
+   * setting `isActive` to false through the update endpoint.
+   */
+  toggleActive(item: WorkLocationDto): void {
+    if (this.updatingId()) {
       return;
     }
 
-    this.deleteError.set(null);
-    this.workLocationService.deleteWorkLocation(id).subscribe({
-      next: () => {
-        this.workLocations.update((items) => items.filter((item) => item.id !== id));
-        this.deleteSuccess.set(true);
-        this.showDeleteConfirmation.set(false);
-      },
-      error: (err) => {
-        this.deleteError.set(
-          err?.error?.message || 'حذف محل کار با خطا مواجه شد. لطفاً دوباره تلاش کنید.'
-        );
-        this.showDeleteConfirmation.set(false);
-      },
-    });
+    this.actionError.set(null);
+    this.updatingId.set(item.id);
+
+    this.workLocationService
+      .updateWorkLocation(item.id, {
+        name: item.name,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        allowedRadiusInMeters: item.allowedRadiusInMeters,
+        isActive: !item.isActive,
+      })
+      .pipe(finalize(() => this.updatingId.set(null)))
+      .subscribe({
+        next: (updated) => {
+          this.workLocations.update((items) =>
+            items.map((current) => (current.id === updated.id ? updated : current))
+          );
+        },
+        error: (err) => {
+          this.actionError.set(
+            extractApiErrorMessage(err, 'تغییر وضعیت محل کار با خطا مواجه شد.')
+          );
+        },
+      });
   }
 
-  cancelDelete(): void {
-    this.showDeleteConfirmation.set(false);
-    this.deletingId.set(null);
+  qrModeLabel(mode: string): string {
+    return mode === 'Dynamic' ? 'پویا' : 'ثابت';
   }
 
   navigateToCreate(): void {

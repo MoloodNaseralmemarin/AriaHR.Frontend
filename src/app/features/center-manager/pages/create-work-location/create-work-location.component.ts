@@ -12,7 +12,6 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -23,7 +22,15 @@ import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { QrCodeModalComponent } from '../../../../shared/components/qr-code-modal/qr-code-modal.component';
 import { environment } from '../../../../../environments/environment';
-import { CreateWorkLocationDto } from '../../models/create-work-location.dto';
+import {
+  CreateWorkLocationDto,
+  DEFAULT_ROTATION_INTERVAL_MINUTES,
+  MAX_ROTATION_INTERVAL_MINUTES,
+  MIN_ROTATION_INTERVAL_MINUTES,
+  QR_CODE_MODE_LABELS,
+  QrCodeMode,
+} from '../../models/create-work-location.dto';
+import { extractApiErrorMessage } from '../../../../core/utils/api-error.util';
 import { WorkLocationService } from '../../services/work-location.service';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
@@ -54,8 +61,10 @@ const MAX_LATITUDE = 90;
 const MIN_LONGITUDE = -180;
 const MAX_LONGITUDE = 180;
 const MIN_RADIUS_METERS = 1;
-const MAX_RADIUS_METERS = 50000;
+/** Backend `QrCodeOptions.MaxAllowedRadiusMeters` default. */
+const MAX_RADIUS_METERS = 1000;
 const DEFAULT_RADIUS_METERS = 200;
+const MAX_NAME_LENGTH = 150;
 
 const ASSET_LOAD_TIMEOUT_MS = 20000;
 
@@ -96,18 +105,34 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
 
   readonly createdWorkLocationId = signal<string | null>(null);
   readonly isGeneratingQr = signal(false);
-  readonly qrData = signal<{ code: string; expiresAtUtc: string } | null>(null);
+  readonly qrData = signal<{ token: string; expiresAtUtc: string | null } | null>(null);
   readonly showQrModal = signal(false);
 
   readonly minRadius = MIN_RADIUS_METERS;
   readonly maxRadius = MAX_RADIUS_METERS;
+  readonly minRotation = MIN_ROTATION_INTERVAL_MINUTES;
+  readonly maxRotation = MAX_ROTATION_INTERVAL_MINUTES;
+  readonly maxNameLength = MAX_NAME_LENGTH;
+  readonly qrCodeModes = [QrCodeMode.Static, QrCodeMode.Dynamic];
+  readonly qrCodeModeLabels = QR_CODE_MODE_LABELS;
 
   readonly form = this.fb.group({
+    name: ['', [Validators.required, Validators.maxLength(MAX_NAME_LENGTH)]],
     radiusInMeters: [
       DEFAULT_RADIUS_METERS,
       [Validators.required, Validators.min(MIN_RADIUS_METERS), Validators.max(MAX_RADIUS_METERS)],
     ],
     isActive: [true],
+    qrCodeMode: [QrCodeMode.Static],
+    qrCodeEnabled: [true],
+    qrRotationIntervalMinutes: [
+      DEFAULT_ROTATION_INTERVAL_MINUTES,
+      [
+        Validators.required,
+        Validators.min(MIN_ROTATION_INTERVAL_MINUTES),
+        Validators.max(MAX_ROTATION_INTERVAL_MINUTES),
+      ],
+    ],
   });
 
   private mapInstance: any = null;
@@ -487,9 +512,31 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       });
   }
 
-  isControlInvalid(name: 'radiusInMeters'): boolean {
+  isControlInvalid(name: 'name' | 'radiusInMeters' | 'qrRotationIntervalMinutes'): boolean {
     const control = this.form.controls[name];
     return control.invalid && (control.touched || control.dirty);
+  }
+
+  nameMessage(): string | null {
+    const control = this.form.controls.name;
+    if (control.hasError('required')) {
+      return 'وارد کردن نام محل کار الزامی است.';
+    }
+    if (control.hasError('maxlength')) {
+      return `نام محل کار نمی‌تواند بیشتر از ${MAX_NAME_LENGTH} کاراکتر باشد.`;
+    }
+    return null;
+  }
+
+  rotationMessage(): string | null {
+    const control = this.form.controls.qrRotationIntervalMinutes;
+    if (control.hasError('min')) {
+      return `بازهٔ چرخش QR باید حداقل ${MIN_ROTATION_INTERVAL_MINUTES} دقیقه باشد.`;
+    }
+    if (control.hasError('max')) {
+      return `بازهٔ چرخش QR نمی‌تواند بیشتر از ${MAX_ROTATION_INTERVAL_MINUTES} دقیقه باشد.`;
+    }
+    return null;
   }
 
   /** Persian message for the current radius validation error, if any. */
@@ -502,7 +549,7 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       return 'شعاع محدوده باید حداقل ۱ متر باشد.';
     }
     if (control.hasError('max')) {
-      return 'شعاع محدوده نمی‌تواند بیشتر از ۵۰٬۰۰۰ متر باشد.';
+      return `شعاع محدوده نمی‌تواند بیشتر از ${MAX_RADIUS_METERS.toLocaleString('fa-IR')} متر باشد.`;
     }
     return null;
   }
@@ -557,11 +604,18 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
           }
 
           const request: CreateWorkLocationDto = {
+            name: value.name.trim(),
             organizationId: orgId,
             latitude: loc.lat,
             longitude: loc.lng,
-            radiusInMeters: value.radiusInMeters,
+            allowedRadiusInMeters: value.radiusInMeters,
             isActive: value.isActive,
+            qrCodeMode: value.qrCodeMode,
+            qrCodeEnabled: value.qrCodeEnabled,
+            qrRotationIntervalMinutes:
+              value.qrCodeMode === QrCodeMode.Dynamic
+                ? value.qrRotationIntervalMinutes
+                : null,
           };
 
           return this.workLocationService.createWorkLocation(request);
@@ -582,78 +636,11 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
         },
         error: (err) => {
           this.submitState.set('error');
-          this.errorMessage.set(this.resolveSubmitError(err));
+          this.errorMessage.set(
+            extractApiErrorMessage(err, 'ثبت محل کار با خطا مواجه شد. لطفاً دوباره تلاش کنید.')
+          );
         },
       });
-  }
-
-  /** Maps backend/network failures to an actionable Persian message. */
-  private resolveSubmitError(err: unknown): string {
-    if (err instanceof HttpErrorResponse) {
-      if (err.status === 0) {
-        return 'ارتباط با سرور برقرار نشد. اتصال اینترنت یا دسترسی به سرویس را بررسی کنید.';
-      }
-      // A 2xx/3xx response that is not the expected JSON means the request never
-      // reached the API (wrong base URL or a proxy fallback). Never surface the
-      // raw parser message to the user.
-      if (err.status < 400) {
-        return 'پاسخ نامعتبر از سرور دریافت شد. لطفاً تنظیمات آدرس سرویس را بررسی کنید.';
-      }
-      if (err.status === 401) {
-        return 'نشست شما منقضی شده است. لطفاً دوباره وارد حساب خود شوید.';
-      }
-      if (err.status === 403) {
-        return 'دسترسی لازم برای ثبت محل کار در این مرکز را ندارید.';
-      }
-      if (err.status === 409) {
-        return 'این محل کار قبلاً ثبت شده است.';
-      }
-      if (err.status === 400 || err.status === 422) {
-        const validationMessage = this.extractValidationMessage(err.error);
-        return validationMessage ?? 'اطلاعات ارسالی نامعتبر است. لطفاً مقادیر فرم را بررسی کنید.';
-      }
-      if (err.status >= 500) {
-        return 'خطا در سرور رخ داد. لطفاً چند لحظه بعد دوباره تلاش کنید.';
-      }
-    }
-
-    const body = (err as { error?: unknown } | null)?.error;
-    if (body instanceof Error) {
-      return 'ثبت محل کار با خطا مواجه شد. لطفاً دوباره تلاش کنید.';
-    }
-
-    const message = (body as { message?: unknown } | null)?.message;
-    if (typeof message === 'string' && message.trim()) {
-      return message;
-    }
-
-    return 'ثبت محل کار با خطا مواجه شد. لطفاً دوباره تلاش کنید.';
-  }
-
-  /** Supports both `{ message }` and ASP.NET Core `ProblemDetails.errors`. */
-  private extractValidationMessage(body: unknown): string | null {
-    // Parser/network failures arrive as Error instances and carry no user-facing text.
-    if (!body || typeof body !== 'object' || body instanceof Error) {
-      return null;
-    }
-
-    const record = body as { message?: unknown; errors?: Record<string, unknown> };
-    if (typeof record.message === 'string' && record.message.trim()) {
-      return record.message;
-    }
-
-    if (record.errors && typeof record.errors === 'object') {
-      for (const value of Object.values(record.errors)) {
-        if (Array.isArray(value) && typeof value[0] === 'string' && value[0].trim()) {
-          return value[0];
-        }
-        if (typeof value === 'string' && value.trim()) {
-          return value;
-        }
-      }
-    }
-
-    return null;
   }
 
   /** Clears the saved registration so another work location can be added. */
@@ -681,7 +668,14 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       }
     }
 
-    this.form.reset({ radiusInMeters: DEFAULT_RADIUS_METERS, isActive: true });
+    this.form.reset({
+      name: '',
+      radiusInMeters: DEFAULT_RADIUS_METERS,
+      isActive: true,
+      qrCodeMode: QrCodeMode.Static,
+      qrCodeEnabled: true,
+      qrRotationIntervalMinutes: DEFAULT_ROTATION_INTERVAL_MINUTES,
+    });
     this.form.markAsPristine();
     this.form.markAsUntouched();
   }
@@ -699,25 +693,15 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       .subscribe({
         next: (res) => {
           this.qrData.set({
-            code: res.code,
+            token: res.token,
             expiresAtUtc: res.expiresAtUtc,
           });
           this.showQrModal.set(true);
         },
         error: (err) => {
-          let msg = 'خطا در دریافت QR کد محل کار.';
-          if (err?.status === 400) {
-            msg = err?.error?.message || 'ورودی نامعتبر / خطای کسب و کار';
-          } else if (err?.status === 401) {
-            msg = 'احراز هویت مورد نیاز است.';
-          } else if (err?.status === 403) {
-            msg = 'دسترسی به این محل کار مجاز نیست.';
-          } else if (err?.status === 404) {
-            msg = 'محل کار یافت نشد.';
-          } else if (err?.error?.message) {
-            msg = err.error.message;
-          }
-          this.errorMessage.set(msg);
+          this.errorMessage.set(
+            extractApiErrorMessage(err, 'خطا در دریافت QR کد محل کار.')
+          );
         },
       });
   }

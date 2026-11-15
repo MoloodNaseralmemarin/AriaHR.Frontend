@@ -9,6 +9,7 @@ import { ToastComponent } from '../../../../shared/components/toast/toast.compon
 
 import { ShiftService } from '../../services/shift.service';
 import { ShiftDto } from '../../models/shift.dto';
+import { extractApiErrorMessage } from '../../../../core/utils/api-error.util';
 
 @Component({
   selector: 'app-center-shifts',
@@ -44,13 +45,20 @@ export class ShiftsComponent implements OnInit {
 
     this.shiftService.getShifts().subscribe({
       next: (data) => {
-        this.shifts.set(data || []);
+        // TimeOnly is serialized as "HH:mm:ss"; the table only shows the clock time.
+        this.shifts.set(
+          (data || []).map((shift) => ({
+            ...shift,
+            startTime: this.toClockTime(shift.startTime),
+            endTime: this.toClockTime(shift.endTime),
+          }))
+        );
         this.isLoading.set(false);
       },
       error: (err) => {
         this.isLoading.set(false);
         this.errorMessage.set(
-          err?.error?.message || 'خطا در دریافت لیست شیفت‌ها. لطفاً دوباره تلاش کنید.'
+          extractApiErrorMessage(err, 'خطا در دریافت لیست شیفت‌ها. لطفاً دوباره تلاش کنید.')
         );
       },
     });
@@ -78,34 +86,22 @@ export class ShiftsComponent implements OnInit {
           shift.isActive ? 'شیفت با موفقیت غیرفعال شد.' : 'شیفت با موفقیت فعال شد.'
         );
       },
-      error: () => {
+      error: (err) => {
         this.togglingId.set(null);
-        // Fallback using full update if specific endpoint is not supported by backend
-        const updateRequest = {
-          name: shift.name,
-          startTime: shift.startTime,
-          endTime: shift.endTime,
-          isActive: !shift.isActive,
-        };
-        this.shiftService.updateShift(shift.id, updateRequest).subscribe({
-          next: () => {
-            this.shifts.update((list) =>
-              list.map((item) =>
-                item.id === shift.id ? { ...item, isActive: !shift.isActive } : item
-              )
-            );
-            this.toastMessage.set(
-              shift.isActive ? 'شیفت با موفقیت غیرفعال شد.' : 'شیفت با موفقیت فعال شد.'
-            );
-          },
-          error: (err) => {
-            this.errorMessage.set(
-              err?.error?.message || 'خطا در تغییر وضعیت شیفت. لطفاً مجدداً تلاش نمایید.'
-            );
-          },
-        });
+        // The active/deactivate endpoint is not implemented by the scheduling API;
+        // surface the server's answer instead of issuing a second doomed request.
+        this.errorMessage.set(
+          extractApiErrorMessage(err, 'خطا در تغییر وضعیت شیفت. لطفاً مجدداً تلاش نمایید.')
+        );
       },
     });
+  }
+
+  private toClockTime(value: string | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+    return value.length >= 5 ? value.slice(0, 5) : value;
   }
 
   onAddShift(): void {

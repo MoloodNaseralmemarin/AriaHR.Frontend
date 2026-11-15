@@ -4,10 +4,15 @@ import { Observable, catchError, map, of } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { CreateWorkLocationDto } from '../models/create-work-location.dto';
-import { QrCodeResponse } from '../models/qr-code-response.dto';
+import {
+  QrCodeResponse,
+  QrCodeSettingsDto,
+  UpdateQrCodeSettingsDto,
+} from '../models/qr-code-response.dto';
+import { UpdateWorkLocationDto } from '../models/update-work-location.dto';
 import {
   NeshanReverseGeocodeResponse,
-  WorkLocationResponseDto,
+  WorkLocationDto,
 } from '../models/work-location-response.dto';
 
 @Injectable({
@@ -26,52 +31,82 @@ export class WorkLocationService {
     return !!environment.neshanServiceApiKey;
   }
 
-  /**
-   * Posts the creation request for a new work location.
-   * Endpoint: POST /api/organizations/work-locations
-   */
-  createWorkLocation(request: CreateWorkLocationDto): Observable<WorkLocationResponseDto> {
-    return this.http.post<WorkLocationResponseDto>(this.apiUrl, request);
+  /** POST /api/organizations/work-locations */
+  createWorkLocation(request: CreateWorkLocationDto): Observable<WorkLocationDto> {
+    return this.http.post<WorkLocationDto>(this.apiUrl, request);
+  }
+
+  /** GET /api/organizations/work-locations/{id} */
+  getWorkLocationById(id: string): Observable<WorkLocationDto> {
+    return this.http.get<WorkLocationDto>(`${this.apiUrl}/${id}`);
+  }
+
+  /** GET /api/organizations/work-locations */
+  getWorkLocations(): Observable<WorkLocationDto[]> {
+    return this.http.get<WorkLocationDto[]>(this.apiUrl);
+  }
+
+  /** PUT /api/organizations/work-locations/{id} */
+  updateWorkLocation(id: string, request: UpdateWorkLocationDto): Observable<WorkLocationDto> {
+    return this.http.put<WorkLocationDto>(`${this.apiUrl}/${id}`, request);
   }
 
   /**
-   * Retrieves a work location by its ID.
-   * Endpoint: GET /api/organizations/work-locations/{id}
-   */
-  getWorkLocationById(id: string): Observable<WorkLocationResponseDto> {
-    return this.http.get<WorkLocationResponseDto>(`${this.apiUrl}/${id}`);
-  }
-
-  /**
-   * Retrieves all work locations for the authenticated organization.
-   * Endpoint: GET /api/organizations/work-locations
-   */
-  getWorkLocations(): Observable<WorkLocationResponseDto[]> {
-    return this.http.get<WorkLocationResponseDto[]>(this.apiUrl);
-  }
-
-  /**
-   * Updates an existing work location.
-   * Endpoint: PUT /api/organizations/work-locations/{id}
-   */
-  updateWorkLocation(id: string, request: CreateWorkLocationDto): Observable<WorkLocationResponseDto> {
-    return this.http.put<WorkLocationResponseDto>(`${this.apiUrl}/${id}`, request);
-  }
-
-  /**
-   * Deletes a work location.
-   * Endpoint: DELETE /api/organizations/work-locations/{id}
-   */
-  deleteWorkLocation(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
-
-  /**
-   * Generates a QR Code for an existing work location.
-   * Endpoint: POST /api/organizations/work-locations/{workLocationId}/qr
+   * Generates a signed QR token (or refreshes the current one).
+   * POST /api/organizations/work-locations/{id}/qrcode/generate
    */
   generateQrCode(workLocationId: string): Observable<QrCodeResponse> {
-    return this.http.post<QrCodeResponse>(`${this.apiUrl}/${workLocationId}/qr`, null);
+    return this.http.post<QrCodeResponse>(
+      `${this.apiUrl}/${workLocationId}/qrcode/generate`,
+      null
+    );
+  }
+
+  /** GET /api/organizations/work-locations/{id}/qrcode/current */
+  getCurrentQrCode(workLocationId: string): Observable<QrCodeResponse> {
+    return this.http.get<QrCodeResponse>(`${this.apiUrl}/${workLocationId}/qrcode/current`);
+  }
+
+  /** GET /api/organizations/work-locations/{id}/qrcode/settings */
+  getQrCodeSettings(workLocationId: string): Observable<QrCodeSettingsDto> {
+    return this.http.get<QrCodeSettingsDto>(
+      `${this.apiUrl}/${workLocationId}/qrcode/settings`
+    );
+  }
+
+  /** PUT /api/organizations/work-locations/{id}/qrcode/settings */
+  updateQrCodeSettings(
+    workLocationId: string,
+    request: UpdateQrCodeSettingsDto
+  ): Observable<QrCodeSettingsDto> {
+    return this.http.put<QrCodeSettingsDto>(
+      `${this.apiUrl}/${workLocationId}/qrcode/settings`,
+      request
+    );
+  }
+
+  /** POST /api/organizations/work-locations/{id}/qrcode/enable */
+  enableQrCode(workLocationId: string): Observable<QrCodeSettingsDto> {
+    return this.http.post<QrCodeSettingsDto>(
+      `${this.apiUrl}/${workLocationId}/qrcode/enable`,
+      null
+    );
+  }
+
+  /** POST /api/organizations/work-locations/{id}/qrcode/disable */
+  disableQrCode(workLocationId: string): Observable<QrCodeSettingsDto> {
+    return this.http.post<QrCodeSettingsDto>(
+      `${this.apiUrl}/${workLocationId}/qrcode/disable`,
+      null
+    );
+  }
+
+  /** POST /api/organizations/work-locations/{id}/qrcode/revoke */
+  revokeQrCode(workLocationId: string): Observable<QrCodeResponse> {
+    return this.http.post<QrCodeResponse>(
+      `${this.apiUrl}/${workLocationId}/qrcode/revoke`,
+      null
+    );
   }
 
   /**

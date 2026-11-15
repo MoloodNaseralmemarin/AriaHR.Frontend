@@ -4,7 +4,11 @@ import { CommonModule } from '@angular/common';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
 import { AttendanceService } from '../../services/attendance.service';
-import { TodayAttendanceDto, RegisterAttendanceResponseDto } from '../../models/employee-attendance.models';
+import {
+  AttendanceScanDataDto,
+  AttendanceScanResponseDto,
+  TodayAttendanceDto,
+} from '../../models/employee-attendance.models';
 import { QrScannerComponent } from '../../components/qr-scanner/qr-scanner.component';
 
 export type AttendanceViewState =
@@ -35,7 +39,8 @@ export class EmployeeAttendanceComponent implements OnInit {
 
   readonly errorMessage = signal<string | null>(null);
 
-  readonly lastResult = signal<RegisterAttendanceResponseDto | null>(null);
+  readonly lastResult = signal<AttendanceScanResponseDto | null>(null);
+  readonly lastScanData = signal<AttendanceScanDataDto | null>(null);
 
   readonly isAttendanceBlocked = computed(() => {
     return !!this.todayAttendance()?.isAttendanceBlockedByLeave;
@@ -63,11 +68,12 @@ export class EmployeeAttendanceComponent implements OnInit {
         this.viewState.set('ready');
       },
       error: (err) => {
-        // Handle initial load error gracefully
-        this.todayAttendance.set({
-          isCheckedIn: false,
-          isCheckedOut: false,
-        });
+        // Do not pretend the employee has no attendance: keep the screen usable
+        // but surface that the current status could not be loaded.
+        this.errorMessage.set(
+          this.readErrorMessage(err, 'دریافت وضعیت حضور امروز با خطا مواجه شد.')
+        );
+        this.todayAttendance.set(null);
         this.viewState.set('ready');
       },
     });
@@ -106,8 +112,8 @@ export class EmployeeAttendanceComponent implements OnInit {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
-        this.submitAttendance(latitude, longitude);
+        const { latitude, longitude, accuracy } = position.coords;
+        this.submitAttendance(latitude, longitude, accuracy, position.timestamp);
       },
       (error) => {
         let msg = 'دسترسی به موقعیت مکانی فعال نیست. برای ثبت حضور، دسترسی موقعیت مکانی را فعال کنید.';
@@ -127,39 +133,53 @@ export class EmployeeAttendanceComponent implements OnInit {
     );
   }
 
-  private submitAttendance(latitude: number, longitude: number): void {
+  private submitAttendance(
+    latitude: number,
+    longitude: number,
+    accuracy: number | null,
+    locationTimestampMs: number
+  ): void {
     if (!this.scannedQrCode) return;
 
     this.viewState.set('submitting');
 
     this.attendanceService
-      .registerAttendance({
-        qrCode: this.scannedQrCode,
+      .scanAttendance({
+        qrCodeToken: this.scannedQrCode,
         latitude,
         longitude,
+        gpsAccuracyInMeters: Number.isFinite(accuracy) ? accuracy : null,
+        locationTimestampUtc: new Date(locationTimestampMs).toISOString(),
+        idempotencyKey: this.createIdempotencyKey(),
+        deviceInfo:
+          typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 256) : undefined,
       })
       .subscribe({
         next: (res) => {
           this.lastResult.set(res);
 
-          // Update local attendance state immediately if provided
-          const current = this.todayAttendance() || {
-            isCheckedIn: false,
-            isCheckedOut: false,
-          };
+          if (!res.success) {
+            this.errorMessage.set(res.message || 'ثبت حضور و غیاب انجام نشد.');
+            this.viewState.set('error');
+            return;
+          }
 
-          const isCheckOut = res.operationType === 'checkOut' || current.isCheckedIn;
-
-          this.todayAttendance.set({
-            ...current,
-            isCheckedIn: isCheckOut ? true : true,
-            isCheckedOut: isCheckOut ? true : false,
-            checkInTime: res.checkInTime || current.checkInTime,
-            checkOutTime: res.checkOutTime || current.checkOutTime,
-            workLocationName: res.workLocationName || current.workLocationName,
-          });
-
+          this.lastScanData.set(res.data);
+          this.applyScanResult(res.data);
           this.viewState.set('success');
+
+          // The record is authoritative on the server; refresh it after registering.
+          this.attendanceService.getTodayAttendance().subscribe({
+            next: (today) => {
+              this.todayAttendance.set({
+                ...today,
+                workLocationName: res.data?.workLocationName ?? today.workLocationName,
+              });
+            },
+            error: () => {
+              // The scan already succeeded; the local state above is enough.
+            },
+          });
         },
         error: (err) => {
           this.handleApiError(err);
@@ -168,38 +188,95 @@ export class EmployeeAttendanceComponent implements OnInit {
       });
   }
 
-  private handleApiError(err: unknown): void {
-    let message = 'ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.';
-
-    if (err && typeof err === 'object') {
-      const httpErr = err as { status?: number; error?: { message?: string; errorCode?: string; code?: string } };
-      const status = httpErr.status;
-      const errorCode = httpErr.error?.errorCode || httpErr.error?.code || '';
-      const backendMsg = httpErr.error?.message || '';
-
-      if (errorCode === 'ATTENDANCE_BLOCKED_BY_APPROVED_LEAVE' || backendMsg.includes('مرخصی')) {
-        message = backendMsg || 'امکان ثبت حضور و غیاب در زمان مرخصی وجود ندارد.';
-        this.loadTodayAttendance();
-      } else if (status === 400 || status === 422) {
-        if (backendMsg.includes('expired') || backendMsg.includes('منقضی')) {
-          message = 'QR منقضی شده است. لطفاً QR جدید محل کار را اسکن کنید.';
-        } else if (backendMsg.includes('outside') || backendMsg.includes('محدوده')) {
-          message = 'شما در محدوده محل کار نیستید. لطفاً در محل کار حضور داشته باشید و دوباره تلاش کنید.';
-        } else if (backendMsg.includes('invalid') || backendMsg.includes('نامعتبر')) {
-          message = 'QR معتبر نیست. لطفاً QR محل کار را دوباره اسکن کنید.';
-        } else if (backendMsg) {
-          message = backendMsg;
-        } else {
-          message = 'کد QR یا موقعیت مکانی معتبر نیست. لطفاً مجدداً تلاش کنید.';
-        }
-      } else if (status === 401 || status === 403) {
-        message = 'دسترسی غیرمجاز. لطفاً مجدداً وارد حساب کاربری خود شوید.';
-      } else if (status === 404) {
-        message = 'محل کار یا کد QR یافت نشد.';
-      }
+  /** Updates the visible card from the scan response, without inventing data. */
+  private applyScanResult(data: AttendanceScanDataDto | null): void {
+    if (!data) {
+      return;
     }
 
-    this.errorMessage.set(message);
+    const current = this.todayAttendance() ?? { isCheckedIn: false, isCheckedOut: false };
+    const registeredTime = this.attendanceService.formatTime(data.registeredAtUtc);
+    const isCheckOut = (data.attendanceAction ?? '').toLowerCase() === 'checkout';
+
+    this.todayAttendance.set({
+      ...current,
+      isCheckedIn: true,
+      isCheckedOut: current.isCheckedOut || isCheckOut,
+      checkInTime: isCheckOut ? current.checkInTime : (registeredTime ?? current.checkInTime),
+      checkOutTime: isCheckOut ? registeredTime : current.checkOutTime,
+      workLocationName: data.workLocationName ?? current.workLocationName,
+      shift: data.shiftName
+        ? { name: data.shiftName, startTime: '', endTime: '' }
+        : current.shift,
+    });
+  }
+
+  private createIdempotencyKey(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  private readErrorMessage(err: unknown, fallback: string): string {
+    const body = (err as { error?: { message?: string; detail?: string; title?: string } } | null)
+      ?.error;
+    return body?.message || body?.detail || body?.title || fallback;
+  }
+
+  private handleApiError(err: unknown): void {
+    const httpErr = err as
+      | {
+          status?: number;
+          error?: {
+            code?: string;
+            message?: string;
+            detail?: string;
+            title?: string;
+          };
+        }
+      | null;
+
+    const status = httpErr?.status;
+    const body = httpErr?.error;
+    const errorCode = body?.code ?? '';
+    const backendMsg = body?.message || body?.detail || body?.title || '';
+
+    if (!status) {
+      this.errorMessage.set('ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.');
+      return;
+    }
+
+    if (status === 401 || status === 403) {
+      this.errorMessage.set('دسترسی غیرمجاز. لطفاً مجدداً وارد حساب کاربری خود شوید.');
+      return;
+    }
+
+    const messages: Record<string, string> = {
+      QR_CODE_INVALID: 'QR معتبر نیست. لطفاً QR محل کار را دوباره اسکن کنید.',
+      QR_CODE_EXPIRED: 'QR منقضی شده است. لطفاً QR جدید محل کار را اسکن کنید.',
+      QR_CODE_DISABLED: 'QR Code این محل کار غیرفعال است. با مدیر مرکز تماس بگیرید.',
+      WORK_LOCATION_NOT_FOUND: 'محل کار این QR یافت نشد.',
+      WORK_LOCATION_INACTIVE: 'این محل کار غیرفعال است و ثبت تردد در آن امکان‌پذیر نیست.',
+      EMPLOYEE_NOT_FOUND: 'پروندهٔ کارمند شما یافت نشد. با مدیر مرکز تماس بگیرید.',
+      EMPLOYEE_NOT_AUTHORIZED: 'اجازهٔ ثبت تردد برای شما وجود ندارد.',
+      LOCATION_UNAVAILABLE: 'موقعیت مکانی در دسترس نیست. GPS دستگاه را بررسی کنید.',
+      LOCATION_COORDINATES_INVALID: 'مختصات موقعیت مکانی نامعتبر است.',
+      LOCATION_ACCURACY_INSUFFICIENT:
+        'دقت موقعیت مکانی کافی نیست. تا دریافت سیگنال بهتر GPS صبر کنید و دوباره تلاش کنید.',
+      LOCATION_DATA_EXPIRED: 'اطلاعات موقعیت مکانی قدیمی است. لطفاً دوباره تلاش کنید.',
+      LOCATION_TIMESTAMP_INVALID: 'زمان موقعیت مکانی نامعتبر است. دوباره تلاش کنید.',
+      OUTSIDE_ALLOWED_RADIUS:
+        'شما در محدودهٔ مجاز محل کار نیستید. حضور در محل کار و تلاش مجدد لازم است.',
+      SHIFT_VALIDATION_FAILED: 'ثبت تردد با قوانین شیفت شما سازگار نیست.',
+      DUPLICATE_ATTENDANCE: 'تردد امروز شما قبلاً ثبت شده است.',
+      INVALID_ATTENDANCE_ACTION: 'نوع عملیات تردد نامعتبر است.',
+      IDEMPOTENCY_KEY_REUSED: 'این درخواست قبلاً پردازش شده است.',
+    };
+
+    const mapped = messages[errorCode];
+    this.errorMessage.set(mapped || backendMsg || 'ثبت حضور و غیاب با خطا مواجه شد. لطفاً دوباره تلاش کنید.');
   }
 
   onViewTodayStatus(): void {

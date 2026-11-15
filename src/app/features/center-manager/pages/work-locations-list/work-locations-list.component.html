@@ -16,6 +16,12 @@
       </button>
     </div>
 
+    @if (actionError()) {
+      <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700" role="alert">
+        {{ actionError() }}
+      </div>
+    }
+
     <!-- Loading State -->
     @if (isLoading()) {
       <div class="flex justify-center py-12">
@@ -23,8 +29,19 @@
       </div>
     }
 
+    <!-- Load Error -->
+    @if (!isLoading() && loadError()) {
+      <app-empty-state
+        title="دریافت محل‌های کار ناموفق بود"
+        [description]="loadError()!"
+        actionLabel="تلاش دوباره"
+        [isError]="true"
+        (action)="reload()"
+      />
+    }
+
     <!-- Empty State -->
-    @if (!isLoading() && workLocations().length === 0) {
+    @if (!isLoading() && !loadError() && workLocations().length === 0) {
       <app-empty-state
         title="محل کار تعریف شده وجود ندارد"
         description="محل کار جدیدی ثبت نشده است. با استفاده از دکمه بالا محل کار جدیدی ایجاد کنید."
@@ -35,28 +52,33 @@
     }
 
     <!-- Table -->
-    @if (!isLoading() && workLocations().length > 0) {
+    @if (!isLoading() && !loadError() && workLocations().length > 0) {
       <div class="overflow-x-auto">
         <table class="min-w-full">
           <thead>
             <tr class="border-b border-slate-200 bg-slate-50">
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">ردیف</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">اسم سازمان</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">عرض جغرافیایی</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">طول جغرافیایی</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">شعاع (متر)</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">وضعیت</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">عملیات</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">نام محل کار</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">عرض جغرافیایی</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">طول جغرافیایی</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">شعاع (متر)</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">حالت QR</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">وضعیت</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">عملیات</th>
             </tr>
           </thead>
           <tbody>
             @for (item of workLocations(); track item.id) {
               <tr class="border-b border-slate-100 hover:bg-slate-50">
-                <td class="p-4 font-medium text-slate-700">{{ item.id.slice(0, 8) }}...</td>
-                <td class="p-4 font-medium text-slate-700">{{ item.organizationId }}</td>
+                <td class="p-4 font-medium text-slate-700">{{ item.name }}</td>
                 <td class="p-4 text-right text-xs font-mono text-slate-600 dir-ltr">{{ item.latitude }}</td>
                 <td class="p-4 text-right text-xs font-mono text-slate-600 dir-ltr">{{ item.longitude }}</td>
-                <td class="p-4 text-right text-sm font-medium text-slate-700">{{ item.radiusInMeters }}</td>
+                <td class="p-4 text-right text-sm font-medium text-slate-700">{{ item.allowedRadiusInMeters }}</td>
+                <td class="p-4 text-sm text-slate-700">
+                  {{ qrModeLabel(item.qrCodeMode) }}
+                  @if (item.qrCodeMode === 'Dynamic') {
+                    <span class="text-xs text-slate-500">(هر {{ item.qrRotationIntervalMinutes }} دقیقه)</span>
+                  }
+                </td>
                 <td class="p-4">
                   @if (item.isActive) {
                     <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">
@@ -70,16 +92,19 @@
                 </td>
                 <td class="p-4">
                   <button
-                    routerLink="/center-manager/work-locations/{{ item.id }}/edit"
+                    [routerLink]="['/center-manager/work-locations', item.id, 'edit']"
                     class="underline underline-offset-2 text-blue-600 hover:text-blue-800 text-sm font-medium mr-2"
                   >
                     ویرایش
                   </button>
                   <button
-                    (click)="onDelete(item.id)"
-                    class="underline underline-offset-2 text-rose-600 hover:text-rose-800 text-sm font-medium"
+                    type="button"
+                    (click)="toggleActive(item)"
+                    [disabled]="updatingId() === item.id"
+                    class="underline underline-offset-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                    [ngClass]="item.isActive ? 'text-rose-600 hover:text-rose-800' : 'text-emerald-600 hover:text-emerald-800'"
                   >
-                    حذف
+                    {{ updatingId() === item.id ? 'در حال اعمال...' : (item.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی') }}
                   </button>
                 </td>
               </tr>

@@ -9,6 +9,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { CreateShiftDto } from '../../models/create-shift.dto';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
+import { extractApiErrorMessage } from '../../../../core/utils/api-error.util';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -184,7 +185,7 @@ export class CreateShiftComponent implements OnInit {
         error: (err) => {
           this.submitState.set('error');
           this.errorMessage.set(
-            err?.error?.message || 'ثبت شیفت با خطا مواجه شد. لطفاً دوباره تلاش کنید.'
+            extractApiErrorMessage(err, 'ثبت شیفت با خطا مواجه شد. لطفاً دوباره تلاش کنید.')
           );
         },
       });

@@ -124,6 +124,12 @@
 
   <!-- Main Today Status View (Ready State) -->
   @if (viewState() === 'ready') {
+    @if (errorMessage()) {
+      <div class="mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
     <!-- Today's Status Card -->
     <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">

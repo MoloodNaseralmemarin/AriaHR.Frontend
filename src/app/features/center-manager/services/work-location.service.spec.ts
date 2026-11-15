@@ -108,30 +108,39 @@ describe('WorkLocationService', () => {
 
     service
       .createWorkLocation({
+        name: 'دفتر مرکزی',
         organizationId: 'org-1',
         latitude: 35.7,
         longitude: 51.3,
-        radiusInMeters: 200,
+        allowedRadiusInMeters: 200,
         isActive: true,
+        qrCodeMode: 1,
+        qrCodeEnabled: true,
       })
       .subscribe();
 
     const [url, body] = http.post.mock.calls[0];
     expect(url).toBe(`${environment.apiUrl}/api/organizations/work-locations`);
-    expect(body.radiusInMeters).toBe(200);
+    expect(body.allowedRadiusInMeters).toBe(200);
+    expect(body.name).toBe('دفتر مرکزی');
   });
 
   it('should call generateQrCode with POST and no request body', () => {
     http.post.mockReturnValue(
-      of({ code: 'test-code-123', expiresAtUtc: '2026-10-03T10:00:00Z' })
+      of({
+        token: 'test-token-123',
+        expiresAtUtc: '2026-10-03T10:00:00Z',
+        refreshAfterUtc: null,
+        rotationIntervalMinutes: 5,
+      })
     );
 
     let response: unknown = null;
     service.generateQrCode('wl-999').subscribe((res) => (response = res));
 
     const [url, body] = http.post.mock.calls[0];
-    expect(url).toBe(`${environment.apiUrl}/api/organizations/work-locations/wl-999/qr`);
+    expect(url).toBe(`${environment.apiUrl}/api/organizations/work-locations/wl-999/qrcode/generate`);
     expect(body).toBeNull();
-    expect(response).toEqual({ code: 'test-code-123', expiresAtUtc: '2026-10-03T10:00:00Z' });
+    expect((response as { token: string }).token).toBe('test-token-123');
   });
 });

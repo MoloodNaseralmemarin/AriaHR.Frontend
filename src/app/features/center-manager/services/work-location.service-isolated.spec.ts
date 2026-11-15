@@ -27,10 +27,12 @@ describe('WorkLocationService (Isolated Unit Tests)', () => {
     return service;
   }
 
-  it('should call generateQrCode with POST to /api/organizations/work-locations/{id}/qr', () => {
+  it('should call generateQrCode with POST to /api/organizations/work-locations/{id}/qrcode/generate', () => {
     const mockResponse = {
-      code: '40fdd938e5e87adeef2109bb200fe6d4cadf5773ffd1fb5ef078baff4278f0bb',
+      token: '40fdd938e5e87adeef2109bb200fe6d4cadf5773ffd1fb5ef078baff4278f0bb',
       expiresAtUtc: '2026-10-03T09:56:27.7920385Z',
+      refreshAfterUtc: null,
+      rotationIntervalMinutes: 5,
     };
     mockHttpClient.post.mockReturnValue(of(mockResponse));
 
@@ -40,7 +42,7 @@ describe('WorkLocationService (Isolated Unit Tests)', () => {
     });
 
     expect(mockHttpClient.post).toHaveBeenCalledWith(
-      `${environment.apiUrl}/api/organizations/work-locations/wl-123/qr`,
+      `${environment.apiUrl}/api/organizations/work-locations/wl-123/qrcode/generate`,
       null
     );
   });
