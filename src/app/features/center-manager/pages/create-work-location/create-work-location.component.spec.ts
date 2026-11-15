@@ -110,11 +110,39 @@ describe('CreateWorkLocationComponent', () => {
       ...mockUserDetails,
       organizationId: null,
     });
+    vi.mocked(mockAuthService.getCurrentUser!).mockReturnValueOnce(
+      of({ ...mockUserDetails, organizationId: null })
+    );
 
     component.selectLocation(35.7219, 51.3347);
     component.onSubmit();
 
+    expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
     expect(component.errorMessage()).toBe('شما به هیچ مرکزی متصل نیستید و امکان ثبت محل کار را ندارید.');
+    expect(mockWorkLocationService.createWorkLocation).not.toHaveBeenCalled();
+  });
+
+  it('should re-check /api/auth/me when the cached profile has no center', () => {
+    userDetailsSignal.set({ ...mockUserDetails, organizationId: null });
+
+    component.selectLocation(35.7219, 51.3347);
+    component.onSubmit();
+
+    expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
+    expect(mockWorkLocationService.createWorkLocation).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: 'org-123' })
+    );
+  });
+
+  it('should not blame the center when the account profile cannot be loaded', () => {
+    userDetailsSignal.set(null);
+    vi.mocked(mockAuthService.getCurrentUser!).mockReturnValueOnce(of(null));
+
+    component.selectLocation(35.7219, 51.3347);
+    component.onSubmit();
+
+    expect(component.errorMessage()).not.toContain('هیچ مرکزی');
+    expect(component.errorMessage()).toContain('دریافت اطلاعات حساب');
     expect(mockWorkLocationService.createWorkLocation).not.toHaveBeenCalled();
   });
 
