@@ -8,12 +8,19 @@ import { vi } from 'vitest';
 describe('VerifyOtpPageComponent (OTP flow & LTR alignment)', () => {
   let component: VerifyOtpPageComponent;
   let fixture: ComponentFixture<VerifyOtpPageComponent>;
-  let mockAuthService: { verifyOtp: any; resendOtp: any };
+  let mockAuthService: {
+    verifyOtp: any;
+    resendOtp: any;
+    getDefaultDashboardRoute: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     mockAuthService = {
       verifyOtp: vi.fn().mockReturnValue(of({ success: true })),
       resendOtp: vi.fn().mockReturnValue(of({ success: true })),
+      // The page resolves the landing route from the authenticated role after a
+      // successful verification; the mock must expose that collaborator.
+      getDefaultDashboardRoute: vi.fn().mockReturnValue('/employee/dashboard'),
     };
 
     await TestBed.configureTestingModule({

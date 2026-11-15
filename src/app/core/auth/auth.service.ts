@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { catchError, finalize, map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import { AuthApiService } from './auth-api.service';
 import {
@@ -195,21 +195,26 @@ AuthService {
     }
   }
 
-  /** Clears authentication session client-side and attempts backend POST /api/auth/logout. */
+  /**
+   * Clears the client session immediately and notifies the backend best-effort.
+   *
+   * The request is issued before the token is cleared so the interceptor can still
+   * attach it, but local state is dropped synchronously: an expired/invalid session
+   * must never keep a token around while the logout round-trip is in flight.
+   */
   logout(): void {
-    this.authApiService
-      .logout()
-      .pipe(
-        finalize(() => {
-          this.clearClientSession();
-          this.router.navigate(['/login'], { replaceUrl: true });
-        })
-      )
-      .subscribe({
-        error: () => {
-          // Failure ignored as finalize handles client cleanup
-        },
-      });
+    const hadSession = this.token() !== null;
+
+    if (hadSession) {
+      // Subscribing runs the interceptor synchronously while the token is still set.
+      this.authApiService
+        .logout()
+        .pipe(catchError(() => of(null)))
+        .subscribe();
+    }
+
+    this.clearClientSession();
+    this.router.navigate(['/login'], { replaceUrl: true });
   }
 
   /** Synchronously clears all authentication signals and stored token/user items. */
@@ -237,15 +242,18 @@ AuthService {
    */
   invalidateSessionOnStartup(): void {
     const activeToken = this.token();
-    // Synchronously clear all credentials & signals before any routes or guards run
-    this.clearClientSession();
 
     if (activeToken) {
-      // Fire non-blocking best-effort logout to invalidate backend token
-      this.authApiService.logout().pipe(
-        catchError(() => of(null))
-      ).subscribe();
+      // Fire the best-effort logout while the token is still present so the request
+      // carries it (the interceptor reads the token eagerly on subscribe).
+      this.authApiService
+        .logout()
+        .pipe(catchError(() => of(null)))
+        .subscribe();
     }
+
+    // Synchronously clear all credentials & signals before any routes or guards run
+    this.clearClientSession();
   }
 
   private getStoredToken(): string | null {

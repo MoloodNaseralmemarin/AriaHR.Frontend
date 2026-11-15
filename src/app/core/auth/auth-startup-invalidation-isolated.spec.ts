@@ -1,11 +1,48 @@
 import '@angular/compiler';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { EnvironmentInjector, createEnvironmentInjector } from '@angular/core';
+import { Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { AuthService } from './auth.service';
 import { AuthApiService } from './auth-api.service';
+
+
+/**
+ * The Angular unit-test environment does not expose Web Storage, while the
+ * service under test intentionally guards for its absence. Provide an in-memory
+ * implementation so the real read/write/remove paths are exercised.
+ */
+function createMemoryStorage(): Storage {
+  const data = new Map<string, string>();
+  return {
+    get length() {
+      return data.size;
+    },
+    clear: () => data.clear(),
+    getItem: (key: string) => (data.has(key) ? data.get(key)! : null),
+    key: (index: number) => Array.from(data.keys())[index] ?? null,
+    removeItem: (key: string) => {
+      data.delete(key);
+    },
+    setItem: (key: string, value: string) => {
+      data.set(key, String(value));
+    },
+  } as Storage;
+}
+
+if (typeof globalThis.localStorage === 'undefined') {
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: createMemoryStorage(),
+    configurable: true,
+  });
+}
+if (typeof globalThis.sessionStorage === 'undefined') {
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    value: createMemoryStorage(),
+    configurable: true,
+  });
+}
 
 describe('AuthService Startup Invalidation (Isolated Unit Tests)', () => {
   let authService: AuthService;
@@ -28,11 +65,13 @@ describe('AuthService Startup Invalidation (Isolated Unit Tests)', () => {
       navigate: vi.fn(),
     };
 
-    const injector = createEnvironmentInjector([
-      { provide: AuthApiService, useValue: authApiMock },
-      { provide: Router, useValue: routerMock },
-      { provide: AuthService, useClass: AuthService },
-    ], {} as EnvironmentInjector);
+    const injector = Injector.create({
+      providers: [
+        { provide: AuthApiService, useValue: authApiMock },
+        { provide: Router, useValue: routerMock },
+        { provide: AuthService, useClass: AuthService },
+      ],
+    });
 
     authService = injector.get(AuthService);
   });

@@ -4,6 +4,7 @@ import { Injector, runInInjectionContext } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { CenterManagerDashboardService } from './center-manager-dashboard.service';
+import { environment } from '../../../../environments/environment';
 import { CenterManagerDashboardDto } from '../models/center-manager-dashboard.dto';
 
 describe('CenterManagerDashboardService (isolated)', () => {
@@ -43,7 +44,7 @@ describe('CenterManagerDashboardService (isolated)', () => {
       expect(data).toEqual(mockResponse);
     });
 
-    expect(httpClientMock.get).toHaveBeenCalledWith('/api/center-manager/dashboard');
+    expect(httpClientMock.get).toHaveBeenCalledWith(`${environment.apiUrl}/api/center-manager/dashboard`);
   });
 
   it('should handle API errors gracefully', () => {

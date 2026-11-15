@@ -1,6 +1,6 @@
 import '@angular/compiler';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { EnvironmentInjector, createEnvironmentInjector, runInInjectionContext } from '@angular/core';
+import { Injector, runInInjectionContext } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -82,13 +82,15 @@ describe('LeaveRequestFormComponent', () => {
       toJalaliString: vi.fn((val: string) => val || '---'),
     };
 
-    const injector = createEnvironmentInjector([
-      { provide: FormBuilder, useClass: FormBuilder },
-      { provide: Router, useValue: mockRouter },
-      { provide: LeaveRequestService, useValue: mockLeaveRequestService },
-      { provide: LeaveCategoryService, useValue: mockLeaveCategoryService },
-      { provide: PersianDateService, useValue: mockPersianDateService },
-    ], {} as EnvironmentInjector);
+    const injector = Injector.create({
+      providers: [
+        { provide: FormBuilder, useClass: FormBuilder },
+        { provide: Router, useValue: mockRouter },
+        { provide: LeaveRequestService, useValue: mockLeaveRequestService },
+        { provide: LeaveCategoryService, useValue: mockLeaveCategoryService },
+        { provide: PersianDateService, useValue: mockPersianDateService },
+      ],
+    });
 
     runInInjectionContext(injector, () => {
       component = new LeaveRequestFormComponent();

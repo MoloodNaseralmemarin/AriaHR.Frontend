@@ -1,11 +1,12 @@
 import '@angular/compiler';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { EnvironmentInjector, createEnvironmentInjector } from '@angular/core';
+import { Injector } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { App } from './app';
 import { AuthService } from './core/auth/auth.service';
 import { PwaStartupService } from './core/services/pwa-startup.service';
+import { LogoutModalService } from './core/services/logout-modal.service';
 
 describe('App Startup Integration (Isolated Unit Tests)', () => {
   let app: App;
@@ -36,12 +37,18 @@ describe('App Startup Integration (Isolated Unit Tests)', () => {
       navigate: vi.fn(),
     };
 
-    const injector = createEnvironmentInjector([
-      { provide: AuthService, useValue: authServiceMock },
-      { provide: PwaStartupService, useValue: pwaStartupServiceMock },
-      { provide: Router, useValue: routerMock },
-      { provide: App, useClass: App },
-    ], {} as EnvironmentInjector);
+    const injector = Injector.create({
+      providers: [
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: PwaStartupService, useValue: pwaStartupServiceMock },
+        { provide: Router, useValue: routerMock },
+        {
+          provide: LogoutModalService,
+          useValue: { isOpen: () => false, open: vi.fn(), close: vi.fn(), confirm: vi.fn() },
+        },
+        { provide: App, useClass: App },
+      ],
+    });
 
     app = injector.get(App);
   });

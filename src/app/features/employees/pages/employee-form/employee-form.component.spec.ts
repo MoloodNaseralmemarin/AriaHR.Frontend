@@ -105,14 +105,13 @@ describe('EmployeeFormComponent', () => {
       firstName: 'رضا',
       lastName: 'رضایی',
       phoneNumber: '09123456789',
-      email: null,
       organizationId: 'org-1',
       personnelCode: '1002',
       nationalCode: '0012345678',
       birthDate: '1995-05-05',
       gender: null,
       hireDate: '2023-01-01',
-      profileImagePath: null,
+      profileImage: null,
     });
     expect(component.toastMessage()).toBe('کارمند جدید با موفقیت ثبت شد.');
 

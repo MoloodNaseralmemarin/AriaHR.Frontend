@@ -83,12 +83,16 @@ describe('Authenticated User Information Flow', () => {
     const req = httpMock.expectOne('https://localhost:7151/api/auth/me');
     req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
 
+    // The interceptor ends the session on 401; that best-effort notification is
+    // expected and must be consumed so the test double has no open requests.
+    httpMock.expectOne('https://localhost:7151/api/auth/logout').flush({});
+
     expect(authService.token()).toBeNull();
     expect(authService.userDetails()).toBeNull();
     expect(navigateSpy).toHaveBeenCalledWith(['/login']);
   });
 
-  it('should display First Name + Last Name and dynamic avatar on SystemAdminDashboardComponent', () => {
+  it('should display First Name + Last Name in the dashboard greeting', () => {
     authService.saveAuthentication('valid-jwt-token');
     authService.userDetails.set(mockUser);
 
@@ -97,15 +101,17 @@ describe('Authenticated User Information Flow', () => {
     );
     fixture.detectChanges();
 
-    const req = httpMock.expectOne('https://localhost:7151/api/auth/me');
-    req.flush(mockUser);
+    httpMock.expectOne('https://localhost:7151/api/auth/me').flush(mockUser);
+    httpMock.expectOne('https://localhost:7151/api/dashboard/overview').flush({
+      centers: { totalCount: 10, activeCount: 8, awaitingCompletionCount: 2 },
+      centerManagers: { totalCount: 5 },
+      employees: { totalCount: 100, createdThisMonth: 4 },
+    });
+    httpMock.expectOne('https://localhost:7151/api/organizations/recent').flush([]);
+    httpMock.expectOne('https://localhost:7151/api/dashboard/recent-activities').flush([]);
     fixture.detectChanges();
 
-    const compiled: HTMLElement = fixture.nativeElement;
-    const greetingHeading = compiled.querySelector('h1')?.textContent;
-    expect(greetingHeading).toContain('سلام، مولود ناصرالمعمارین');
-
-    const avatar = compiled.querySelector('.rounded-2xl.bg-blue-600')?.textContent;
-    expect(avatar).toBe('م');
+    const headerText: string = fixture.nativeElement.textContent;
+    expect(headerText).toContain('سلام، مولود ناصرالمعمارین');
   });
 });

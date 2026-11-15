@@ -142,8 +142,6 @@ export class EmployeeFormComponent implements OnInit {
     const errorObj = err?.error;
     const detailMessage: string = errorObj?.detail || errorObj?.message || err?.message || '';
 
-    let errorMapped = false;
-
     const fieldMappings: Array<{ keyword: string; controlName: StringEmployeeFormControlName }> = [
       { keyword: 'شماره موبایل', controlName: 'phoneNumber' },
       { keyword: 'کد ملی', controlName: 'nationalCode' },
@@ -177,17 +175,16 @@ export class EmployeeFormComponent implements OnInit {
               server: msg,
             });
             control.markAsTouched();
-            errorMapped = true;
           }
         }
       });
     });
 
-    if (!errorMapped) {
-      this.errorMessage.set(
-        detailMessage || 'خطا در ثبت کارمند. لطفاً ورودی‌ها را بررسی کنید.'
-      );
-    }
+    // Always surface a form-level message too: field errors alone are easy to
+    // miss when the offending field is scrolled out of view.
+    this.errorMessage.set(
+      detailMessage || 'خطا در ثبت کارمند. لطفاً ورودی‌ها را بررسی کنید.'
+    );
   }
 
   private loadEmployee(id: string): void {
