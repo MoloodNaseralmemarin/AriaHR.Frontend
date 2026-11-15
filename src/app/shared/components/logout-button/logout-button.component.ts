@@ -1,7 +1,6 @@
-import { Component, Input, inject, signal } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../../core/auth/auth.service';
-import { LogoutModalComponent } from '../logout-modal/logout-modal.component';
+import { LogoutModalService } from '../../../core/services/logout-modal.service';
 
 /**
  * Standardized shared logout control for all dashboards (System Admin, Center Manager, Employee).
@@ -12,11 +11,13 @@ import { LogoutModalComponent } from '../logout-modal/logout-modal.component';
  * - `menu-item`: full-width button item inside mobile bottom sheets / drawers.
  *
  * Always confirms logout with a Persian modal dialog before triggering AuthService.logout().
+ * The dialog itself is rendered once at the application root (see app.html) so that no
+ * layout or map can ever paint above it.
  */
 @Component({
   selector: 'app-logout-button',
   standalone: true,
-  imports: [CommonModule, LogoutModalComponent],
+  imports: [CommonModule],
   template: `
     @if (variant === 'nav') {
       <button
@@ -58,36 +59,20 @@ import { LogoutModalComponent } from '../logout-modal/logout-modal.component';
         <span>خروج از حساب</span>
       </button>
     }
-
-    <app-logout-modal
-      [isOpen]="showModal()"
-      (confirm)="onConfirmedLogout()"
-      (cancel)="closeModal()"
-    ></app-logout-modal>
   `,
 })
 export class LogoutButtonComponent {
   @Input() variant: 'sidebar' | 'nav' | 'menu-item' = 'sidebar';
 
-  private readonly authService = inject(AuthService);
+  private readonly logoutModal = inject(LogoutModalService);
 
-  readonly showModal = signal(false);
-
+  /** Opens the shared, app-level logout confirmation dialog. */
   openModal(): void {
-    this.showModal.set(true);
-  }
-
-  closeModal(): void {
-    this.showModal.set(false);
-  }
-
-  onConfirmedLogout(): void {
-    this.showModal.set(false);
-    this.authService.logout();
+    this.logoutModal.open();
   }
 
   /**
-   * Directly triggers logout for backward compatibility in specs or programmatic triggers.
+   * Kept for backward compatibility with programmatic triggers and specs.
    */
   onLogout(): void {
     this.openModal();

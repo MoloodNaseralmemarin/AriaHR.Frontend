@@ -21,3 +21,10 @@
 }
 
 <router-outlet />
+
+<!-- Single logout confirmation dialog for every role, rendered outside all layouts -->
+<app-logout-modal
+  [isOpen]="logoutModal.isOpen()"
+  (confirm)="logoutModal.confirm()"
+  (cancel)="logoutModal.close()"
+/>

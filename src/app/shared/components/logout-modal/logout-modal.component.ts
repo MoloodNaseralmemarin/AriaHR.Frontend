@@ -3,6 +3,10 @@ import { CommonModule } from '@angular/common';
 
 /**
  * Standardized Persian modal dialog for confirming logout across all roles and layouts.
+ *
+ * Rendered once at the application root (app.html) so it is never trapped inside a
+ * layout's stacking context. The `app-modal-layer` utility keeps it above every
+ * Leaflet layer (panes 400-800, control corners 1000) and all page elements.
  */
 @Component({
   selector: 'app-logout-modal',
@@ -11,7 +15,7 @@ import { CommonModule } from '@angular/common';
   template: `
     @if (isOpen) {
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs transition-opacity duration-200"
+        class="app-modal-layer fixed inset-0 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs transition-opacity duration-200"
         (click)="onBackdropClick($event)"
         role="dialog"
         aria-modal="true"
