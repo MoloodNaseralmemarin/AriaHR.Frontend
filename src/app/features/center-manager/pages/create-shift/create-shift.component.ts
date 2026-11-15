@@ -2,10 +2,11 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { EMPTY, Observable, finalize, of, switchMap } from 'rxjs';
 
 import { ShiftService } from '../../services/shift.service';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { CreateShiftDto } from '../../models/create-shift.dto';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 
@@ -66,13 +67,29 @@ export class CreateShiftComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    if (!this.authService.userDetails()) {
-      this.authService.getCurrentUser().subscribe({
-        error: () => {
-          // Failure handled gracefully during submission
-        },
-      });
+    this.loadCurrentUserIfMissing().subscribe({
+      error: () => {
+        // Failure handled gracefully during submission
+      },
+    });
+  }
+
+  /**
+   * The organization of a shift comes from the authenticated manager's profile
+   * (`/api/auth/me`), never from user input, so a manager can only create shifts
+   * for the center they belong to.
+   */
+  private loadCurrentUserIfMissing(): Observable<CurrentUserDto | null> {
+    const existing = this.authService.userDetails();
+    if (existing?.organizationId) {
+      return of(existing);
     }
+
+    // A cached profile without an organization can be stale (it was stored
+    // before the manager was assigned to a center, or before the backend started
+    // returning the field), so ask /api/auth/me again instead of reporting the
+    // manager as disconnected based on cached data.
+    return this.authService.getCurrentUser();
   }
 
   get f() {
@@ -118,28 +135,40 @@ export class CreateShiftComponent implements OnInit {
       return;
     }
 
-    const userDetails = this.authService.userDetails();
-    const orgId = userDetails?.organizationId;
-
-    if (!orgId) {
-      this.errorMessage.set('شما به هیچ مرکزی متصل نیستید و امکان ثبت شیفت را ندارید.');
-      return;
-    }
-
     const value = this.form.getRawValue();
-    const request: CreateShiftDto = {
-      name: value.name.trim(),
-      startTime: normalizedStart,
-      endTime: normalizedEnd,
-      isActive: value.isActive,
-      organizationId: orgId,
-    };
 
-    this.submitState.set('submitting');
-
-    this.shiftService
-      .createShift(request)
+    this.loadCurrentUserIfMissing()
       .pipe(
+        switchMap((user) => {
+          if (!user) {
+            // AuthService turns a failed /api/auth/me (expired session, server or
+            // network failure) into null; that is not the same as a manager who
+            // genuinely belongs to no center, so never claim the latter.
+            this.errorMessage.set(
+              'دریافت اطلاعات حساب شما انجام نشد. اتصال به سرور و وضعیت نشست را بررسی کنید و دوباره تلاش کنید.'
+            );
+            return EMPTY;
+          }
+
+          const orgId = user.organizationId;
+
+          if (!orgId) {
+            this.errorMessage.set('شما به هیچ مرکزی متصل نیستید و امکان ثبت شیفت را ندارید.');
+            return EMPTY;
+          }
+
+          const request: CreateShiftDto = {
+            name: value.name.trim(),
+            startTime: normalizedStart,
+            endTime: normalizedEnd,
+            isActive: value.isActive,
+            organizationId: orgId,
+          };
+
+          this.submitState.set('submitting');
+
+          return this.shiftService.createShift(request);
+        }),
         finalize(() => {
           if (this.submitState() === 'submitting') {
             this.submitState.set('idle');
