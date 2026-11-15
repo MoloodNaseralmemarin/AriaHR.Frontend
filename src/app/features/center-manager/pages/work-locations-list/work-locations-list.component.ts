@@ -25,7 +25,7 @@ export interface WorkLocationTableItem {
 @Component({
   selector: 'app-work-locations-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, EmptyStateComponent, DeleteConfirmationComponent],
+  imports: [CommonModule, RouterLink, EmptyStateComponent],
   templateUrl: './work-locations-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
