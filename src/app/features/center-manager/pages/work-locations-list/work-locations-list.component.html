@@ -88,17 +88,5 @@
         </table>
       </div>
     }
-
-    <!-- Delete Confirmation -->
-    @if (showDeleteConfirmation()) {
-      <app-delete-confirmation
-        (confirm)="confirmDelete()"
-        (cancel)="cancelDelete()"
-        title="حذف محل کار"
-        description="آیا از حذف این محل کار اطمینان دارید؟ این اقدام قابل بازگشت نیست و تمام اطلاعات مرتبط با محل کار حذف خواهد شد."
-        confirmText=" حذف"
-        cancelText=" انصراف"
-      />
-    }
   </div>
 </div>
