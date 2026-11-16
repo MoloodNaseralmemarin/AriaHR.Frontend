@@ -144,7 +144,7 @@ export class SidebarNavComponent implements OnInit {
     { label: 'شیفت‌ها', route: '/center-manager/shifts', icon: 'shifts' },
     { label: 'درخواست‌های مرخصی', route: '/center-manager/leave-requests', icon: 'leave-requests' },
     { label: 'دسته‌بندی‌های مرخصی', route: '/center-manager/leave-categories', icon: 'leave-categories' },
-    { label: 'محل کار', route: '/center-manager/work-locations/create', icon: 'work-location' },
+    { label: 'محل کار', route: '/center-manager/work-locations', icon: 'work-location' },
     { label: 'گزارش‌ها', route: '/center-manager/reports', icon: 'reports' },
     { label: 'اعلان‌ها', route: '/center-manager/notifications', icon: 'notifications', badge: this.unreadCount() },
     { label: 'تنظیمات مرکز', route: '/center-manager/settings', icon: 'settings' },

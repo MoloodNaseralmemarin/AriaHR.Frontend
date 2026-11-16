@@ -1,0 +1,128 @@
+<div class="space-y-4">
+  <div
+    class="relative h-64 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 sm:h-80 lg:h-96"
+  >
+    <div
+      #mapContainer
+      class="h-full w-full"
+      role="application"
+      aria-label="نقشهٔ انتخاب محل کار"
+    ></div>
+
+    @if (!isMapLoading() && !mapError()) {
+      <button
+        type="button"
+        (click)="useCurrentLocation()"
+        [disabled]="disabled || isLocatingCurrentPosition()"
+        class="absolute bottom-4 left-4 z-[500] inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+        title="نمایش موقعیت فعلی من روی نقشه"
+      >
+        @if (isLocatingCurrentPosition()) {
+          <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+        } @else {
+          <svg class="h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>
+            <circle cx="12" cy="12" r="8"></circle>
+          </svg>
+        }
+        موقعیت فعلی من
+      </button>
+    }
+
+    @if (isMapLoading()) {
+      <div class="absolute inset-0 z-[600] flex flex-col items-center justify-center gap-3 bg-slate-100/90 px-6 text-center">
+        <svg class="h-7 w-7 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <p class="text-sm font-medium text-slate-600">در حال بارگذاری نقشه…</p>
+        <p class="text-xs text-slate-500">برای انتخاب محل کار، روی نقشه کلیک کنید.</p>
+      </div>
+    }
+
+    @if (mapError()) {
+      <div class="absolute inset-0 z-[600] flex flex-col items-center justify-center gap-3 bg-white/95 px-6 text-center">
+        <div class="flex h-11 w-11 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 9v4M12 17h.01"></path>
+            <path d="M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"></path>
+          </svg>
+        </div>
+        <p class="max-w-md text-sm leading-6 text-slate-700">{{ mapError() }}</p>
+        <button
+          type="button"
+          (click)="retryMap()"
+          class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+        >
+          تلاش دوباره
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (mapWarning()) {
+    <div class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-800" role="status">
+      <svg class="mt-0.5 h-4 w-4 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 9v4M12 17h.01"></path>
+        <path d="M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"></path>
+      </svg>
+      <span>{{ mapWarning() }}</span>
+    </div>
+  }
+
+  @if (locationError()) {
+    <div class="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs leading-5 text-rose-700" role="alert">
+      <svg class="mt-0.5 h-4 w-4 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M12 8v5M12 16h.01"></path>
+      </svg>
+      <span>{{ locationError() }}</span>
+    </div>
+  }
+
+  <div class="flex items-start gap-2 text-xs leading-5 text-slate-500">
+    <svg class="mt-0.5 h-4 w-4 flex-none text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M9 20l-5.4-2.7A1 1 0 013 16.4V5.6a1 1 0 011.4-.9L9 7l6-3 5.6 2.7a1 1 0 01.4.8v10.8a1 1 0 01-1.4.9L15 17l-6 3z"></path>
+      <path d="M9 7v13M15 4v13"></path>
+    </svg>
+    <p>روی نقشه کلیک کنید یا نشانگر را بکشید. دایرهٔ آبی شعاع محدودهٔ مجاز حضور را نشان می‌دهد.</p>
+  </div>
+
+  @if (selectedLocation(); as location) {
+    <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+          <p class="text-[11px] font-medium text-slate-500">عرض جغرافیایی</p>
+          <p class="mt-1 font-mono text-sm font-semibold text-slate-800" dir="ltr">{{ location.lat }}</p>
+        </div>
+        <div>
+          <p class="text-[11px] font-medium text-slate-500">طول جغرافیایی</p>
+          <p class="mt-1 font-mono text-sm font-semibold text-slate-800" dir="ltr">{{ location.lng }}</p>
+        </div>
+      </div>
+
+      <div class="mt-3 border-t border-slate-200 pt-3">
+        <p class="text-[11px] font-medium text-slate-500">آدرس تقریبی</p>
+        @if (isResolvingAddress()) {
+          <p class="mt-1 flex items-center gap-2 text-sm text-slate-500" aria-live="polite">
+            <svg class="h-4 w-4 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            در حال دریافت آدرس…
+          </p>
+        } @else {
+          <p class="mt-1 text-sm leading-6 text-slate-700">{{ resolvedAddress() || 'آدرسی برای این نقطه ثبت نشده است.' }}</p>
+        }
+      </div>
+    </div>
+  } @else if (!isMapLoading() && !mapError()) {
+    <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-xs leading-5 text-slate-500">
+      هنوز نقطه‌ای انتخاب نشده است. برای ثبت محل کار، موقعیت مرکز را روی نقشه مشخص کنید.
+    </div>
+  }
+</div>

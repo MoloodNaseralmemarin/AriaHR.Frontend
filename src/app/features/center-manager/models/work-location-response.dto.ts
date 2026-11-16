@@ -1,3 +1,5 @@
+import { QrCodeMode } from './qr-code-settings.dto';
+
 /**
  * `WorkLocationDto` — response of the `/api/organizations/work-locations` endpoints.
  *
@@ -12,7 +14,7 @@ export interface WorkLocationResponseDto {
   longitude: number;
   allowedRadiusInMeters: number;
   isActive: boolean;
-  qrCodeMode: string;
+  qrCodeMode: QrCodeMode;
   qrCodeEnabled: boolean;
   qrRotationIntervalMinutes: number;
   qrCodeLastGeneratedAtUtc?: string | null;

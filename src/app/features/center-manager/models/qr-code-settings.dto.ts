@@ -1,9 +1,12 @@
+/** The backend serializes the QR mode as `Static` or `Dynamic`. */
+export type QrCodeMode = 'Static' | 'Dynamic';
+
 /**
  * `QrCodeSettingsDto` — response of `GET|PUT /api/organizations/work-locations/{id}/qrcode/settings`.
  */
 export interface QrCodeSettingsDto {
   workLocationId: string;
-  qrCodeMode: string;
+  qrCodeMode: QrCodeMode;
   qrCodeEnabled: boolean;
   rotationIntervalMinutes: number;
   minRotationIntervalMinutes: number;
@@ -18,6 +21,6 @@ export interface QrCodeSettingsDto {
  * `qrCodeMode` is `Static` or `Dynamic`; the rotation interval only applies to dynamic codes.
  */
 export interface UpdateQrCodeSettingsDto {
-  qrCodeMode: string;
+  qrCodeMode: QrCodeMode;
   qrRotationIntervalMinutes?: number | null;
 }
