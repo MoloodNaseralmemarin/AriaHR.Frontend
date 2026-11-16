@@ -1,3 +1,5 @@
+import { QrCodeMode } from './qr-code-settings.dto';
+
 /**
  * `QrCodeResponse` — a signed QR token for a work location.
  *
@@ -7,7 +9,7 @@
  */
 export interface QrCodeResponse {
   workLocationId: string;
-  qrCodeMode: string;
+  qrCodeMode: QrCodeMode;
   token: string;
   expiresAtUtc?: string | null;
   refreshAfterUtc?: string | null;

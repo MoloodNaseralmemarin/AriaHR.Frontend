@@ -1,4 +1,4 @@
-import { Component, Input, computed, signal } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type BadgeTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
@@ -17,9 +17,9 @@ export type BadgeTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
   template: `
     <span
       class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap"
-      [ngClass]="toneClasses()"
+      [ngClass]="toneClasses"
     >
-      <span class="h-1.5 w-1.5 rounded-full" [ngClass]="dotClasses()"></span>
+      <span class="h-1.5 w-1.5 rounded-full" [ngClass]="dotClasses"></span>
       {{ label }}
     </span>
   `,
@@ -28,9 +28,10 @@ export class StatusBadgeComponent {
   @Input() label = '';
   @Input() tone: BadgeTone = 'neutral';
 
-  private toneSignal = signal<BadgeTone>('neutral');
-
-  toneClasses = computed(() => {
+  // Plain getters (not computed()) because `tone` is a decorator input: a
+  // computed with no signal dependency would cache the first tone forever and
+  // the badge would not update when a location is activated/deactivated.
+  get toneClasses(): string {
     switch (this.tone) {
       case 'success':
         return 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200';
@@ -43,9 +44,9 @@ export class StatusBadgeComponent {
       default:
         return 'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200';
     }
-  });
+  }
 
-  dotClasses = computed(() => {
+  get dotClasses(): string {
     switch (this.tone) {
       case 'success':
         return 'bg-emerald-500';
@@ -58,5 +59,5 @@ export class StatusBadgeComponent {
       default:
         return 'bg-slate-400';
     }
-  });
+  }
 }

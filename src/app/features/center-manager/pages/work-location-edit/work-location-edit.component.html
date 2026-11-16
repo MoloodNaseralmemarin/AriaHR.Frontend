@@ -1,319 +1,447 @@
-<div class="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8" dir="rtl">
-  @if (showSuccessToast()) {
-    <app-toast
-      tone="success"
-      message="محل کار با موفقیت ویرایش شد."
-    />
-  }
-
-  @if (showQrModal() && qrData()) {
+<div class="mx-auto max-w-6xl space-y-5 p-4 sm:p-6 lg:p-8" dir="rtl">
+  @if (showQrModal() && qrData(); as qr) {
     <app-qr-code-modal
-      [code]="qrData()!.code"
-      [expiresAtUtc]="qrData()!.expiresAtUtc"
+      [code]="qr.code"
+      [expiresAtUtc]="qr.expiresAtUtc"
+      [qrCodeMode]="qr.qrCodeMode"
       (closeModal)="showQrModal.set(false)"
     />
   }
 
-  <!-- Header -->
-  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-    <div>
-      <h1 class="text-2xl font-bold text-slate-800">
-        ویرایش محل کار
-      </h1>
-      <p class="mt-1 text-sm text-slate-500">
-        موقعیت جغرافیایی و شعاع مجاز برای حضور و غیاب پرسنل را روی نقشه مشخص کنید.
-      </p>
+  @if (qrGenerateConfirmOpen()) {
+    <app-delete-confirmation
+      title="صدور کد QR جدید"
+      description="با صدور کد جدید، کد فعلی بی‌اعتبار می‌شود و اسکن‌های در حال انجام از آن قابل استفاده نخواهند بود. آیا ادامه می‌دهید؟"
+      confirmText="صدور کد جدید"
+      cancelText="انصراف"
+      tone="primary"
+      [busy]="isGeneratingQr()"
+      (confirm)="confirmGenerateNewQr()"
+      (cancel)="cancelGenerateNewQr()"
+    />
+  }
+
+  @if (qrDisableConfirmOpen()) {
+    <app-delete-confirmation
+      title="غیرفعال‌سازی کد QR"
+      description="با غیرفعال شدن کد QR، امکان ثبت حضور و غیاب با اسکن کد برای این محل کار وجود نخواهد داشت. آیا ادامه می‌دهید؟"
+      confirmText="غیرفعال کن"
+      cancelText="انصراف"
+      tone="warning"
+      [busy]="isTogglingQrEnabled()"
+      (confirm)="confirmDisableQr()"
+      (cancel)="cancelDisableQr()"
+    />
+  }
+
+  <app-page-header
+    title="ویرایش محل کار"
+    subtitle="اطلاعات موقعیت، محدودهٔ مجاز و تنظیمات کد QR را مدیریت کنید."
+  >
+    <a
+      actions
+      routerLink="/center-manager/work-locations"
+      class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+    >
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+      بازگشت به لیست
+    </a>
+  </app-page-header>
+
+  @if (isLoadingLocation()) {
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" aria-busy="true">
+      <app-skeleton-loader variant="card" [count]="3" />
+      <p class="sr-only">در حال بارگذاری اطلاعات محل کار…</p>
     </div>
-    <div>
-      <a
-        routerLink="/center-manager/work-locations"
-        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+  } @else if (loadError()) {
+    <div class="space-y-4">
+      <app-empty-state
+        [isError]="true"
+        title="بارگذاری محل کار انجام نشد"
+        [description]="loadError()!"
+        actionLabel="تلاش دوباره"
+        (action)="retryLoad()"
+      />
+      <div class="text-center">
+        <a
+          routerLink="/center-manager/work-locations"
+          class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-800"
+        >
+          بازگشت به فهرست محل‌های کار
+        </a>
+      </div>
+    </div>
+  } @else {
+    <div class="grid gap-5 lg:grid-cols-3">
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        novalidate
+        class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:col-span-2"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-        بازگشت به لیست
-      </a>
-    </div>
-  </div>
-
-  <!-- Main Card -->
-  <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-    @if (errorMessage()) {
-      <div class="mb-6 flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-        <svg class="h-5 w-5 shrink-0 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <span>{{ errorMessage() }}</span>
-      </div>
-    }
-
-    @if (loadError()) {
-      <div class="mb-6 flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700" role="alert">
-        <span>{{ loadError() }}</span>
-      </div>
-    }
-
-    @if (isLoadingLocation()) {
-      <div class="mb-6 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-        <div class="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-        <span>در حال دریافت اطلاعات محل کار...</span>
-      </div>
-    }
-
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
-      <!-- Work location name -->
-      <div>
-        <label for="name" class="mb-1.5 block text-sm font-semibold text-slate-700">
-          نام محل کار <span class="text-rose-500">*</span>
-        </label>
-        <input
-          id="name"
-          type="text"
-          formControlName="name"
-          maxlength="200"
-          placeholder="مثلاً دفتر مرکزی"
-          [attr.aria-invalid]="isControlInvalid('name')"
-          [attr.aria-describedby]="isControlInvalid('name') ? 'name-error' : null"
-          class="w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-800 transition focus:outline-none focus:ring-2"
-          [ngClass]="{
-            'border-rose-300 focus:border-rose-500 focus:ring-rose-200': isControlInvalid('name'),
-            'border-slate-200 focus:border-blue-500 focus:ring-blue-100': !isControlInvalid('name')
-          }"
-        />
-        @if (isControlInvalid('name')) {
-          <p id="name-error" class="mt-1 text-xs text-rose-600" role="alert">{{ nameMessage() }}</p>
-        }
-      </div>
-      <!-- Map Section -->
-      <div>
-        <label class="mb-2 block text-sm font-semibold text-slate-700">
-          انتخاب موقعیت روی نقشه <span class="text-rose-500">*</span>
-        </label>
-        <div class="relative h-80 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 sm:h-96">
-          <div #mapContainer class="h-full w-full"></div>
-
-          @if (!isMapLoading() && !mapError()) {
-            <button
-              type="button"
-              (click)="useCurrentLocation()"
-              [disabled]="isLocatingCurrentPosition()"
-              aria-label="موقعیت فعلی من"
-              class="absolute top-3 right-3 z-[600] inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white/95 px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-md transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-70 sm:px-4"
-            >
-              @if (isLocatingCurrentPosition()) {
-                <div class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                <span>در حال یافتن موقعیت...</span>
-              } @else {
-                <svg
-                  class="h-4.5 w-4.5 shrink-0 text-blue-600"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="12" cy="12" r="8"/>
-                  <circle cx="12" cy="12" r="2.5"/>
-                  <line x1="12" y1="2" x2="12" y2="4"/>
-                  <line x1="12" y1="20" x2="12" y2="22"/>
-                  <line x1="2" y1="12" x2="4" y2="12"/>
-                  <line x1="20" y1="12" x2="22" y2="12"/>
-                </svg>
-                <span>موقعیت فعلی من</span>
-              }
-            </button>
-          }
-
-          @if (isMapLoading()) {
-            <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/80 backdrop-blur-xs">
-              <div class="h-8 w-8 animate-spin rounded-full border-3 border-blue-600 border-t-transparent"></div>
-              <p class="mt-2 text-sm font-medium text-slate-600">در حال بارگذاری نقشه...</p>
-            </div>
-          }
-
-          @if (mapError()) {
-            <div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-rose-50/95 p-6 text-center">
-              <svg class="h-10 w-10 text-rose-500 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <p class="text-sm font-semibold text-rose-800">{{ mapError() }}</p>
-            </div>
-          }
-        </div>
-        <p class="mt-2 text-xs text-slate-500">
-          دکمهٔ «موقعیت فعلی من» موقعیت شما را با نقطهٔ آبی و دیرهٔ دقت نشان می‌دهد؛ برای ثبت محل کار، روی نقشه کلیک کنید یا نشانگر را بکشید.
-        </p>
-
-        @if (locationError()) {
-          <div
-            class="mt-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800"
-            role="alert"
-          >
-            <svg
-              class="mt-0.5 h-4 w-4 shrink-0 text-amber-500"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
+        @if (submitSuccess()) {
+          <div class="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-sm text-emerald-800" role="status">
+            <svg class="mt-0.5 h-4 w-4 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+              <path d="M20 6L9 17l-5-5"></path>
             </svg>
-            <span>{{ locationError() }}</span>
+            <span>تغییرات با موفقیت ذخیره شد.</span>
           </div>
         }
-      </div>
 
-      <!-- Selected Coordinates Display -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label class="mb-1.5 block text-xs font-semibold text-slate-600">عرض جغرافیایی (Latitude)</label>
-          <input
-            type="text"
-            readonly
-            [value]="selectedLocation() ? selectedLocation()!.lat : '-'"
-            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-left text-sm font-mono text-slate-700 dir-ltr"
-          />
-        </div>
+        @if (errorMessage()) {
+          <div class="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-sm text-rose-700" role="alert">
+            <svg class="mt-0.5 h-4 w-4 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 8v5M12 16h.01"></path>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
 
         <div>
-          <label class="mb-1.5 block text-xs font-semibold text-slate-600">طول جغرافیایی (Longitude)</label>
+          <label for="work-location-name" class="mb-1.5 block text-sm font-semibold text-slate-700">
+            نام محل کار <span class="text-rose-500">*</span>
+          </label>
           <input
+            id="work-location-name"
             type="text"
-            readonly
-            [value]="selectedLocation() ? selectedLocation()!.lng : '-'"
-            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-left text-sm font-mono text-slate-700 dir-ltr"
+            formControlName="name"
+            [attr.maxlength]="nameMaxLength"
+            autocomplete="off"
+            placeholder="مثلاً دفتر مرکزی"
+            [attr.aria-invalid]="isControlInvalid('name')"
+            [attr.aria-describedby]="isControlInvalid('name') ? 'work-location-name-error' : null"
+            class="w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-800 transition focus:outline-none focus:ring-2"
+            [ngClass]="
+              isControlInvalid('name')
+                ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-200'
+                : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100'
+            "
           />
-        </div>
-      </div>
-
-      <!-- Reverse Geocoded Address Display -->
-      <div>
-        <label class="mb-1.5 block text-xs font-semibold text-slate-600">آدرس شناسایی شده</label>
-        <div class="relative">
-          <input
-            type="text"
-            readonly
-            [value]="isResolvingAddress() ? 'در حال دریافت آدرس...' : (resolvedAddress() || (selectedLocation() ? 'آدرس ثبت نشد' : 'هنوز نقطه ای انتخاب نشده است'))"
-            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700"
-          />
-          @if (isResolvingAddress()) {
-            <div class="absolute left-3 top-1/2 -translate-y-1/2">
-              <div class="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-            </div>
+          @if (isControlInvalid('name')) {
+            <p id="work-location-name-error" class="mt-1.5 text-xs text-rose-600" role="alert">
+              {{ nameMessage() }}
+            </p>
           }
         </div>
-      </div>
 
-      <!-- Radius Control -->
-      <div>
-        <label for="radiusInMeters" class="mb-1.5 block text-sm font-semibold text-slate-700">
-          شعاع محدوده مجاز (متر) <span class="text-rose-500">*</span>
-        </label>
-        <div class="relative">
-          <input
-            id="radiusInMeters"
-            type="number"
-            formControlName="radiusInMeters"
-            inputmode="numeric"
-            [min]="minRadius"
-            [max]="maxRadius"
-            step="1"
-            placeholder="200"
-            [attr.aria-invalid]="isControlInvalid('radiusInMeters')"
-            [attr.aria-describedby]="isControlInvalid('radiusInMeters') ? 'radiusInMeters-error' : null"
-            class="w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-800 transition focus:outline-none focus:ring-2"
-            [ngClass]="{
-              'border-rose-300 focus:border-rose-500 focus:ring-rose-200': isControlInvalid('radiusInMeters'),
-              'border-slate-200 focus:border-blue-500 focus:ring-blue-100': !isControlInvalid('radiusInMeters')
-            }"
-          />
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">متر</span>
-        </div>
-        @if (isControlInvalid('radiusInMeters')) {
-          <p id="radiusInMeters-error" class="mt-1 text-xs text-rose-600" role="alert">
-            {{ radiusMessage() }}
-          </p>
-        }
-      </div>
-
-      <!-- Active Status Toggle -->
-      <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-4">
         <div>
-          <p class="text-sm font-semibold text-slate-800">وضعیت فعال بودن</p>
-          <p class="text-xs text-slate-500">در صورت فعال بودن، حضور و غیاب پرسنل در این محدوده امکان‌پذیر است.</p>
+          <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <label class="text-sm font-semibold text-slate-700">
+              موقعیت روی نقشه <span class="text-rose-500">*</span>
+            </label>
+            <span class="text-xs text-slate-400">برای جابه‌جایی، نشانگر را بکشید</span>
+          </div>
+          <app-work-location-map
+            [initialLocation]="selectedLocation()"
+            [radiusMeters]="form.controls.radiusInMeters.value"
+            [disabled]="isSubmitting()"
+            (locationChange)="onLocationSelected($event)"
+          />
         </div>
-        <label class="relative inline-flex cursor-pointer items-center">
-          <input type="checkbox" formControlName="isActive" class="peer sr-only" />
-          <div class="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:top-[2px] after:right-[2px] after:h-5 after:w-5 after:rounded-full after:border after.border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
-        </label>
-      </div>
 
-      <!-- Actions -->
-      <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-100 pt-5">
-        <div class="flex items-center gap-3">
-          <button
-            type="button"
-            (click)="onGenerateQrCode()"
-            [disabled]="isGeneratingQr() || isLoadingLocation()"
-            class="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            @if (isGeneratingQr()) {
-              <div class="h-4 w-4 animate-spin rounded-full border-2 border-blue-700 border-t-transparent"></div>
-              <span>در حال دریافت QR...</span>
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="work-location-radius" class="mb-1.5 block text-sm font-semibold text-slate-700">
+              شعاع محدودهٔ مجاز (متر) <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="work-location-radius"
+              type="number"
+              inputmode="numeric"
+              formControlName="radiusInMeters"
+              [attr.min]="minRadius"
+              [attr.max]="maxRadius"
+              step="1"
+              [attr.aria-invalid]="isControlInvalid('radiusInMeters')"
+              [attr.aria-describedby]="
+                isControlInvalid('radiusInMeters')
+                  ? 'work-location-radius-error'
+                  : 'work-location-radius-help'
+              "
+              class="w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-800 transition focus:outline-none focus:ring-2"
+              [ngClass]="
+                isControlInvalid('radiusInMeters')
+                  ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-200'
+                  : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100'
+              "
+            />
+            @if (isControlInvalid('radiusInMeters')) {
+              <p id="work-location-radius-error" class="mt-1.5 text-xs text-rose-600" role="alert">
+                {{ radiusMessage() }}
+              </p>
             } @else {
-              <span>QR Code</span>
+              <p id="work-location-radius-help" class="mt-1.5 text-xs text-slate-500">
+                بین {{ minRadius | persianDigits }} تا {{ maxRadius | persianDigits }} متر؛ دایرهٔ روی نقشه با تغییر این عدد به‌روز می‌شود.
+              </p>
+            }
+          </div>
+
+          <div>
+            <span class="mb-1.5 block text-sm font-semibold text-slate-700">وضعیت محل کار</span>
+            <div class="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-3.5 py-3">
+              <div>
+                <p class="text-sm font-medium text-slate-700">
+                  {{ form.controls.isActive.value ? 'فعال' : 'غیرفعال' }}
+                </p>
+                <p class="mt-0.5 text-xs text-slate-500">
+                  فقط در محل کار فعال، ثبت حضور و غیاب انجام می‌شود.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                [attr.aria-checked]="form.controls.isActive.value"
+                aria-label="فعال یا غیرفعال کردن محل کار"
+                (click)="form.controls.isActive.setValue(!form.controls.isActive.value)"
+                class="relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-colors"
+                [class.bg-blue-600]="form.controls.isActive.value"
+                [class.bg-slate-300]="!form.controls.isActive.value"
+              >
+                <span
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                  [ngClass]="form.controls.isActive.value ? '-translate-x-7' : 'translate-x-0'"
+                ></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col-reverse gap-2 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-end">
+          <a
+            routerLink="/center-manager/work-locations"
+            class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            انصراف
+          </a>
+          <button
+            type="submit"
+            [disabled]="isSubmitting()"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            @if (isSubmitting()) {
+              <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+              در حال ذخیره…
+            } @else {
+              ذخیره تغییرات
             }
           </button>
         </div>
+      </form>
 
-        <div class="flex items-center justify-end gap-3">
-          @if (isSubmitting()) {
-            <button
-              type="button"
-              (click)="startNewRegistration()"
-              [disabled]="isSubmitting()"
-              class="hidden sm:inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              انصراف
-            </button>
-          } @else {
-            <button
-              type="button"
-              (click)="startNewRegistration()"
-              class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              انصراف
-            </button>
+      <aside id="qr-settings" class="space-y-5 lg:col-span-1">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-sm font-bold text-slate-800">تنظیمات کد QR</h2>
+                <p class="mt-0.5 text-[11px] text-slate-500">ثابت یا پویا برای حضور و غیاب</p>
+              </div>
+            </div>
+            @if (qrSettings(); as settings) {
+              <app-status-badge
+                [label]="settings.qrCodeEnabled ? 'فعال' : 'غیرفعال'"
+                [tone]="settings.qrCodeEnabled ? 'success' : 'neutral'"
+              />
+            }
+          </div>
+
+          @if (isLoadingQrSettings()) {
+            <div class="mt-5 space-y-3" aria-busy="true">
+              <div class="h-10 animate-pulse rounded-xl bg-slate-100"></div>
+              <div class="h-20 animate-pulse rounded-xl bg-slate-100"></div>
+              <div class="h-10 animate-pulse rounded-xl bg-slate-100"></div>
+              <p class="sr-only">در حال بارگذاری تنظیمات QR…</p>
+            </div>
+          } @else if (qrSettingsError()) {
+            <div class="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs leading-5 text-rose-700" role="alert">
+              <p>{{ qrSettingsError() }}</p>
+              <button
+                type="button"
+                (click)="retryQrSettings()"
+                class="mt-2 rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100"
+              >
+                تلاش دوباره
+              </button>
+            </div>
+          } @else if (qrSettings(); as settings) {
+            <div class="mt-5 space-y-5">
+              <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3.5 py-3">
+                <div>
+                  <p class="text-xs font-semibold text-slate-700">وضعیت QR</p>
+                  <p class="mt-0.5 text-[11px] leading-5 text-slate-500">
+                    {{ settings.qrCodeEnabled ? 'امکان اسکن کد فعال است.' : 'اسکن کد برای ثبت حضور ممکن نیست.' }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  [attr.aria-checked]="settings.qrCodeEnabled"
+                  aria-label="فعال یا غیرفعال کردن کد QR"
+                  [disabled]="isTogglingQrEnabled()"
+                  (click)="requestToggleQrEnabled()"
+                  class="relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                  [class.bg-blue-600]="settings.qrCodeEnabled"
+                  [class.bg-slate-300]="!settings.qrCodeEnabled"
+                >
+                  <span
+                    class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                    [ngClass]="settings.qrCodeEnabled ? '-translate-x-7' : 'translate-x-0'"
+                  ></span>
+                </button>
+              </div>
+
+              <form [formGroup]="qrForm" (ngSubmit)="saveQrSettings()" novalidate class="space-y-4">
+                <fieldset>
+                  <legend class="mb-2 text-xs font-semibold text-slate-700">نوع کد QR</legend>
+                  <div class="grid grid-cols-2 gap-2">
+                    <label class="cursor-pointer">
+                      <input type="radio" formControlName="qrCodeMode" value="Static" class="peer sr-only" />
+                      <span class="flex h-full flex-col rounded-xl border border-slate-200 px-3 py-2.5 text-center transition hover:bg-slate-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-200">
+                        <span class="text-xs font-bold">ثابت</span>
+                        <span class="mt-0.5 text-[10px] text-slate-500">بدون انقضا</span>
+                      </span>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" formControlName="qrCodeMode" value="Dynamic" class="peer sr-only" />
+                      <span class="flex h-full flex-col rounded-xl border border-slate-200 px-3 py-2.5 text-center transition hover:bg-slate-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-200">
+                        <span class="text-xs font-bold">پویا</span>
+                        <span class="mt-0.5 text-[10px] text-slate-500">چرخش دوره‌ای</span>
+                      </span>
+                    </label>
+                  </div>
+                  <p class="mt-1.5 text-[11px] leading-5 text-slate-500">{{ qrModeHelp() }}</p>
+                </fieldset>
+
+                @if (qrForm.controls.qrCodeMode.value === 'Dynamic') {
+                  <div>
+                    <label for="qr-rotation-interval" class="mb-1.5 block text-xs font-semibold text-slate-700">
+                      بازهٔ چرخش کد (دقیقه) <span class="text-rose-500">*</span>
+                    </label>
+                    <input
+                      id="qr-rotation-interval"
+                      type="number"
+                      inputmode="numeric"
+                      formControlName="qrRotationIntervalMinutes"
+                      [attr.min]="minRotationInterval"
+                      [attr.max]="maxRotationInterval"
+                      step="1"
+                      [attr.aria-invalid]="isQrControlInvalid()"
+                      [attr.aria-describedby]="
+                        isQrControlInvalid()
+                          ? 'qr-rotation-interval-error'
+                          : 'qr-rotation-interval-help'
+                      "
+                      class="w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-800 transition focus:outline-none focus:ring-2"
+                      [ngClass]="
+                        isQrControlInvalid()
+                          ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-200'
+                          : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100'
+                      "
+                    />
+                    @if (isQrControlInvalid()) {
+                      <p id="qr-rotation-interval-error" class="mt-1.5 text-xs text-rose-600" role="alert">
+                        {{ qrIntervalMessage() }}
+                      </p>
+                    } @else {
+                      <p id="qr-rotation-interval-help" class="mt-1.5 text-[11px] text-slate-500">
+                        بین {{ minRotationInterval | persianDigits }} تا
+                        {{ maxRotationInterval | persianDigits }} دقیقه (پیش‌فرض:
+                        {{ settings.defaultRotationIntervalMinutes | persianDigits }} دقیقه)
+                      </p>
+                    }
+                  </div>
+                }
+
+                @if (qrActionError()) {
+                  <div class="rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-[11px] leading-5 text-rose-700" role="alert">
+                    {{ qrActionError() }}
+                  </div>
+                }
+
+                <button
+                  type="submit"
+                  [disabled]="isSavingQrSettings()"
+                  class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  @if (isSavingQrSettings()) {
+                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    در حال ذخیره…
+                  } @else {
+                    ذخیره تنظیمات QR
+                  }
+                </button>
+              </form>
+
+              <div class="space-y-2 border-t border-slate-100 pt-4">
+                <button
+                  type="button"
+                  (click)="viewCurrentQr()"
+                  [disabled]="!settings.qrCodeEnabled || isLoadingCurrentQr() || isGeneratingQr()"
+                  class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  @if (isLoadingCurrentQr()) {
+                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                  } @else {
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <rect x="3" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="14" width="7" height="7"></rect>
+                      <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                  }
+                  نمایش کد QR فعلی
+                </button>
+
+                <button
+                  type="button"
+                  (click)="requestGenerateNewQr()"
+                  [disabled]="!settings.qrCodeEnabled || isGeneratingQr() || isLoadingCurrentQr()"
+                  class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  @if (isGeneratingQr()) {
+                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                  }
+                  صدور کد جدید
+                </button>
+
+                @if (!settings.qrCodeEnabled) {
+                  <p class="text-[11px] leading-5 text-slate-500">
+                    برای نمایش یا صدور کد، ابتدا QR را فعال کنید.
+                  </p>
+                }
+
+                <p class="text-[11px] leading-5 text-slate-400">
+                  آخرین صدور:
+                  {{ settings.lastGeneratedAtUtc ? (settings.lastGeneratedAtUtc | jalali: 'persian') : 'هنوز کدی صادر نشده است.' }}
+                </p>
+              </div>
+            </div>
           }
-        </div>
-        <button
-          type="submit"
-          [disabled]="isSubmitting() || isLoadingLocation() || !selectedLocation() || form.invalid"
-          class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          @if (isSubmitting()) {
-            <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-            <span>در حال ذخیره...</span>
-          } @else {
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            <span>ذخیره تغییرات</span>
-          }
-        </button>
-      </div>
-    </form>
-  </div>
+        </section>
+      </aside>
+    </div>
+  }
 </div>

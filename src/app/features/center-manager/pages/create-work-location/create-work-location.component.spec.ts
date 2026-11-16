@@ -2,12 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { describe, beforeEach, it, expect, vi } from 'vitest';
+import { afterEach, describe, beforeEach, it, expect, vi } from 'vitest';
 
 import { CreateWorkLocationComponent } from './create-work-location.component';
 import { WorkLocationService } from '../../services/work-location.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CurrentUserDto } from '../../../../core/auth/auth.models';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { environment } from '../../../../../environments/environment';
 
 describe('CreateWorkLocationComponent', () => {
   let component: CreateWorkLocationComponent;
@@ -15,6 +17,8 @@ describe('CreateWorkLocationComponent', () => {
 
   let mockWorkLocationService: Partial<WorkLocationService>;
   let mockAuthService: Partial<AuthService>;
+  let notificationService: { showSuccess: ReturnType<typeof vi.fn> };
+  const originalMapKey = environment.neshanMapApiKey;
 
   const mockUserDetails: CurrentUserDto = {
     id: 'user-1',
@@ -28,25 +32,40 @@ describe('CreateWorkLocationComponent', () => {
   const userDetailsSignal = signal<CurrentUserDto | null>(mockUserDetails);
 
   beforeEach(async () => {
+    // Keep the Leaflet SDK out of jsdom; the map component renders its
+    // configuration error instead of loading external scripts.
+    environment.neshanMapApiKey = '';
+
     mockWorkLocationService = {
       createWorkLocation: vi.fn().mockReturnValue(
         of({
           id: 'wl-1',
           organizationId: 'org-123',
+          name: 'دفتر مرکزی',
           latitude: 35.7219,
           longitude: 51.3347,
-          radiusInMeters: 200,
+          allowedRadiusInMeters: 200,
           isActive: true,
+          qrCodeMode: 'Static',
+          qrCodeEnabled: true,
+          qrRotationIntervalMinutes: 5,
+          createdAtUtc: '2026-10-03T12:00:00Z',
         })
       ),
       generateQrCode: vi.fn().mockReturnValue(
         of({
-          code: 'sample-qr-token',
-          expiresAtUtc: '2026-10-03T12:00:00Z',
+          workLocationId: 'wl-1',
+          qrCodeMode: 'Static',
+          token: 'sample-qr-token',
+          expiresAtUtc: null,
+          refreshAfterUtc: null,
+          generatedAtUtc: '2026-10-03T12:00:00Z',
+          qrCodeEnabled: true,
+          rotationIntervalMinutes: 5,
         })
       ),
-      reverseGeocode: vi.fn().mockReturnValue(of('تهران، خیابان ولیعصر')),
       hasReverseGeocodingKey: true,
+      reverseGeocode: vi.fn().mockReturnValue(of('تهران، خیابان ولیعصر')),
     };
 
     userDetailsSignal.set(mockUserDetails);
@@ -56,18 +75,25 @@ describe('CreateWorkLocationComponent', () => {
       getCurrentUser: vi.fn().mockReturnValue(of(mockUserDetails)),
     };
 
+    notificationService = { showSuccess: vi.fn() };
+
     await TestBed.configureTestingModule({
       imports: [CreateWorkLocationComponent],
       providers: [
         provideRouter([]),
         { provide: WorkLocationService, useValue: mockWorkLocationService },
         { provide: AuthService, useValue: mockAuthService },
+        { provide: NotificationService, useValue: notificationService },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CreateWorkLocationComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    environment.neshanMapApiKey = originalMapKey;
   });
 
   it('should create component and initialize default form values', () => {
@@ -77,9 +103,17 @@ describe('CreateWorkLocationComponent', () => {
     expect(component.selectedLocation()).toBeNull();
   });
 
-  it('should validate radius control correctly', () => {
-    const radiusCtrl = component.form.controls.radiusInMeters;
+  it('should validate name and radius controls correctly', () => {
+    const nameCtrl = component.form.controls.name;
+    expect(nameCtrl.invalid).toBe(true);
 
+    nameCtrl.setValue('   ');
+    expect(nameCtrl.invalid).toBe(true);
+
+    nameCtrl.setValue('دفتر مرکزی');
+    expect(nameCtrl.valid).toBe(true);
+
+    const radiusCtrl = component.form.controls.radiusInMeters;
     radiusCtrl.setValue(0);
     expect(radiusCtrl.invalid).toBe(true);
 
@@ -90,15 +124,14 @@ describe('CreateWorkLocationComponent', () => {
     expect(radiusCtrl.valid).toBe(true);
   });
 
-  it('should update selected location and trigger reverse geocoding on selectLocation', () => {
-    component.selectLocation(35.7219, 51.3347);
+  it('should store the selected location from the map', () => {
+    component.onLocationSelected({ lat: 35.7219, lng: 51.3347 });
 
     expect(component.selectedLocation()).toEqual({ lat: 35.7219, lng: 51.3347 });
-    expect(mockWorkLocationService.reverseGeocode).toHaveBeenCalledWith(35.7219, 51.3347);
-    expect(component.resolvedAddress()).toBe('تهران، خیابان ولیعصر');
   });
 
   it('should require selecting a location before submission', () => {
+    component.form.controls.name.setValue('دفتر مرکزی');
     component.onSubmit();
 
     expect(component.errorMessage()).toBe('لطفاً ابتدا محل مرکز را روی نقشه انتخاب کنید.');
@@ -114,7 +147,8 @@ describe('CreateWorkLocationComponent', () => {
       of({ ...mockUserDetails, organizationId: null })
     );
 
-    component.selectLocation(35.7219, 51.3347);
+    component.form.controls.name.setValue('دفتر مرکزی');
+    component.onLocationSelected({ lat: 35.7219, lng: 51.3347 });
     component.onSubmit();
 
     expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
@@ -125,7 +159,8 @@ describe('CreateWorkLocationComponent', () => {
   it('should re-check /api/auth/me when the cached profile has no center', () => {
     userDetailsSignal.set({ ...mockUserDetails, organizationId: null });
 
-    component.selectLocation(35.7219, 51.3347);
+    component.form.controls.name.setValue('دفتر مرکزی');
+    component.onLocationSelected({ lat: 35.7219, lng: 51.3347 });
     component.onSubmit();
 
     expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
@@ -138,7 +173,8 @@ describe('CreateWorkLocationComponent', () => {
     userDetailsSignal.set(null);
     vi.mocked(mockAuthService.getCurrentUser!).mockReturnValueOnce(of(null));
 
-    component.selectLocation(35.7219, 51.3347);
+    component.form.controls.name.setValue('دفتر مرکزی');
+    component.onLocationSelected({ lat: 35.7219, lng: 51.3347 });
     component.onSubmit();
 
     expect(component.errorMessage()).not.toContain('هیچ مرکزی');
@@ -146,23 +182,26 @@ describe('CreateWorkLocationComponent', () => {
     expect(mockWorkLocationService.createWorkLocation).not.toHaveBeenCalled();
   });
 
-  it('should submit valid work location successfully and show success toast', () => {
-    component.selectLocation(35.7219, 51.3347);
+  it('should submit a valid work location with the current backend fields', () => {
+    component.form.controls.name.setValue('  دفتر مرکزی  ');
+    component.form.controls.radiusInMeters.setValue(200);
+    component.onLocationSelected({ lat: 35.7219, lng: 51.3347 });
     component.onSubmit();
 
     expect(mockWorkLocationService.createWorkLocation).toHaveBeenCalledWith({
       organizationId: 'org-123',
+      name: 'دفتر مرکزی',
       latitude: 35.7219,
       longitude: 51.3347,
-      radiusInMeters: 200,
+      allowedRadiusInMeters: 200,
       isActive: true,
     });
-    expect(component.showSuccessToast()).toBe(true);
     expect(component.submitState()).toBe('success');
     expect(component.createdWorkLocationId()).toBe('wl-1');
+    expect(notificationService.showSuccess).toHaveBeenCalled();
   });
 
-  it('should call generateQrCode and open modal on onGenerateQrCode', () => {
+  it('should generate a QR code and open the modal with mode data', () => {
     component.createdWorkLocationId.set('wl-1');
     component.onGenerateQrCode();
 
@@ -170,7 +209,8 @@ describe('CreateWorkLocationComponent', () => {
     expect(component.showQrModal()).toBe(true);
     expect(component.qrData()).toEqual({
       code: 'sample-qr-token',
-      expiresAtUtc: '2026-10-03T12:00:00Z',
+      expiresAtUtc: null,
+      qrCodeMode: 'Static',
     });
   });
 
@@ -191,11 +231,12 @@ describe('CreateWorkLocationComponent', () => {
       throwError(() => ({ error: { message: 'محل کار تکراری است.' } }))
     );
 
-    component.selectLocation(35.7219, 51.3347);
+    component.form.controls.name.setValue('دفتر مرکزی');
+    component.onLocationSelected({ lat: 35.7219, lng: 51.3347 });
     component.onSubmit();
 
     expect(component.submitState()).toBe('error');
     expect(component.errorMessage()).toBe('محل کار تکراری است.');
-    expect(component.showSuccessToast()).toBe(false);
+    expect(component.isSubmitted()).toBe(false);
   });
 });

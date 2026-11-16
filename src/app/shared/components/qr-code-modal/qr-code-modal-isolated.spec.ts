@@ -46,6 +46,28 @@ describe('QrCodeModalComponent (Isolated Unit Tests)', () => {
     expect(comp.formattedExpiration()).toContain('15-02-1405');
   });
 
+  it('should render static codes without an expiration date', async () => {
+    const comp = createComponent();
+    comp.code = 'static-token';
+    comp.expiresAtUtc = null;
+    comp.qrCodeMode = 'Static';
+
+    comp.ngOnChanges({
+      code: {
+        currentValue: comp.code,
+        previousValue: '',
+        firstChange: true,
+        isFirstChange: () => true,
+      },
+    });
+
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(comp.isDynamic).toBe(false);
+    expect(comp.modeLabel).toBe('ثابت');
+    expect(comp.formattedExpiration()).toBe('');
+  });
+
   it('should emit closeModal event when onClose is called', () => {
     const comp = createComponent();
     const spy = vi.spyOn(comp.closeModal, 'emit');

@@ -94,7 +94,7 @@ export class BottomNavComponent {
   readonly drawerItems = computed<MobileDrawerNavItem[]>(() => [
     { label: 'درخواست‌های مرخصی', route: '/center-manager/leave-requests', icon: 'leave' },
     { label: 'دسته‌بندی‌های مرخصی', route: '/center-manager/leave-categories', icon: 'leave-categories' },
-    { label: 'محل کار و محدوده', route: '/center-manager/work-locations/create', icon: 'work-location' },
+    { label: 'محل کار و محدوده', route: '/center-manager/work-locations', icon: 'work-location' },
     { label: 'گزارش‌ها', route: '/center-manager/reports', icon: 'reports' },
     { label: 'اعلان‌ها', route: '/center-manager/notifications', icon: 'notifications', badge: this.unreadCount() },
     { label: 'تنظیمات مرکز', route: '/center-manager/settings', icon: 'settings' },
