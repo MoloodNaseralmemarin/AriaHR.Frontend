@@ -40,9 +40,7 @@ describe('SystemAdminDashboardComponent (Isolated Tests)', () => {
     {
       id: '1',
       name: 'کلینیک نمونه',
-      managerFirstName: 'علی',
-      managerLastName: 'رضایی',
-      isActive: true,
+      createdAtUtc: '2026-09-14T08:00:00Z',
     },
   ];
 
@@ -112,7 +110,8 @@ describe('SystemAdminDashboardComponent (Isolated Tests)', () => {
     expect(component.overviewData()).toEqual(mockOverview);
 
     expect(component.recentCenters().length).toBe(1);
-    expect(component.recentCenters()[0].managerName).toBe('علی رضایی');
+    expect(component.recentCenters()[0].name).toBe('کلینیک نمونه');
+    expect(component.recentCenters()[0].createdAtUtc).toBe('2026-09-14T08:00:00Z');
 
     expect(component.recentActivity().length).toBe(1);
     expect(component.recentActivity()[0].label).toBe('ثبت مرکز جدید');

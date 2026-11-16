@@ -139,10 +139,11 @@ export class SystemAdminNotificationsComponent implements OnInit {
   loadRecipientOptions(): void {
     this.organizationService.getRecentOrganizations().subscribe({
       next: (orgs: RecentOrganizationDto[]) => {
+        // The recent-organizations API returns only id, name and createdAtUtc.
         const mapped = (orgs || []).map((o) => ({
-          id: String(o.id ?? o.Id ?? ''),
-          name: o.name ?? o.Name ?? 'مرکز بدون نام',
-          managerName: `${o.managerFirstName || ''} ${o.managerLastName || ''}`.trim() || 'مدیر مرکز',
+          id: String(o.id),
+          name: o.name || 'مرکز بدون نام',
+          managerName: 'مدیر مرکز',
         }));
         this.targetOptions.set(mapped);
       },

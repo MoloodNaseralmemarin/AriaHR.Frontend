@@ -14,15 +14,16 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
       of({
         id: 'wl-123',
         organizationId: 'org-1',
+        name: 'دفتر مرکزی',
         latitude: 35.7,
         longitude: 51.3,
-        radiusInMeters: 200,
+        allowedRadiusInMeters: 200,
         isActive: true,
       })
     ),
     generateQrCode: vi.fn().mockReturnValue(
       of({
-        code: 'sample-token-code',
+        token: 'sample-token-code',
         expiresAtUtc: '2026-10-03T12:00:00Z',
       })
     ),
@@ -56,6 +57,7 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
 
   it('should store createdWorkLocationId when createWorkLocation succeeds', () => {
     const comp = createComponent();
+    comp.form.controls.name.setValue('دفتر مرکزی');
     comp.selectLocation(35.7, 51.3);
     comp.onSubmit();
 
@@ -80,6 +82,7 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
   it('should not post a duplicate record when the form is submitted twice', () => {
     mockWorkLocationService.createWorkLocation.mockClear();
     const comp = createComponent();
+    comp.form.controls.name.setValue('دفتر مرکزی');
     comp.selectLocation(35.7, 51.3);
 
     comp.onSubmit();
@@ -90,6 +93,7 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
 
   it('should keep the saved point and block further changes until a new registration starts', () => {
     const comp = createComponent();
+    comp.form.controls.name.setValue('دفتر مرکزی');
     comp.selectLocation(35.7, 51.3);
     comp.onSubmit();
 
@@ -100,6 +104,7 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
     expect(comp.selectedLocation()).toBeNull();
     expect(comp.isSubmitted()).toBe(false);
     expect(comp.form.controls.radiusInMeters.value).toBe(200);
+    expect(comp.form.controls.name.value).toBe('');
   });
 
   it('should explain radius validation errors in Persian', () => {
@@ -109,8 +114,8 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
     radius.setValue(0);
     expect(comp.radiusMessage()).toBe('شعاع محدوده باید حداقل ۱ متر باشد.');
 
-    radius.setValue(60000);
-    expect(comp.radiusMessage()).toBe('شعاع محدوده نمی‌تواند بیشتر از ۵۰٬۰۰۰ متر باشد.');
+    radius.setValue(5000);
+    expect(comp.radiusMessage()).toBe('شعاع محدوده نمی‌تواند بیشتر از ۱٬۰۰۰ متر باشد.');
 
     radius.setValue(250);
     expect(comp.radiusMessage()).toBeNull();
@@ -119,6 +124,7 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
   it('should reject out-of-range coordinates before calling the API', () => {
     mockWorkLocationService.createWorkLocation.mockClear();
     const comp = createComponent();
+    comp.form.controls.name.setValue('دفتر مرکزی');
     (comp as any).selectedLocation.set({ lat: 120, lng: 51.3 });
 
     comp.onSubmit();

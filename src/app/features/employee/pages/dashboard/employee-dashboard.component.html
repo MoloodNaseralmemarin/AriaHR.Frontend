@@ -156,7 +156,7 @@
               <div class="flex items-center justify-between rounded-lg bg-white p-2.5 border border-slate-200/60">
                 <span class="text-slate-400">زمان ورود:</span>
                 <span class="font-semibold text-slate-800 dir-ltr font-mono">
-                  {{ att.checkInTime ? (att.checkInTime | persianDigits) : 'ثبت نشده' }}
+                  {{ todayCheckInTime() | persianDigits }}
                 </span>
               </div>
               <div class="flex items-center justify-between rounded-lg bg-white p-2.5 border border-slate-200/60">
@@ -167,12 +167,12 @@
               </div>
             </div>
 
-            @if (att.shift) {
-              <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
-                <span>شیفت کاری: {{ att.shift.name }}</span>
-                <span dir="ltr" class="font-mono">({{ att.shift.startTime | persianDigits }} - {{ att.shift.endTime | persianDigits }})</span>
-              </div>
-            }
+            <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
+              <span>روش ثبت: {{ att.method }}</span>
+              @if (att.checkOutTime) {
+                <span>خروج: {{ todayCheckOutTime() | persianDigits }}</span>
+              }
+            </div>
           </div>
         } @else {
           <app-empty-state

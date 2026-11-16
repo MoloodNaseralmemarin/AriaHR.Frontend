@@ -31,8 +31,9 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
     managerFirstName: 'مریم',
     managerLastName: 'حسینی',
     managerMobile: '09129876543',
-    managerEmail: 'hosseini@example.com',
     isActive: true,
+    createdAtUtc: '2026-10-21T09:25:16.108Z',
+    createdByUserId: null,
   };
 
   function createComponent(): SystemAdminCreateCenterComponent {
@@ -193,7 +194,6 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       name: 'کلینیک سلامت',
       code: 'C-101',
       type: OrganizationType.Clinic,
-      organizationType: OrganizationType.Clinic,
       nationalIdentifier: null,
       phone: '02166667777',
       address: 'خیابان آزادی',
@@ -219,7 +219,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'رضا',
       managerLastName: 'مرادی',
       managerMobile: '09121112233',
-      managerEmail: '',
+      managerEmail: 'manager@example.com',
     });
 
     comp.nextStep();
@@ -229,7 +229,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       expect.objectContaining({
         address: null,
         phone: null,
-        managerEmail: null,
+        managerEmail: 'manager@example.com',
       })
     );
   });
@@ -243,6 +243,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'علی',
       managerLastName: 'رضایی',
       managerMobile: '09121234567',
+      managerEmail: 'lab@example.com',
     });
 
     comp.nextStep();
@@ -252,7 +253,6 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       expect.objectContaining({
         code: 'LAB-404',
         type: OrganizationType.Laboratory,
-        organizationType: OrganizationType.Laboratory,
       })
     );
   });
@@ -266,6 +266,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'رضا',
       managerLastName: 'کمالی',
       managerMobile: '09121234567',
+      managerEmail: 'pharmacy@example.com',
     });
 
     comp.nextStep();
@@ -275,7 +276,6 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       expect.objectContaining({
         code: 'PHARM-505',
         type: OrganizationType.Pharmacy,
-        organizationType: OrganizationType.Pharmacy,
       })
     );
   });
@@ -292,6 +292,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'مریم',
       managerLastName: 'حسینی',
       managerMobile: '09129876543',
+      managerEmail: 'manager@example.com',
     });
 
     comp.nextStep();
@@ -320,6 +321,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'مریم',
       managerLastName: 'حسینی',
       managerMobile: '09129876543',
+      managerEmail: 'manager@example.com',
     });
 
     comp.nextStep();
@@ -342,6 +344,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
       managerFirstName: 'مریم',
       managerLastName: 'حسینی',
       managerMobile: '09129876543',
+      managerEmail: 'manager@example.com',
     });
 
     comp.nextStep();

@@ -14,15 +14,15 @@ import {
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Observable, finalize, of, switchMap } from 'rxjs';
+import { finalize } from 'rxjs';
 
-import { AuthService } from '../../../../core/auth/auth.service';
-import { CurrentUserDto } from '../../../../core/auth/auth.models';
+import { parseApiError } from '../../../../core/http/api-error.util';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
+import { QrCodeModalComponent } from '../../../../shared/components/qr-code-modal/qr-code-modal.component';
 import { environment } from '../../../../../environments/environment';
-import { CreateWorkLocationDto } from '../../models/create-work-location.dto';
+import { UpdateWorkLocationDto } from '../../models/update-work-location.dto';
 import { WorkLocationResponseDto } from '../../models/work-location-response.dto';
 import { WorkLocationService } from '../../services/work-location.service';
 
@@ -43,7 +43,8 @@ const MAX_LATITUDE = 90;
 const MIN_LONGITUDE = -180;
 const MAX_LONGITUDE = 180;
 const MIN_RADIUS_METERS = 1;
-const MAX_RADIUS_METERS = 50000;
+/** Backend `WorkLocationOptions.MaxAllowedRadiusMeters` default. */
+const MAX_RADIUS_METERS = 1000;
 const DEFAULT_RADIUS_METERS = 200;
 
 const ASSET_LOAD_TIMEOUT_MS = 20000;
@@ -53,7 +54,7 @@ declare const L: any;
 @Component({
   selector: 'app-work-location-edit',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, ToastComponent],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, ToastComponent, QrCodeModalComponent],
   templateUrl: './work-location-edit.component.html',
   styleUrls: ['./work-location-edit.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,7 +62,7 @@ declare const L: any;
 export class CenterManagerWorkLocationEditComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly workLocationService = inject(WorkLocationService);
-  private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly submitState = signal<SubmitState>('idle');
@@ -79,6 +80,10 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, AfterView
   readonly selectedLocation = signal<{ lat: number; lng: number } | null>(null);
 
   readonly isGeneratingQr = signal(false);
+  readonly isLoadingLocation = signal(true);
+  readonly loadError = signal<string | null>(null);
+  readonly qrData = signal<{ code: string; expiresAtUtc: string } | null>(null);
+  readonly showQrModal = signal(false);
 
   readonly isSubmitting = computed(() => this.submitState() === 'submitting');
   readonly isSubmitted = computed(() => this.submitState() === 'success');
@@ -96,7 +101,15 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, AfterView
   private accuracyCircle: any = null;
 
   ngOnInit(): void {
-    this.loadCurrentUserIfMissing();
+    const id = this.route.snapshot.paramMap.get('id');
+    this.workLocationId.set(id);
+
+    if (!id) {
+      this.loadError.set('شناسه محل کار معتبر نیست.');
+      this.isLoadingLocation.set(false);
+    } else {
+      this.loadWorkLocation(id);
+    }
 
     this.form.controls.radiusInMeters.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -109,24 +122,52 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, AfterView
     this.initMap();
   }
 
-  private loadCurrentUserIfMissing(): Observable<CurrentUserDto | null> {
-    const existing = this.authService.userDetails();
-    if (existing) {
-      return of(existing);
-    }
-
-    return this.authService.getCurrentUser();
-  }
-
   @ViewChild('mapContainer') mapContainer!: ElementRef<HTMLDivElement>;
 
   readonly form = this.fb.group({
+    name: ['', [Validators.required, Validators.maxLength(200)]],
     radiusInMeters: [
       DEFAULT_RADIUS_METERS,
       [Validators.required, Validators.min(MIN_RADIUS_METERS), Validators.max(MAX_RADIUS_METERS)],
     ],
     isActive: [true],
   });
+
+  /** GET /api/organizations/work-locations/{id} */
+  private loadWorkLocation(id: string): void {
+    this.isLoadingLocation.set(true);
+    this.loadError.set(null);
+
+    this.workLocationService
+      .getWorkLocationById(id)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isLoadingLocation.set(false))
+      )
+      .subscribe({
+        next: (location) => {
+          this.form.patchValue({
+            name: location.name,
+            radiusInMeters: location.allowedRadiusInMeters ?? DEFAULT_RADIUS_METERS,
+            isActive: location.isActive,
+          });
+          this.selectedLocation.set({ lat: location.latitude, lng: location.longitude });
+          this.applyLoadedLocation();
+        },
+        error: (error) => this.loadError.set(parseApiError(error).message),
+      });
+  }
+
+  /** Places the map marker once both the map SDK and the saved location are ready. */
+  private applyLoadedLocation(): void {
+    const location = this.selectedLocation();
+    if (!location || !this.mapInstance) {
+      return;
+    }
+
+    this.selectLocation(location.lat, location.lng);
+    this.focusMapOn(location.lat, location.lng, CURRENT_LOCATION_ZOOM);
+  }
 
   ngOnDestroy(): void {
     if (this.mapInstance) {
@@ -188,6 +229,7 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, AfterView
         }
 
         this.isMapLoading.set(false);
+        this.applyLoadedLocation();
       })
       .catch(() => {
         this.isMapLoading.set(false);
@@ -455,9 +497,20 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, AfterView
       });
   }
 
-  isControlInvalid(name: 'radiusInMeters'): boolean {
+  isControlInvalid(name: 'name' | 'radiusInMeters'): boolean {
     const control = this.form.controls[name];
     return control.invalid && (control.touched || control.dirty);
+  }
+
+  nameMessage(): string | null {
+    const control = this.form.controls.name;
+    if (control.hasError('required')) {
+      return 'نام محل کار الزامی است.';
+    }
+    if (control.hasError('maxlength')) {
+      return 'نام محل کار نمی‌تواند بیش از ۲۰۰ کاراکتر باشد.';
+    }
+    return null;
   }
 
   /** Persian message for the current radius validation error, if any. */
@@ -470,7 +523,7 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, AfterView
       return 'شعاع محدوده باید حداقل ۱ متر باشد.';
     }
     if (control.hasError('max')) {
-      return 'شعاع محدوده نمی‌تواند بیشتر از ۵۰٬۰۰۰ متر باشد.';
+      return 'شعاع محدوده نمی‌تواند بیشتر از ۱٬۰۰۰ متر باشد.';
     }
     return null;
   }
@@ -511,29 +564,27 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, AfterView
       return;
     }
 
+    const id = this.workLocationId();
+    if (!id) {
+      this.errorMessage.set('شناسه محل کار معتبر نیست.');
+      return;
+    }
+
     const value = this.form.getRawValue();
     this.submitState.set('submitting');
 
-    this.loadCurrentUserIfMissing()
+    const request: UpdateWorkLocationDto = {
+      name: value.name.trim(),
+      latitude: loc.lat,
+      longitude: loc.lng,
+      allowedRadiusInMeters: value.radiusInMeters,
+      isActive: value.isActive,
+    };
+
+    this.workLocationService
+      .updateWorkLocation(id, request)
       .pipe(
-        switchMap((user) => {
-          const orgId = user?.organizationId;
-
-          if (!orgId) {
-            this.errorMessage.set('شما به هیچ مرکزی متصل نیستید و امکان ویرایش محل کار را ندارید.');
-            return EMPTY;
-          }
-
-          const request: CreateWorkLocationDto = {
-            organizationId: orgId,
-            latitude: loc.lat,
-            longitude: loc.lng,
-            radiusInMeters: value.radiusInMeters,
-            isActive: value.isActive,
-          };
-
-          return this.workLocationService.updateWorkLocation(this.workLocationId()!, request);
-        }),
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => {
           if (this.submitState() === 'submitting') {
             this.submitState.set('idle');
@@ -575,7 +626,7 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, AfterView
       }
       if (err.status === 400 || err.status === 422) {
         const validationMessage = this.extractValidationMessage(err.error);
-        return validationMessage ?? 'اطلاعات ارسالی نامعتبر است. لطفاً مقادیر فرم را بررسی کنید.';
+        return validationMessage ?? parseApiError(err).message;
       }
       if (err.status >= 500) {
         return 'خطا در سرور رخ داد. لطفاً چند لحظه بعد دوباره تلاش کنید.';
@@ -643,11 +694,12 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, AfterView
       }
     }
 
-    this.form.reset({ radiusInMeters: DEFAULT_RADIUS_METERS, isActive: true });
+    this.form.reset({ name: '', radiusInMeters: DEFAULT_RADIUS_METERS, isActive: true });
     this.form.markAsPristine();
     this.form.markAsUntouched();
   }
 
+  /** POST /api/organizations/work-locations/{id}/qrcode/generate */
   onGenerateQrCode(): void {
     const workLocationId = this.workLocationId();
     if (!workLocationId || this.isGeneratingQr()) return;
@@ -657,26 +709,16 @@ export class CenterManagerWorkLocationEditComponent implements OnInit, AfterView
 
     this.workLocationService
       .generateQrCode(workLocationId)
-      .pipe(finalize(() => this.isGeneratingQr.set(false)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isGeneratingQr.set(false))
+      )
       .subscribe({
         next: (res) => {
-          // qr data handling...
+          this.qrData.set({ code: res.token, expiresAtUtc: res.expiresAtUtc ?? '' });
+          this.showQrModal.set(true);
         },
-        error: (err) => {
-          let msg = 'خطا در دریافت QR کد محل کار.';
-          if (err?.status === 400) {
-            msg = err?.error?.message || 'ورودی نامعتبر / خطای کسب و Car';
-          } else if (err?.status === 401) {
-            msg = 'احراز هویت مورد نیاز است.';
-          } else if (err?.status === 403) {
-            msg = 'دسترسی به این محل کار مجاز نیست.';
-          } else if (err?.status === 404) {
-            msg = 'محل کار یافت نشد.';
-          } else if (err?.error?.message) {
-            msg = err.error.message;
-          }
-          this.errorMessage.set(msg);
-        },
+        error: (err) => this.errorMessage.set(parseApiError(err).message),
       });
   }
 }

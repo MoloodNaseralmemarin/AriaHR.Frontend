@@ -1,25 +1,25 @@
 /**
- * Response of `POST /api/organizations/work-locations`.
+ * `WorkLocationDto` — response of the `/api/organizations/work-locations` endpoints.
  *
- * The backend returns the persisted location, including the server-generated
- * `id`, UTC creation timestamp and the id of the authenticated creator. The
- * organization is always resolved server-side from the caller's token; the
- * request body's `organizationId` only names the target center.
+ * Coordinates are stored as `decimal(9,6)` and the radius as `decimal(8,1)`;
+ * `qrCodeMode` is serialized as a string (`Static` | `Dynamic`).
  */
 export interface WorkLocationResponseDto {
-  id?: string;
-  organizationId?: string;
-  latitude?: number;
-  longitude?: number;
-  radiusInMeters?: number;
-  isActive?: boolean;
-  /** UTC creation timestamp, e.g. "2026-11-14T19:41:07.889Z". */
-  createdAtUtc?: string;
-  /** Authenticated creator, or null when the record was created by a system process. */
+  id: string;
+  organizationId: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  allowedRadiusInMeters: number;
+  isActive: boolean;
+  qrCodeMode: string;
+  qrCodeEnabled: boolean;
+  qrRotationIntervalMinutes: number;
+  qrCodeLastGeneratedAtUtc?: string | null;
+  createdAtUtc: string;
   createdByUserId?: string | null;
-  /** Legacy alias kept for payloads that predate `createdAtUtc`. */
-  createdAt?: string;
-  updatedAt?: string;
+  updatedAtUtc?: string | null;
+  updatedByUserId?: string | null;
 }
 
 /** Response of Neshan Reverse Geocoding v5 (https://api.neshan.org/v5/reverse). */

@@ -1,24 +1,24 @@
 import { OrganizationType } from './organization-type.enum';
 
+/**
+ * `OrganizationDto` — response of `POST /api/organizations`.
+ *
+ * The backend persists the manager contact data on the organization and
+ * exposes `type` as an alias of `organizationType`, so both are present.
+ */
 export interface OrganizationResponseDto {
-  id: string | number;
-  organizationId?: string | number | null;
+  id: string;
   name: string;
-  code?: string | null;
-  organizationType?: OrganizationType | string | number;
-  type?: OrganizationType | string | number;
-  managerFullName?: string | null;
+  code: string;
+  nationalIdentifier?: string | null;
+  phone?: string | null;
+  address?: string | null;
   managerFirstName?: string | null;
   managerLastName?: string | null;
   managerMobile?: string | null;
-  managerEmail?: string | null;
-  centerPhone?: string | null;
-  phone?: string | null;
-  email?: string | null;
   isActive: boolean;
-  createdAtUtc?: string | null;
-  createdAt?: string | null;
+  organizationType: OrganizationType;
+  type: OrganizationType;
+  createdAtUtc: string;
   createdByUserId?: string | null;
-  nationalIdentifier?: string | null;
-  address?: string | null;
 }

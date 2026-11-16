@@ -8,6 +8,7 @@ import { SummaryCardComponent } from '../../../../shared/components/summary-card
 import { StatusBadgeComponent, BadgeTone } from '../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
+import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
 import { OrganizationService } from '../../../organizations/services/organization.service';
 import { RecentOrganizationDto } from '../../../organizations/models/recent-organization.dto';
 import { getOrganizationTypeLabel } from '../../../organizations/models/organization-type.enum';
@@ -20,9 +21,11 @@ import { CenterStatus, SystemActivity } from '../../models/system-admin.models';
 export interface UIRecentOrganization {
   id: string | number;
   name: string;
-  typeLabel: string;
-  managerName: string;
-  status: CenterStatus;
+  /** `GET /api/organizations/recent` returns only id, name and createdAtUtc. */
+  typeLabel?: string;
+  managerName?: string;
+  status?: CenterStatus;
+  createdAtUtc?: string;
 }
 
 export interface UIRecentActivity {
@@ -43,6 +46,7 @@ export interface UIRecentActivity {
     StatusBadgeComponent,
     EmptyStateComponent,
     SkeletonLoaderComponent,
+    JalaliPipe,
   ],
   templateUrl: './system-admin-dashboard.component.html',
   styleUrl: './system-admin-dashboard.component.css',
@@ -77,19 +81,11 @@ export class SystemAdminDashboardComponent implements OnInit, OnDestroy {
   readonly recentCenters = computed<UIRecentOrganization[]>(() => {
     const rawList = this.recentOrgsRaw();
     if (rawList !== null) {
-      return rawList.map((item) => {
-        const id = item.id ?? item.Id ?? '';
-        const name = item.name ?? item.Name ?? '';
-        const typeNum = item.type ?? item.Type;
-        const typeLabel = getOrganizationTypeLabel(typeNum);
-        const firstName = item.managerFirstName ?? item.ManagerFirstName ?? '';
-        const lastName = item.managerLastName ?? item.ManagerLastName ?? '';
-        const managerName = `${firstName} ${lastName}`.trim() || 'نامشخص';
-        const isActive = item.isActive ?? item.IsActive ?? true;
-        const status: CenterStatus = isActive ? 'active' : 'inactive';
-
-        return { id, name, typeLabel, managerName, status };
-      });
+      return rawList.map((item) => ({
+        id: item.id,
+        name: item.name || 'مرکز بدون نام',
+        createdAtUtc: item.createdAtUtc,
+      }));
     }
 
     // Fallback to local mock service if API failed
@@ -100,6 +96,7 @@ export class SystemAdminDashboardComponent implements OnInit, OnDestroy {
         typeLabel: 'کلینیک',
         managerName: c.managerName,
         status: c.status,
+        createdAtUtc: c.createdAt,
       }));
     }
 
