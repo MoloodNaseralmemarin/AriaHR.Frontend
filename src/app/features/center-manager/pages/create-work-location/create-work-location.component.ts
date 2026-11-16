@@ -53,7 +53,11 @@ type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
-    QrCodeModalComponent
+    QrCodeModalComponent,
+    StatusBadgeComponent,
+    PageHeaderComponent,
+    PersianDigitsPipe,
+    WorkLocationMapComponent,
   ],
   templateUrl: './create-work-location.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
