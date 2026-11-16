@@ -15,12 +15,14 @@ describe('EmployeeDetailsComponent', () => {
     id: 'emp-1',
     userId: 'user-1',
     organizationId: 'org-1',
+    firstName: 'علی',
+    lastName: 'علوی',
+    phoneNumber: '09120000000',
     personnelCode: '1001',
     nationalCode: '1234567890',
     birthDate: '1990-01-01',
     hireDate: '2022-01-01',
     isActive: true,
-    userFullName: 'علی علوی',
   };
 
   const mockEmployeeService = {

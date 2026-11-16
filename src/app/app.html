@@ -22,6 +22,9 @@
 
 <router-outlet />
 
+<!-- Global API error/success notifications for every dashboard -->
+<app-toast-container />
+
 <!-- Single logout confirmation dialog for every role, rendered outside all layouts -->
 <app-logout-modal
   [isOpen]="logoutModal.isOpen()"

@@ -4,6 +4,8 @@ import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { OrganizationService } from '../../../organizations/services/organization.service';
+import { parseApiError } from '../../../../core/http/api-error.util';
+import { applyServerFieldErrors } from '../../../../shared/utils/server-form-errors';
 import { CreateOrganizationDto } from '../../../organizations/models/create-organization.dto';
 import {
   ORGANIZATION_TYPE_OPTIONS,
@@ -57,6 +59,10 @@ export class SystemAdminCreateCenterComponent {
     const control = this.form.get(name);
     if (!control || !control.errors || !(control.touched || control.dirty)) {
       return null;
+    }
+
+    if (control.errors['serverError']) {
+      return control.errors['serverError'] as string;
     }
 
     if (control.errors['required']) {
@@ -189,17 +195,14 @@ export class SystemAdminCreateCenterComponent {
           this.router.navigate(['/system-admin/centers']);
         },
         error: (err) => {
-          let message = 'خطایی در ثبت مرکز رخ داد. لطفا مجدداً تلاش کنید.';
-          if (typeof err?.error === 'string') {
-            message = err.error;
-          } else if (err?.error?.message) {
-            message = err.error.message;
-          } else if (err?.error?.title) {
-            message = err.error.title;
-          } else if (err?.message) {
-            message = err.message;
-          }
-          this.errorMessage.set(message);
+          const info = parseApiError(err);
+          const unmatched = applyServerFieldErrors(this.form, info.fieldErrors);
+          const mappedCount = Object.keys(info.fieldErrors).length - unmatched.length;
+          this.errorMessage.set(
+            mappedCount > 0
+              ? 'لطفاً خطاهای مشخص‌شده در فرم را بررسی و اصلاح فرمایید.'
+              : info.message
+          );
         },
       });
   }

@@ -64,21 +64,15 @@
         <label for="startTime" class="block text-sm font-medium text-slate-700 mb-1.5">
           ساعت شروع <span class="text-rose-500">*</span>
         </label>
-        <input
+        <app-time-input
           id="startTime"
-          type="text"
           formControlName="startTime"
-          placeholder="08:00"
-          dir="ltr"
-          class="w-full text-center rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono text-slate-900
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-        <p class="mt-1 text-xs text-slate-400">فرمت ۲۴ ساعته (مثلاً ۰۸:۰۰)</p>
+          ariaLabel="ساعت شروع شیفت"
+        ></app-time-input>
+        <p class="mt-1 text-xs text-slate-400">ورود بدون دونقطه هم امکان‌پذیر است (مثلاً ۰۸۰۰)</p>
         @if (isControlInvalid('startTime')) {
           @if (f.startTime.errors?.['required']) {
             <p class="mt-1 text-xs text-rose-600">ساعت شروع الزامی است.</p>
-          } @else if (f.startTime.errors?.['pattern']) {
-            <p class="mt-1 text-xs text-rose-600">فرمت ساعت معتبر نیست (مثلاً ۰۸:۰۰).</p>
           }
         }
       </div>
@@ -88,21 +82,15 @@
         <label for="endTime" class="block text-sm font-medium text-slate-700 mb-1.5">
           ساعت پایان <span class="text-rose-500">*</span>
         </label>
-        <input
+        <app-time-input
           id="endTime"
-          type="text"
           formControlName="endTime"
-          placeholder="16:00"
-          dir="ltr"
-          class="w-full text-center rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono text-slate-900
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-        <p class="mt-1 text-xs text-slate-400">فرمت ۲۴ ساعته (مثلاً ۱۶:۰۰)</p>
+          ariaLabel="ساعت پایان شیفت"
+        ></app-time-input>
+        <p class="mt-1 text-xs text-slate-400">ورود بدون دونقطه هم امکان‌پذیر است (مثلاً ۱۶۰۰)</p>
         @if (isControlInvalid('endTime')) {
           @if (f.endTime.errors?.['required']) {
             <p class="mt-1 text-xs text-rose-600">ساعت پایان الزامی است.</p>
-          } @else if (f.endTime.errors?.['pattern']) {
-            <p class="mt-1 text-xs text-rose-600">فرمت ساعت معتبر نیست (مثلاً ۱۶:۰۰).</p>
           }
         }
       </div>

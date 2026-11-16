@@ -326,7 +326,7 @@ describe('SystemAdminCreateCenterComponent (Isolated Unit Tests)', () => {
     comp.onSubmit();
 
     expect(comp.saving()).toBe(false);
-    expect(comp.errorMessage()).toBe('Server error occurred');
+    expect(comp.errorMessage()).toBe('عملیات انجام نشد. لطفاً دوباره تلاش کنید.');
   });
 
   it('extracts backend error message from err.error string or title', () => {

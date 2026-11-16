@@ -9,6 +9,8 @@ import { UpdateShiftDto } from '../../models/update-shift.dto';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { TimeInputComponent } from '../../../../shared/components/time-input/time-input.component';
+import { resolveApiErrorMessage } from '../../../../core/http/api-error.util';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -49,6 +51,7 @@ export function time24hValidator(control: AbstractControl): ValidationErrors | n
     ToastComponent,
     PageHeaderComponent,
     EmptyStateComponent,
+    TimeInputComponent,
   ],
   templateUrl: './edit-shift.component.html',
   styleUrls: ['./edit-shift.component.css'],
@@ -107,7 +110,7 @@ export class EditShiftComponent implements OnInit {
       error: (err) => {
         this.isLoading.set(false);
         this.loadError.set(
-          err?.error?.message || 'دریافت اطلاعات شیفت با خطا مواجه شد.'
+          resolveApiErrorMessage(err, 'دریافت اطلاعات شیفت با خطا مواجه شد.')
         );
       },
     });
@@ -184,7 +187,7 @@ export class EditShiftComponent implements OnInit {
         error: (err) => {
           this.submitState.set('error');
           this.errorMessage.set(
-            err?.error?.message || 'ویرایش شیفت با خطا مواجه شد. لطفاً دوباره تلاش کنید.'
+            resolveApiErrorMessage(err, 'ویرایش شیفت با خطا مواجه شد. لطفاً دوباره تلاش کنید.')
           );
         },
       });

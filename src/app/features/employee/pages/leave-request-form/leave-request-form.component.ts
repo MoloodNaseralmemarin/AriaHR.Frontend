@@ -438,21 +438,18 @@ export class LeaveRequestFormComponent implements OnInit {
     if (err?.status === 0) {
       generalMessage = 'عدم برقراری ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.';
       this.formError.set(generalMessage);
-      this.triggerToast(generalMessage, 'error');
       return;
     }
 
     if (err?.status === 401) {
       generalMessage = 'شما وارد سیستم نشده‌اید. لطفاً مجدداً وارد شوید.';
       this.formError.set(generalMessage);
-      this.triggerToast(generalMessage, 'error');
       return;
     }
 
     if (err?.status === 403) {
       generalMessage = 'شما دسترسی لازم برای ثبت این درخواست را ندارید.';
       this.formError.set(generalMessage);
-      this.triggerToast(generalMessage, 'error');
       return;
     }
 
@@ -460,14 +457,12 @@ export class LeaveRequestFormComponent implements OnInit {
       generalMessage = 'برای تاریخ انتخاب‌شده، درخواست مرخصی دیگری ثبت شده است.';
       this.conflictError.set(generalMessage);
       this.formError.set(generalMessage);
-      this.triggerToast(generalMessage, 'error');
       return;
     }
 
     if (err?.status === 500) {
       generalMessage = 'خطای داخلی سرور رخ داده است. لطفاً بعداً تلاش کنید.';
       this.formError.set(generalMessage);
-      this.triggerToast(generalMessage, 'error');
       return;
     }
 
@@ -503,11 +498,9 @@ export class LeaveRequestFormComponent implements OnInit {
         generalMessage = this.translateServerErrorToPersian('', err.error.title);
       }
       this.formError.set(generalMessage);
-      this.triggerToast(generalMessage, 'error');
     } else {
       const fieldNotice = 'لطفاً خطاهای مشخص‌شده در فرم را بررسی و اصلاح فرمایید.';
       this.formError.set(fieldNotice);
-      this.triggerToast(fieldNotice, 'error');
     }
   }
 
