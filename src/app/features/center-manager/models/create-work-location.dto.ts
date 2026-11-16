@@ -1,5 +1,5 @@
 /**
- * `CreateWorkLocationRequest` — body of `POST /api/organizations/work-locations`.
+ * `CreateWorkLocationRequest` — body of `POST /api/WorkLocations/work-locations`.
  *
  * The organization is resolved from the caller's JWT for a CenterManager; a
  * SystemAdmin must supply `organizationId`. `name` and `allowedRadiusInMeters`

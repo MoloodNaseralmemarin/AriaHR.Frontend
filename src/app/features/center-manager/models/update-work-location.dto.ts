@@ -1,5 +1,5 @@
 /**
- * `UpdateWorkLocationRequest` — body of `PUT /api/organizations/work-locations/{id}`.
+ * `UpdateWorkLocationRequest` — body of `PUT /api/WorkLocations/work-locations/{id}`.
  *
  * The organization cannot be changed after creation.
  */

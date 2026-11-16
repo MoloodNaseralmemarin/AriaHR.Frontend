@@ -2,7 +2,7 @@
 export type QrCodeMode = 'Static' | 'Dynamic';
 
 /**
- * `QrCodeSettingsDto` — response of `GET|PUT /api/organizations/work-locations/{id}/qrcode/settings`.
+ * `QrCodeSettingsDto` — response of `GET|PUT /api/WorkLocations/work-locations/{id}/qrcode/settings`.
  */
 export interface QrCodeSettingsDto {
   workLocationId: string;

@@ -28,7 +28,7 @@ describe('authInterceptor', () => {
 
   it('attaches the bearer token to same-origin backend requests', () => {
     const { injector } = createContext();
-    const request = new HttpRequest('POST', '/api/organizations/work-locations', {});
+    const request = new HttpRequest('POST', '/api/WorkLocations/work-locations', {});
 
     let forwarded: HttpRequest<unknown> | null = null;
     runInInjectionContext(injector, () => {
@@ -61,7 +61,7 @@ describe('authInterceptor', () => {
 
   it('clears the session on 401 responses', () => {
     const { injector, authService, router } = createContext();
-    const request = new HttpRequest('GET', '/api/organizations/work-locations');
+    const request = new HttpRequest('GET', '/api/WorkLocations/work-locations');
 
     runInInjectionContext(injector, () => {
       authInterceptor(request, () => throwError(() => new HttpErrorResponse({ status: 401 }))).subscribe({
@@ -74,7 +74,7 @@ describe('authInterceptor', () => {
   });
 
   it('classifies backend versus third-party URLs', () => {
-    expect(isBackendRequest('/api/organizations/work-locations')).toBe(true);
+    expect(isBackendRequest('/api/WorkLocations/work-locations')).toBe(true);
     expect(isBackendRequest('https://api.neshan.org/v5/reverse?lat=1&lng=1')).toBe(false);
     expect(isBackendRequest('https://static.neshan.org/sdk/leaflet/index.js')).toBe(false);
   });

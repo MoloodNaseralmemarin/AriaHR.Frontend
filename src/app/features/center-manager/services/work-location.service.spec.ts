@@ -118,7 +118,7 @@ describe('WorkLocationService', () => {
       .subscribe();
 
     const [url, body] = http.post.mock.calls[0];
-    expect(url).toBe(`${environment.apiUrl}/api/organizations/work-locations`);
+    expect(url).toBe(`${environment.apiUrl}/api/WorkLocations/work-locations`);
     expect(body.allowedRadiusInMeters).toBe(200);
     expect(body.name).toBe('دفتر مرکزی');
   });
@@ -139,7 +139,7 @@ describe('WorkLocationService', () => {
     service.generateQrCode('wl-999').subscribe((res) => (response = res));
 
     const [url, body] = http.post.mock.calls[0];
-    expect(url).toBe(`${environment.apiUrl}/api/organizations/work-locations/wl-999/qrcode/generate`);
+    expect(url).toBe(`${environment.apiUrl}/api/WorkLocations/work-locations/wl-999/qrcode/generate`);
     expect(body).toBeNull();
     expect(response).toEqual(qrResponse);
   });
