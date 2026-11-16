@@ -1,6 +1,6 @@
 import '@angular/compiler';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createEnvironmentInjector, runInInjectionContext } from '@angular/core';
+import { EnvironmentInjector, createEnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -88,7 +88,7 @@ describe('LeaveRequestFormComponent', () => {
       { provide: LeaveRequestService, useValue: mockLeaveRequestService },
       { provide: LeaveCategoryService, useValue: mockLeaveCategoryService },
       { provide: PersianDateService, useValue: mockPersianDateService },
-    ]);
+    ], null as unknown as EnvironmentInjector);
 
     runInInjectionContext(injector, () => {
       component = new LeaveRequestFormComponent();

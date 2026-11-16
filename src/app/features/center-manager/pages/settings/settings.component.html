@@ -109,24 +109,20 @@
 
         <label class="block">
           <span class="mb-1.5 block text-xs font-medium text-slate-500">ساعت شروع کاری</span>
-          <input
-            type="time"
-            dir="ltr"
+          <app-time-input
             [ngModel]="workStart()"
             (ngModelChange)="workStart.set($event)"
-            class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-end text-sm text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-          />
+            ariaLabel="ساعت شروع کاری"
+          ></app-time-input>
         </label>
 
         <label class="block">
           <span class="mb-1.5 block text-xs font-medium text-slate-500">ساعت پایان کاری</span>
-          <input
-            type="time"
-            dir="ltr"
+          <app-time-input
             [ngModel]="workEnd()"
             (ngModelChange)="workEnd.set($event)"
-            class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-end text-sm text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-          />
+            ariaLabel="ساعت پایان کاری"
+          ></app-time-input>
         </label>
       </div>
     </section>

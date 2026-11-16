@@ -9,6 +9,8 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { CreateShiftDto } from '../../models/create-shift.dto';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
+import { TimeInputComponent } from '../../../../shared/components/time-input/time-input.component';
+import { resolveApiErrorMessage } from '../../../../core/http/api-error.util';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -42,7 +44,7 @@ export function time24hValidator(control: AbstractControl): ValidationErrors | n
 @Component({
   selector: 'app-create-shift',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, ToastComponent],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, ToastComponent, TimeInputComponent],
   templateUrl: './create-shift.component.html',
   styleUrls: ['./create-shift.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -184,7 +186,7 @@ export class CreateShiftComponent implements OnInit {
         error: (err) => {
           this.submitState.set('error');
           this.errorMessage.set(
-            err?.error?.message || 'ثبت شیفت با خطا مواجه شد. لطفاً دوباره تلاش کنید.'
+            resolveApiErrorMessage(err, 'ثبت شیفت با خطا مواجه شد. لطفاً دوباره تلاش کنید.')
           );
         },
       });

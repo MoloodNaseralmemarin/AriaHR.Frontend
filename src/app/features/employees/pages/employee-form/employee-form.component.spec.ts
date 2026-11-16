@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { describe, beforeEach, it, expect, vi } from 'vitest';
@@ -17,6 +17,9 @@ describe('EmployeeFormComponent', () => {
     id: 'emp-1',
     userId: 'user-1',
     organizationId: 'org-1',
+    firstName: 'علی',
+    lastName: 'علوی',
+    phoneNumber: '09120000000',
     personnelCode: '1001',
     nationalCode: '1234567890',
     birthDate: '1990-01-01',

@@ -80,18 +80,13 @@
           <label for="startTime" class="mb-2 block text-xs font-bold text-slate-700">
             ساعت شروع <span class="text-rose-500">*</span>
           </label>
-          <input
+          <app-time-input
             id="startTime"
-            type="text"
-            dir="ltr"
             formControlName="startTime"
-            placeholder="08:00"
-            class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left font-mono text-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-            [ngClass]="{ 'border-rose-300 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-100': isControlInvalid('startTime') }"
-          />
+            ariaLabel="ساعت شروع شیفت"
+          ></app-time-input>
           <div *ngIf="isControlInvalid('startTime')" class="mt-1.5 text-xs text-rose-600">
             <span *ngIf="f.startTime.errors?.['required']">ورود ساعت شروع الزامی است.</span>
-            <span *ngIf="f.startTime.errors?.['pattern']">فرمت ساعت باید به صورت HH:mm معتبر باشد (مثلاً 08:00).</span>
           </div>
         </div>
 
@@ -100,18 +95,13 @@
           <label for="endTime" class="mb-2 block text-xs font-bold text-slate-700">
             ساعت پایان <span class="text-rose-500">*</span>
           </label>
-          <input
+          <app-time-input
             id="endTime"
-            type="text"
-            dir="ltr"
             formControlName="endTime"
-            placeholder="16:00"
-            class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left font-mono text-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-            [ngClass]="{ 'border-rose-300 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-100': isControlInvalid('endTime') }"
-          />
+            ariaLabel="ساعت پایان شیفت"
+          ></app-time-input>
           <div *ngIf="isControlInvalid('endTime')" class="mt-1.5 text-xs text-rose-600">
             <span *ngIf="f.endTime.errors?.['required']">ورود ساعت پایان الزامی است.</span>
-            <span *ngIf="f.endTime.errors?.['pattern']">فرمت ساعت باید به صورت HH:mm معتبر باشد (مثلاً 16:00).</span>
           </div>
         </div>
       </div>

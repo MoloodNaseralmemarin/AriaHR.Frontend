@@ -4,7 +4,7 @@ const ARABIC_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩
 /**
  * Normalizes Persian and Arabic-Indic digits to ASCII digits.
  */
-function toAsciiDigits(raw?: string | null): string {
+export function toAsciiDigits(raw?: string | null): string {
   if (!raw) return '';
   let result = '';
   for (const char of String(raw)) {

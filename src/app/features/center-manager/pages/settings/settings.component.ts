@@ -6,6 +6,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { AccountInfoCardComponent } from '../../../../shared/components/account-info-card/account-info-card.component';
 import { LogoutButtonComponent } from '../../../../shared/components/logout-button/logout-button.component';
+import { TimeInputComponent } from '../../../../shared/components/time-input/time-input.component';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../../organizations/models/organization-type.enum';
 
 /**
@@ -24,6 +25,7 @@ import { ORGANIZATION_TYPE_OPTIONS } from '../../../organizations/models/organiz
     ToastComponent,
     AccountInfoCardComponent,
     LogoutButtonComponent,
+    TimeInputComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.css'],

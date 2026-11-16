@@ -7,11 +7,12 @@ import { LogoutModalService } from './core/services/logout-modal.service';
 import { PwaStartupService } from './core/services/pwa-startup.service';
 import { SplashScreenComponent } from './shared/components/splash-screen/splash-screen.component';
 import { LogoutModalComponent } from './shared/components/logout-modal/logout-modal.component';
+import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, SplashScreenComponent, LogoutModalComponent],
+  imports: [CommonModule, RouterOutlet, SplashScreenComponent, LogoutModalComponent, ToastContainerComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
