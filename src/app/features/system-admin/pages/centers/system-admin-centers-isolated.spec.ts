@@ -5,14 +5,14 @@ import { of, throwError } from 'rxjs';
 
 import { SystemAdminCentersComponent } from './system-admin-centers.component';
 import { OrganizationService } from '../../../organizations/services/organization.service';
-import { OrganizationResponseDto } from '../../../organizations/models/organization-response.dto';
+import { OrganizationListItemDto } from '../../../organizations/models/organization-list-item.dto';
 import { OrganizationType } from '../../../organizations/models/organization-type.enum';
 
 describe('SystemAdminCentersComponent (Isolated Tests)', () => {
   let component: SystemAdminCentersComponent;
   let mockOrgService: { getOrganizations: any };
 
-  const mockOrgs: OrganizationResponseDto[] = [
+  const mockOrgs: OrganizationListItemDto[] = [
     {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'کلینیک پارس',
@@ -28,15 +28,12 @@ describe('SystemAdminCentersComponent (Isolated Tests)', () => {
       id: '123e4567-e89b-12d3-a456-426614174001',
       name: 'مرکز تصویربرداری شیراز',
       code: 'ORG-002',
-      type: OrganizationType.ImagingCenter,
-      nationalIdentifier: '0987654321',
-      phone: '07133333333',
-      address: 'شیراز',
-      managerFirstName: 'مریم',
-      managerLastName: 'احمدی',
+      organizationType: OrganizationType.ImagingCenter,
+      managerFullName: 'مریم احمدی',
       managerMobile: '09173334455',
+      centerPhone: '07133333333',
       isActive: false,
-      createdAt: '2026-05-10T10:00:00Z',
+      createdAtUtc: '2026-05-10T10:00:00Z',
     },
   ];
 
@@ -108,7 +105,7 @@ describe('SystemAdminCentersComponent (Isolated Tests)', () => {
     component.loadOrganizations();
 
     expect(component.loading()).toBe(false);
-    expect(component.error()).toBe('Server Error');
+    expect(component.error()).toBe('عملیات انجام نشد. لطفاً دوباره تلاش کنید.');
     expect(component.organizations().length).toBe(0);
 
     // Retry
@@ -130,10 +127,13 @@ describe('SystemAdminCentersComponent (Isolated Tests)', () => {
     expect(component.getCenterPhone(mockOrgs[0])).toBe('02188888888');
     expect(component.getCenterPhone(mockOrgs[1])).toBe('07133333333');
 
-    const emptyOrg: OrganizationResponseDto = {
+    const emptyOrg: OrganizationListItemDto = {
       id: '99',
       name: 'مرکز بدون مشخصات',
+      code: 'C-99',
+      organizationType: OrganizationType.Clinic,
       isActive: true,
+      createdAtUtc: '2026-01-01T00:00:00Z',
     };
     expect(component.getManagerFullName(emptyOrg)).toBe('—');
     expect(component.getCenterPhone(emptyOrg)).toBe('—');

@@ -2,14 +2,17 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import { OrganizationService } from '../../../organizations/services/organization.service';
-import { OrganizationResponseDto } from '../../../organizations/models/organization-response.dto';
+import { OrganizationListItemDto } from '../../../organizations/models/organization-list-item.dto';
 import { getOrganizationTypeLabel } from '../../../organizations/models/organization-type.enum';
+import { parseApiError } from '../../../../core/http/api-error.util';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
 
 @Component({
   selector: 'app-system-admin-centers',
@@ -22,6 +25,7 @@ import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe'
     EmptyStateComponent,
     SkeletonLoaderComponent,
     PersianDigitsPipe,
+    JalaliPipe,
   ],
   templateUrl: './system-admin-centers.component.html',
   styleUrl: './system-admin-centers.component.css',
@@ -35,7 +39,7 @@ export class SystemAdminCentersComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
-  readonly organizations = signal<OrganizationResponseDto[]>([]);
+  readonly organizations = signal<OrganizationListItemDto[]>([]);
 
   readonly filteredOrganizations = computed(() => {
     const text = this.query().trim().toLowerCase();
@@ -43,8 +47,9 @@ export class SystemAdminCentersComponent implements OnInit {
 
     return this.organizations().filter((org) => {
       const managerName = this.getManagerFullName(org);
-      const phone = this.getCenterPhone(org);
-      const searchHaystack = `${org.name ?? ''} ${org.code ?? ''} ${managerName} ${phone} ${org.managerMobile ?? ''}`.toLowerCase();
+      const phone = org.centerPhone ?? '';
+      const searchHaystack =
+        `${org.name ?? ''} ${org.code ?? ''} ${managerName} ${phone} ${org.managerMobile ?? ''}`.toLowerCase();
 
       const matchesText = !text || searchHaystack.includes(text);
       const matchesFilter =
@@ -64,32 +69,27 @@ export class SystemAdminCentersComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.organizationService.getOrganizations().subscribe({
-      next: (data) => {
-        this.organizations.set(data ?? []);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        const errorMsg =
-          err?.error?.message ||
-          err?.message ||
-          'خطایی در دریافت اطلاعات مراکز رخ داد. لطفا مجدداً تلاش کنید.';
-        this.error.set(errorMsg);
-        this.loading.set(false);
-      },
-    });
+    this.organizationService
+      .getOrganizations()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (data) => this.organizations.set(data ?? []),
+        error: (error) => {
+          this.organizations.set([]);
+          this.error.set(parseApiError(error).message);
+        },
+      });
   }
 
-  getTypeLabel(org: OrganizationResponseDto): string {
-    return getOrganizationTypeLabel(org.organizationType ?? org.type);
+  getTypeLabel(org: OrganizationListItemDto): string {
+    return getOrganizationTypeLabel(org.organizationType);
   }
 
-  getManagerFullName(org: OrganizationResponseDto): string {
-    const fullName = org.managerFullName?.trim() || `${org.managerFirstName ?? ''} ${org.managerLastName ?? ''}`.trim();
-    return fullName || '—';
+  getManagerFullName(org: OrganizationListItemDto): string {
+    return org.managerFullName?.trim() || '—';
   }
 
-  getCenterPhone(org: OrganizationResponseDto): string {
-    return org.centerPhone || org.phone || '—';
+  getCenterPhone(org: OrganizationListItemDto): string {
+    return org.centerPhone || '—';
   }
 }

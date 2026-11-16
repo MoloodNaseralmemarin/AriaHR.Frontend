@@ -1,13 +1,13 @@
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6" dir="rtl">
   <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:p-6">
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
       <div>
         <h1 class="text-3xl font-bold text-slate-800">لیست محل‌های کار</h1>
         <p class="text-sm text-slate-500">محل‌های کار تعریف شده برای مرکز مدیریت</p>
       </div>
       <button
         routerLink="/center-manager/work-locations/create"
-        class="inline-flex items-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-5 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+        class="inline-flex items-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-5 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"/>
@@ -18,13 +18,22 @@
 
     <!-- Loading State -->
     @if (isLoading()) {
-      <div class="flex justify-center py-12">
-        <div class="animate-pulse h-8 w-8 rounded-md border-4 border-blue-600 border-t-transparent"></div>
-      </div>
+      <app-skeleton-loader variant="row" [count]="4"></app-skeleton-loader>
+    }
+
+    <!-- Error State -->
+    @if (!isLoading() && errorMessage()) {
+      <app-empty-state
+        title="دریافت محل‌های کار با مشکل مواجه شد."
+        [description]="errorMessage() ?? ''"
+        actionLabel="تلاش مجدد"
+        [isError]="true"
+        (action)="loadWorkLocations()"
+      ></app-empty-state>
     }
 
     <!-- Empty State -->
-    @if (!isLoading() && workLocations().length === 0) {
+    @if (!isLoading() && !errorMessage() && workLocations().length === 0) {
       <app-empty-state
         title="محل کار تعریف شده وجود ندارد"
         description="محل کار جدیدی ثبت نشده است. با استفاده از دکمه بالا محل کار جدیدی ایجاد کنید."
@@ -35,52 +44,48 @@
     }
 
     <!-- Table -->
-    @if (!isLoading() && workLocations().length > 0) {
+    @if (!isLoading() && !errorMessage() && workLocations().length > 0) {
       <div class="overflow-x-auto">
         <table class="min-w-full">
           <thead>
             <tr class="border-b border-slate-200 bg-slate-50">
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">ردیف</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">اسم سازمان</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">عرض جغرافیایی</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">طول جغرافیایی</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">شعاع (متر)</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">وضعیت</th>
-              <th class="p-4 text-left text-xs font-medium text-slate-600 widnow">عملیات</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">نام محل کار</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">عرض جغرافیایی</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">طول جغرافیایی</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">شعاع مجاز (متر)</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">QR</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">وضعیت</th>
+              <th class="p-4 text-right text-xs font-medium text-slate-600">عملیات</th>
             </tr>
           </thead>
           <tbody>
             @for (item of workLocations(); track item.id) {
               <tr class="border-b border-slate-100 hover:bg-slate-50">
-                <td class="p-4 font-medium text-slate-700">{{ item.id.slice(0, 8) }}...</td>
-                <td class="p-4 font-medium text-slate-700">{{ item.organizationId }}</td>
-                <td class="p-4 text-right text-xs font-mono text-slate-600 dir-ltr">{{ item.latitude }}</td>
-                <td class="p-4 text-right text-xs font-mono text-slate-600 dir-ltr">{{ item.longitude }}</td>
-                <td class="p-4 text-right text-sm font-medium text-slate-700">{{ item.radiusInMeters }}</td>
-                <td class="p-4">
-                  @if (item.isActive) {
-                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">
-                      فعال
-                    </span>
-                  } @else {
-                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-rose-100 text-rose-800 text-xs font-medium">
-                      غیرفعال
-                    </span>
-                  }
+                <td class="p-4 font-medium text-slate-700">{{ item.name }}</td>
+                <td class="p-4 text-right text-xs font-mono text-slate-600" dir="ltr">{{ item.latitude }}</td>
+                <td class="p-4 text-right text-xs font-mono text-slate-600" dir="ltr">{{ item.longitude }}</td>
+                <td class="p-4 text-right text-sm font-medium text-slate-700">
+                  {{ item.allowedRadiusInMeters | persianDigits }}
                 </td>
                 <td class="p-4">
-                  <button
+                  <app-status-badge
+                    [label]="item.qrCodeEnabled ? item.qrCodeMode : 'غیرفعال'"
+                    [tone]="item.qrCodeEnabled ? 'info' : 'neutral'"
+                  ></app-status-badge>
+                </td>
+                <td class="p-4">
+                  <app-status-badge
+                    [label]="item.isActive ? 'فعال' : 'غیرفعال'"
+                    [tone]="item.isActive ? 'success' : 'danger'"
+                  ></app-status-badge>
+                </td>
+                <td class="p-4">
+                  <a
                     routerLink="/center-manager/work-locations/{{ item.id }}/edit"
-                    class="underline underline-offset-2 text-blue-600 hover:text-blue-800 text-sm font-medium mr-2"
+                    class="text-sm font-medium text-blue-600 underline underline-offset-2 hover:text-blue-800"
                   >
                     ویرایش
-                  </button>
-                  <button
-                    (click)="onDelete(item.id)"
-                    class="underline underline-offset-2 text-rose-600 hover:text-rose-800 text-sm font-medium"
-                  >
-                    حذف
-                  </button>
+                  </a>
                 </td>
               </tr>
             }

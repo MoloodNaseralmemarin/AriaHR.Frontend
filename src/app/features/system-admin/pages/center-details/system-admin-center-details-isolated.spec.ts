@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 
 import { SystemAdminCenterDetailsComponent } from './system-admin-center-details.component';
 import { OrganizationService } from '../../../organizations/services/organization.service';
-import { CenterResponseDto } from '../../../organizations/models/center-response.dto';
+import { BranchListItemDto } from '../../../organizations/models/branch-list-item.dto';
 
 describe('SystemAdminCenterDetailsComponent (Isolated Tests)', () => {
   let component: SystemAdminCenterDetailsComponent;
@@ -19,7 +19,7 @@ describe('SystemAdminCenterDetailsComponent (Isolated Tests)', () => {
     paramMap: any;
   };
 
-  const mockCenters: CenterResponseDto[] = [
+  const mockCenters: BranchListItemDto[] = [
     {
       id: 'center-101',
       organizationId: 'org-202',
@@ -95,7 +95,7 @@ describe('SystemAdminCenterDetailsComponent (Isolated Tests)', () => {
     component.loadCenterDetails();
 
     expect(component.loading()).toBe(false);
-    expect(component.error()).toBe('ارتباط با سرور برقرار نشد');
+    expect(component.error()).toBe('عملیات انجام نشد. لطفاً دوباره تلاش کنید.');
 
     // Retry
     mockOrgService.getOrganizationCenters.mockReturnValue(of(mockCenters));

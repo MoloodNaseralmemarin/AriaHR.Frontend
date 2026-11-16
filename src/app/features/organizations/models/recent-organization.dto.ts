@@ -1,22 +1,8 @@
-import { OrganizationType } from './organization-type.enum';
-
+/**
+ * `RecentOrganizationDto` — item of `GET /api/organizations/recent` (SystemAdmin only).
+ */
 export interface RecentOrganizationDto {
-  id: string | number;
+  id: string;
   name: string;
-  code?: string;
-  type?: OrganizationType | string | number;
-  isActive?: boolean;
-  managerFirstName?: string | null;
-  managerLastName?: string | null;
-  createdAt?: string;
-
-  // Casing variations from backend JSON deserialization
-  Id?: string | number;
-  Name?: string;
-  Code?: string;
-  Type?: OrganizationType | string | number;
-  IsActive?: boolean;
-  ManagerFirstName?: string | null;
-  ManagerLastName?: string | null;
-  CreatedAt?: string;
+  createdAtUtc: string;
 }

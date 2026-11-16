@@ -1,18 +1,25 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
-  RegisterAttendanceDto,
-  RegisterAttendanceResponseDto,
-  TodayAttendanceDto,
+  AttendanceDateRangeQuery,
+  AttendanceRecordDto,
+  AttendanceScanResponseDto,
+  CheckInRequestDto,
+  CheckOutRequestDto,
+  OrganizationAttendanceQuery,
+  ScanAttendanceRequestDto,
+  UpdateAttendanceStatusRequestDto,
 } from '../models/employee-attendance.models';
 
 /**
- * Feature API service for Employee Attendance operations.
+ * Feature API service for the Attendance module.
  *
- * Calls GET /api/attendance/today and POST /api/attendance/register per ARIAHR standards.
+ * Mirrors `AttendanceController` (`/api/attendance`):
+ * POST /scan, POST /check-in, POST /check-out, GET /current, GET /my,
+ * GET / (organization attendance), PATCH /{id}/status.
  */
 @Injectable({
   providedIn: 'root',
@@ -22,18 +29,87 @@ export class AttendanceService {
   private readonly apiUrl = `${environment.apiUrl}/api/attendance`;
 
   /**
-   * Retrieves today's attendance status and shift details for current employee.
-   * GET /api/attendance/today
+   * Registers check-in/check-out from a work-location QR token plus a GPS reading.
+   * POST /api/attendance/scan
    */
-  getTodayAttendance(): Observable<TodayAttendanceDto> {
-    return this.http.get<TodayAttendanceDto>(`${this.apiUrl}/today`);
+  scanAttendance(request: ScanAttendanceRequestDto): Observable<AttendanceScanResponseDto> {
+    return this.http.post<AttendanceScanResponseDto>(`${this.apiUrl}/scan`, request);
   }
 
   /**
-   * Registers attendance (check-in or check-out) using scanned QR code and employee GPS coordinates.
-   * POST /api/attendance/register
+   * Legacy GPS/QR check-in; returns the created record.
+   * POST /api/attendance/check-in
    */
-  registerAttendance(payload: RegisterAttendanceDto): Observable<RegisterAttendanceResponseDto> {
-    return this.http.post<RegisterAttendanceResponseDto>(`${this.apiUrl}/register`, payload);
+  checkIn(request: CheckInRequestDto): Observable<AttendanceRecordDto> {
+    return this.http.post<AttendanceRecordDto>(`${this.apiUrl}/check-in`, request);
   }
+
+  /**
+   * Closes the active attendance record.
+   * POST /api/attendance/check-out
+   */
+  checkOut(request: CheckOutRequestDto = {}): Observable<AttendanceRecordDto> {
+    return this.http.post<AttendanceRecordDto>(`${this.apiUrl}/check-out`, request);
+  }
+
+  /**
+   * Current open attendance record of the authenticated employee.
+   * GET /api/attendance/current — the API answers 204 No Content when there is none.
+   */
+  getCurrentAttendance(): Observable<AttendanceRecordDto | null> {
+    return this.http.get<AttendanceRecordDto | null>(`${this.apiUrl}/current`);
+  }
+
+  /**
+   * Attendance history of the authenticated employee.
+   * GET /api/attendance/my?startDate=&endDate=
+   */
+  getMyAttendanceHistory(query: AttendanceDateRangeQuery = {}): Observable<AttendanceRecordDto[]> {
+    return this.http.get<AttendanceRecordDto[]>(`${this.apiUrl}/my`, {
+      params: buildDateRangeParams(query),
+    });
+  }
+
+  /**
+   * Organization attendance report (CenterManager / SystemAdmin).
+   * GET /api/attendance?organizationId=&startDate=&endDate=&employeeId=
+   */
+  getOrganizationAttendance(
+    query: OrganizationAttendanceQuery = {}
+  ): Observable<AttendanceRecordDto[]> {
+    let params = buildDateRangeParams(query);
+
+    if (query.organizationId) {
+      params = params.set('organizationId', query.organizationId);
+    }
+    if (query.employeeId) {
+      params = params.set('employeeId', query.employeeId);
+    }
+
+    return this.http.get<AttendanceRecordDto[]>(this.apiUrl, { params });
+  }
+
+  /**
+   * Corrects the status of an attendance record.
+   * PATCH /api/attendance/{id}/status
+   */
+  updateAttendanceStatus(
+    id: string,
+    request: UpdateAttendanceStatusRequestDto
+  ): Observable<AttendanceRecordDto> {
+    return this.http.patch<AttendanceRecordDto>(`${this.apiUrl}/${id}/status`, request);
+  }
+}
+
+function buildDateRangeParams(query: AttendanceDateRangeQuery): HttpParams {
+  let params = new HttpParams();
+
+  if (query.startDate) {
+    params = params.set('startDate', query.startDate);
+  }
+  if (query.endDate) {
+    params = params.set('endDate', query.endDate);
+  }
+
+  return params;
 }

@@ -6,7 +6,8 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { AttendanceService } from '../../services/attendance.service';
 import { LeaveRequestService } from '../../services/leave-request.service';
-import { TodayAttendanceDto } from '../../models/employee-attendance.models';
+import { AttendanceRecordDto } from '../../models/employee-attendance.models';
+import { formatAttendanceTime } from '../../../../shared/utils/attendance-status.util';
 import { LeaveRequestDto, LeaveSummaryDto } from '../../models/leave-request.model';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
 import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
@@ -43,7 +44,8 @@ export class EmployeeDashboardComponent implements OnInit, OnDestroy {
   readonly isLoadingUser = signal<boolean>(!this.authService.userDetails() && !this.authService.currentUser());
 
   // Attendance signals
-  readonly todayAttendance = signal<TodayAttendanceDto | null>(null);
+  /** Open attendance record of the employee (GET /api/attendance/current). */
+  readonly todayAttendance = signal<AttendanceRecordDto | null>(null);
   readonly isLoadingAttendance = signal<boolean>(true);
   readonly attendanceError = signal<boolean>(false);
 
@@ -53,12 +55,8 @@ export class EmployeeDashboardComponent implements OnInit, OnDestroy {
 
   // Active leave computed helpers
   readonly activeLeaveInfo = computed(() => {
-    const att = this.todayAttendance();
-    if (att && att.isAttendanceBlockedByLeave && att.activeLeave) {
-      return att.activeLeave;
-    }
-
-    // Fallback check against loaded recent leave requests if backend todayAttendance activeLeave is omitted
+    // The attendance API does not embed leave data, so the active leave is derived
+    // from the approved leave requests loaded for this employee.
     const requests = this.recentLeaveRequests();
     const approved = requests.filter((r) => r.status === 'approved');
     if (approved.length === 0) return null;
@@ -91,20 +89,9 @@ export class EmployeeDashboardComponent implements OnInit, OnDestroy {
     };
   });
 
-  readonly isAttendanceBlocked = computed(() => {
-    const att = this.todayAttendance();
-    if (att?.isAttendanceBlockedByLeave !== undefined) {
-      return att.isAttendanceBlockedByLeave;
-    }
-    return !!this.activeLeaveInfo();
-  });
+  readonly isAttendanceBlocked = computed(() => !!this.activeLeaveInfo());
 
   readonly leaveRestrictionBannerMessage = computed(() => {
-    const att = this.todayAttendance();
-    if (att?.leaveRestrictionMessage) {
-      return att.leaveRestrictionMessage;
-    }
-
     const leave = this.activeLeaveInfo();
     if (!leave) return null;
 
@@ -147,81 +134,49 @@ export class EmployeeDashboardComponent implements OnInit, OnDestroy {
     return name ? name.charAt(0) : 'ک';
   });
 
-  readonly attendanceStatusLabel = computed(() => {
+  readonly hasActiveCheckIn = computed(() => {
     const att = this.todayAttendance();
-    if (!att) return 'در انتظار ثبت حضور';
+    return !!att && !att.checkOutTime;
+  });
 
-    if (att.isCheckedOut) return 'خروج ثبت شده';
-    if (att.isCheckedIn) return 'حاضر (ورود ثبت شده)';
+  readonly isCheckedOut = computed(() => !!this.todayAttendance()?.checkOutTime);
 
-    switch (att.status) {
-      case 'checkedIn':
-        return 'حاضر (ورود ثبت شده)';
-      case 'checkedOut':
-        return 'خروج ثبت شده';
-      case 'notCheckedIn':
-      default:
-        return 'عدم حضور / هنوز وارد نشده';
-    }
+  readonly todayCheckInTime = computed(() =>
+    formatAttendanceTime(this.todayAttendance()?.checkInTime)
+  );
+
+  readonly todayCheckOutTime = computed(() =>
+    formatAttendanceTime(this.todayAttendance()?.checkOutTime)
+  );
+
+  readonly attendanceStatusLabel = computed(() => {
+    if (this.isCheckedOut()) return 'خروج ثبت شده';
+    if (this.hasActiveCheckIn()) return 'حاضر (ورود ثبت شده)';
+    return 'در انتظار ثبت حضور';
   });
 
   readonly attendanceStatusSummaryLabel = computed(() => {
-    const att = this.todayAttendance();
-    if (!att) return 'ثبت‌نشده';
-    if (att.isCheckedOut) return 'خروج ثبت شده';
-    if (att.isCheckedIn) return 'حاضر در محل کار';
+    if (this.isCheckedOut()) return 'خروج ثبت شده';
+    if (this.hasActiveCheckIn()) return 'حاضر در محل کار';
     return 'ثبت‌نشده';
   });
 
   readonly attendanceSummaryTone = computed<SummaryTone>(() => {
-    const att = this.todayAttendance();
-    if (!att) return 'warning';
-
-    if (att.isCheckedOut) return 'default';
-    if (att.isCheckedIn) return 'success';
-
-    switch (att.status) {
-      case 'checkedIn':
-        return 'success';
-      case 'checkedOut':
-        return 'default';
-      default:
-        return 'warning';
-    }
+    if (this.isCheckedOut()) return 'default';
+    if (this.hasActiveCheckIn()) return 'success';
+    return 'warning';
   });
 
   readonly attendanceStatusTone = computed<BadgeTone>(() => {
-    const att = this.todayAttendance();
-    if (!att) return 'warning';
-
-    if (att.isCheckedOut) return 'neutral';
-    if (att.isCheckedIn) return 'success';
-
-    switch (att.status) {
-      case 'checkedIn':
-        return 'success';
-      case 'checkedOut':
-        return 'neutral';
-      default:
-        return 'warning';
-    }
+    if (this.isCheckedOut()) return 'neutral';
+    if (this.hasActiveCheckIn()) return 'success';
+    return 'warning';
   });
 
   readonly attendanceStatusClass = computed(() => {
-    const att = this.todayAttendance();
-    if (!att) return 'bg-amber-100 text-amber-800';
-
-    if (att.isCheckedOut) return 'bg-slate-100 text-slate-800';
-    if (att.isCheckedIn) return 'bg-emerald-100 text-emerald-800';
-
-    switch (att.status) {
-      case 'checkedIn':
-        return 'bg-emerald-100 text-emerald-800';
-      case 'checkedOut':
-        return 'bg-slate-100 text-slate-800';
-      default:
-        return 'bg-amber-100 text-amber-800';
-    }
+    if (this.isCheckedOut()) return 'bg-slate-100 text-slate-800';
+    if (this.hasActiveCheckIn()) return 'bg-emerald-100 text-emerald-800';
+    return 'bg-amber-100 text-amber-800';
   });
 
   readonly latestLeaveRequest = computed(() => {
@@ -250,7 +205,7 @@ export class EmployeeDashboardComponent implements OnInit, OnDestroy {
     this.isLoadingAttendance.set(true);
     this.attendanceError.set(false);
 
-    this.attendanceService.getTodayAttendance().subscribe({
+    this.attendanceService.getCurrentAttendance().subscribe({
       next: (data) => {
         this.todayAttendance.set(data);
         this.isLoadingAttendance.set(false);
@@ -315,6 +270,9 @@ export class EmployeeDashboardComponent implements OnInit, OnDestroy {
       next: (requests) => {
         const list = requests || [];
         this.recentLeaveRequests.set(list);
+        // The active leave is derived from these requests, so the hourly-leave
+        // countdown can only be evaluated once they arrive.
+        this.setupHourlyLeaveTimer();
 
         const pending = list.filter((r) => r.status === 'pending').length;
         const approved = list.filter((r) => r.status === 'approved').length;

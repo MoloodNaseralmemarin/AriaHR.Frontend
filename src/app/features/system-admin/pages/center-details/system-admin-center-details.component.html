@@ -45,11 +45,22 @@
             </p>
           </div>
         </div>
-        <div>
+        <div class="flex flex-col items-start gap-2 sm:items-end">
           <app-status-badge
             [tone]="c.isActive ? 'success' : 'neutral'"
             [label]="getStatusLabel(c.isActive)"
           ></app-status-badge>
+          <button
+            type="button"
+            (click)="toggleStatus()"
+            [disabled]="isUpdatingStatus()"
+            class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {{ isUpdatingStatus() ? 'در حال ذخیره...' : (c.isActive ? 'غیرفعال کردن مرکز' : 'فعال کردن مرکز') }}
+          </button>
+          @if (statusError()) {
+            <p class="text-[11px] font-medium text-rose-600" role="alert">{{ statusError() }}</p>
+          }
         </div>
       </div>
     </div>

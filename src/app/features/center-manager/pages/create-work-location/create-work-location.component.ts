@@ -19,6 +19,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable, finalize, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { parseApiError } from '../../../../core/http/api-error.util';
 import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { ToastComponent } from '../../../../shared/components/toast/toast.component';
 import { QrCodeModalComponent } from '../../../../shared/components/qr-code-modal/qr-code-modal.component';
@@ -103,6 +104,7 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
   readonly maxRadius = MAX_RADIUS_METERS;
 
   readonly form = this.fb.group({
+    name: ['', [Validators.required, Validators.maxLength(200)]],
     radiusInMeters: [
       DEFAULT_RADIUS_METERS,
       [Validators.required, Validators.min(MIN_RADIUS_METERS), Validators.max(MAX_RADIUS_METERS)],
@@ -487,9 +489,20 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       });
   }
 
-  isControlInvalid(name: 'radiusInMeters'): boolean {
+  isControlInvalid(name: 'name' | 'radiusInMeters'): boolean {
     const control = this.form.controls[name];
     return control.invalid && (control.touched || control.dirty);
+  }
+
+  nameMessage(): string | null {
+    const control = this.form.controls.name;
+    if (control.hasError('required')) {
+      return 'نام محل کار الزامی است.';
+    }
+    if (control.hasError('maxlength')) {
+      return 'نام محل کار نمی‌تواند بیش از ۲۰۰ کاراکتر باشد.';
+    }
+    return null;
   }
 
   /** Persian message for the current radius validation error, if any. */
@@ -558,9 +571,10 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
 
           const request: CreateWorkLocationDto = {
             organizationId: orgId,
+            name: value.name.trim(),
             latitude: loc.lat,
             longitude: loc.lng,
-            radiusInMeters: value.radiusInMeters,
+            allowedRadiusInMeters: value.radiusInMeters,
             isActive: value.isActive,
           };
 
@@ -681,7 +695,7 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       }
     }
 
-    this.form.reset({ radiusInMeters: DEFAULT_RADIUS_METERS, isActive: true });
+    this.form.reset({ name: '', radiusInMeters: DEFAULT_RADIUS_METERS, isActive: true });
     this.form.markAsPristine();
     this.form.markAsUntouched();
   }
@@ -699,26 +713,12 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       .subscribe({
         next: (res) => {
           this.qrData.set({
-            code: res.code,
-            expiresAtUtc: res.expiresAtUtc,
+            code: res.token,
+            expiresAtUtc: res.expiresAtUtc ?? '',
           });
           this.showQrModal.set(true);
         },
-        error: (err) => {
-          let msg = 'خطا در دریافت QR کد محل کار.';
-          if (err?.status === 400) {
-            msg = err?.error?.message || 'ورودی نامعتبر / خطای کسب و کار';
-          } else if (err?.status === 401) {
-            msg = 'احراز هویت مورد نیاز است.';
-          } else if (err?.status === 403) {
-            msg = 'دسترسی به این محل کار مجاز نیست.';
-          } else if (err?.status === 404) {
-            msg = 'محل کار یافت نشد.';
-          } else if (err?.error?.message) {
-            msg = err.error.message;
-          }
-          this.errorMessage.set(msg);
-        },
+        error: (err) => this.errorMessage.set(parseApiError(err).message),
       });
   }
 }

@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import { OrganizationService } from '../../../organizations/services/organization.service';
-import { CenterResponseDto } from '../../../organizations/models/center-response.dto';
+import { BranchListItemDto } from '../../../organizations/models/branch-list-item.dto';
+import { parseApiError } from '../../../../core/http/api-error.util';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
@@ -32,7 +34,10 @@ export class SystemAdminCenterDetailsComponent implements OnInit {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
-  readonly center = signal<CenterResponseDto | null>(null);
+  readonly center = signal<BranchListItemDto | null>(null);
+
+  readonly isUpdatingStatus = signal(false);
+  readonly statusError = signal<string | null>(null);
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(() => {
@@ -65,14 +70,29 @@ export class SystemAdminCenterDetailsComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        const message =
-          err?.error?.message ||
-          err?.message ||
-          'خطایی در دریافت اطلاعات مرکز رخ داد. لطفاً مجدداً تلاش کنید.';
-        this.error.set(message);
+        this.error.set(parseApiError(err).message);
         this.loading.set(false);
       },
     });
+  }
+
+  /** Activates or deactivates the branch through `PATCH /api/centers/{id}/status`. */
+  toggleStatus(): void {
+    const center = this.center();
+    if (!center || this.isUpdatingStatus()) {
+      return;
+    }
+
+    this.isUpdatingStatus.set(true);
+    this.statusError.set(null);
+
+    this.organizationService
+      .updateCenterStatus(center.id, { isActive: !center.isActive })
+      .pipe(finalize(() => this.isUpdatingStatus.set(false)))
+      .subscribe({
+        next: (updated) => this.center.set(updated),
+        error: (err) => this.statusError.set(parseApiError(err).message),
+      });
   }
 
   getDisplayValue(value: string | null | undefined): string {

@@ -9,7 +9,7 @@ import { AttendanceService } from '../../services/attendance.service';
 import { LeaveRequestService } from '../../services/leave-request.service';
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { CurrentUserDto, AuthUserDto } from '../../../../core/auth/auth.models';
-import { TodayAttendanceDto } from '../../models/employee-attendance.models';
+import { AttendanceRecordDto } from '../../models/employee-attendance.models';
 import { LeaveRequestDto } from '../../models/leave-request.model';
 
 describe('EmployeeDashboardComponent (Isolated Tests)', () => {
@@ -21,7 +21,7 @@ describe('EmployeeDashboardComponent (Isolated Tests)', () => {
     getCurrentUser: ReturnType<typeof vi.fn>;
   };
   let mockAttendanceService: {
-    getTodayAttendance: ReturnType<typeof vi.fn>;
+    getCurrentAttendance: ReturnType<typeof vi.fn>;
   };
   let mockLeaveRequestService: {
     getLeaveRequests: ReturnType<typeof vi.fn>;
@@ -30,6 +30,27 @@ describe('EmployeeDashboardComponent (Isolated Tests)', () => {
     getTodayFormatted: ReturnType<typeof vi.fn>;
   };
   let injector: Injector;
+
+  const todayIso = new Date().toISOString().split('T')[0];
+
+  const openRecord: AttendanceRecordDto = {
+    id: 'att-1',
+    organizationId: 'org-1',
+    employeeId: 'emp-1',
+    checkInTime: new Date().toISOString(),
+    method: 'QRCode',
+    status: 'Present',
+    isWithinGeofence: true,
+    createdAtUtc: new Date().toISOString(),
+  };
+
+  function createComponent(): EmployeeDashboardComponent {
+    let component!: EmployeeDashboardComponent;
+    runInInjectionContext(injector, () => {
+      component = new EmployeeDashboardComponent();
+    });
+    return component;
+  }
 
   beforeEach(() => {
     userDetailsSignal = signal<CurrentUserDto | null>(null);
@@ -42,29 +63,23 @@ describe('EmployeeDashboardComponent (Isolated Tests)', () => {
     };
 
     mockAttendanceService = {
-      getTodayAttendance: vi.fn().mockReturnValue(of({
-        isCheckedIn: true,
-        isCheckedOut: false,
-        checkInTime: '08:00',
-        checkOutTime: null,
-        workDuration: '04:00',
-        shift: { name: 'شیفت صبح', startTime: '08:00', endTime: '16:00' },
-        status: 'checkedIn',
-      } as TodayAttendanceDto)),
+      getCurrentAttendance: vi.fn().mockReturnValue(of(openRecord)),
     };
 
     mockLeaveRequestService = {
-      getLeaveRequests: vi.fn().mockReturnValue(of([
-        {
-          id: 'leave-1',
-          leaveType: 'daily',
-          startDate: '1403-02-10',
-          durationText: '1 روز',
-          reason: 'شخصی',
-          status: 'pending',
-          createdAt: '1403-02-09',
-        } as LeaveRequestDto,
-      ])),
+      getLeaveRequests: vi.fn().mockReturnValue(
+        of([
+          {
+            id: 'leave-1',
+            leaveType: 'daily',
+            startDate: '1403-02-10',
+            durationText: '1 روز',
+            reason: 'شخصی',
+            status: 'pending',
+            createdAt: '1403-02-09',
+          } as LeaveRequestDto,
+        ])
+      ),
     };
 
     mockPersianDateService = {
@@ -82,136 +97,136 @@ describe('EmployeeDashboardComponent (Isolated Tests)', () => {
   });
 
   it('should initialize and call APIs on ngOnInit', () => {
-    runInInjectionContext(injector, () => {
-      const component = new EmployeeDashboardComponent();
-      component.ngOnInit();
+    const component = createComponent();
+    component.ngOnInit();
 
-      expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
-      expect(mockAttendanceService.getTodayAttendance).toHaveBeenCalled();
-      expect(mockLeaveRequestService.getLeaveRequests).toHaveBeenCalled();
-      expect(component.isLoadingUser()).toBe(false);
-      expect(component.isLoadingAttendance()).toBe(false);
-      expect(component.isLoadingLeaves()).toBe(false);
-    });
+    expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
+    expect(mockAttendanceService.getCurrentAttendance).toHaveBeenCalled();
+    expect(mockLeaveRequestService.getLeaveRequests).toHaveBeenCalled();
+    expect(component.isLoadingUser()).toBe(false);
+    expect(component.isLoadingAttendance()).toBe(false);
+    expect(component.isLoadingLeaves()).toBe(false);
   });
 
   it('should compute employee full name from userDetails (firstName + lastName)', () => {
-    runInInjectionContext(injector, () => {
-      userDetailsSignal.set({
-        id: 'emp-123',
-        firstName: 'علی',
-        lastName: 'رضایی',
-        phoneNumber: '09121112233',
-        roles: ['Employee'],
-        organizationId: 'org-1',
-      });
-
-      const component = new EmployeeDashboardComponent();
-      expect(component.employeeName()).toBe('علی رضایی');
+    userDetailsSignal.set({
+      id: 'emp-123',
+      firstName: 'علی',
+      lastName: 'رضایی',
+      phoneNumber: '09121112233',
+      roles: ['Employee'],
+      organizationId: 'org-1',
     });
+
+    const component = createComponent();
+    expect(component.employeeName()).toBe('علی رضایی');
   });
 
   it('should compute employee name from AuthUserDto.fullName if userDetails is missing', () => {
-    runInInjectionContext(injector, () => {
-      currentUserSignal.set({
-        id: 'emp-123',
-        fullName: 'مریم احمدی',
-        roles: ['Employee'],
-      });
-
-      const component = new EmployeeDashboardComponent();
-      expect(component.employeeName()).toBe('مریم احمدی');
+    currentUserSignal.set({
+      id: 'emp-123',
+      fullName: 'مریم احمدی',
+      roles: ['Employee'],
     });
+
+    const component = createComponent();
+    expect(component.employeeName()).toBe('مریم احمدی');
   });
 
   it('should fallback to "کارمند" when all name properties are null or empty', () => {
-    runInInjectionContext(injector, () => {
-      userDetailsSignal.set({
-        id: 'emp-123',
-        firstName: '',
-        lastName: '',
-        phoneNumber: '09121112233',
-        roles: ['Employee'],
-        organizationId: 'org-1',
-      });
-
-      const component = new EmployeeDashboardComponent();
-      expect(component.employeeName()).toBe('کارمند');
+    userDetailsSignal.set({
+      id: 'emp-123',
+      firstName: '',
+      lastName: '',
+      phoneNumber: '09121112233',
+      roles: ['Employee'],
+      organizationId: 'org-1',
     });
+
+    const component = createComponent();
+    expect(component.employeeName()).toBe('کارمند');
   });
 
   it('should handle API errors gracefully', () => {
-    mockAttendanceService.getTodayAttendance.mockReturnValue(throwError(() => new Error('API Error')));
-    mockLeaveRequestService.getLeaveRequests.mockReturnValue(throwError(() => new Error('API Error')));
+    mockAttendanceService.getCurrentAttendance.mockReturnValue(
+      throwError(() => new Error('API Error'))
+    );
+    mockLeaveRequestService.getLeaveRequests.mockReturnValue(
+      throwError(() => new Error('API Error'))
+    );
 
-    runInInjectionContext(injector, () => {
-      const component = new EmployeeDashboardComponent();
-      component.ngOnInit();
+    const component = createComponent();
+    component.ngOnInit();
 
-      expect(component.attendanceError()).toBe(true);
-      expect(component.isLoadingAttendance()).toBe(false);
-      expect(component.isLoadingLeaves()).toBe(false);
-    });
+    expect(component.attendanceError()).toBe(true);
+    expect(component.isLoadingAttendance()).toBe(false);
+    expect(component.isLoadingLeaves()).toBe(false);
   });
 
   it('should return correct badge tones for attendance and leave request status', () => {
-    runInInjectionContext(injector, () => {
-      const component = new EmployeeDashboardComponent();
-      component.ngOnInit();
+    const component = createComponent();
+    component.ngOnInit();
 
-      expect(component.attendanceStatusTone()).toBe('success');
-      expect(component.getLeaveStatusTone('pending')).toBe('warning');
-      expect(component.getLeaveStatusTone('approved')).toBe('success');
-      expect(component.getLeaveStatusTone('rejected')).toBe('danger');
-      expect(component.getLeaveStatusTone('cancelled')).toBe('neutral');
-    });
+    expect(component.attendanceStatusTone()).toBe('success');
+    expect(component.getLeaveStatusTone('pending')).toBe('warning');
+    expect(component.getLeaveStatusTone('approved')).toBe('success');
+    expect(component.getLeaveStatusTone('rejected')).toBe('danger');
+    expect(component.getLeaveStatusTone('cancelled')).toBe('neutral');
   });
 
-  it('should detect when attendance is blocked by daily leave and format message correctly', () => {
-    mockAttendanceService.getTodayAttendance.mockReturnValue(of({
-      isCheckedIn: false,
-      isCheckedOut: false,
-      isAttendanceBlockedByLeave: true,
-      leaveRestrictionMessage: 'شما امروز در مرخصی هستید و امکان ثبت تردد ندارید.',
-      activeLeave: {
-        isHourly: false,
-        startDate: '2026-03-30',
-        endDate: '2026-03-30',
-        leaveCategoryName: 'مرخصی استحقاقی',
-      },
-    } as TodayAttendanceDto));
+  it('should detect a daily approved leave covering today', () => {
+    mockAttendanceService.getCurrentAttendance.mockReturnValue(of(null));
+    mockLeaveRequestService.getLeaveRequests.mockReturnValue(
+      of([
+        {
+          id: 'leave-1',
+          leaveType: 'daily',
+          startDate: todayIso,
+          endDate: todayIso,
+          durationText: '1 روز',
+          reason: 'شخصی',
+          status: 'approved',
+          categoryName: 'مرخصی استحقاقی',
+          createdAt: todayIso,
+        } as LeaveRequestDto,
+      ])
+    );
 
-    runInInjectionContext(injector, () => {
-      const component = new EmployeeDashboardComponent();
-      component.ngOnInit();
+    const component = createComponent();
+    component.ngOnInit();
 
-      expect(component.isAttendanceBlocked()).toBe(true);
-      expect(component.leaveRestrictionBannerMessage()).toBe('شما امروز در مرخصی هستید و امکان ثبت تردد ندارید.');
-      expect(component.activeLeaveInfo()?.leaveCategoryName).toBe('مرخصی استحقاقی');
-    });
+    expect(component.isAttendanceBlocked()).toBe(true);
+    expect(component.leaveRestrictionBannerMessage()).toBe(
+      'شما امروز در مرخصی هستید و امکان ثبت تردد ندارید.'
+    );
+    expect(component.activeLeaveInfo()?.leaveCategoryName).toBe('مرخصی استحقاقی');
   });
 
   it('should setup countdown timer when on hourly leave', () => {
-    const futureEndTime = '23:59:59';
-    mockAttendanceService.getTodayAttendance.mockReturnValue(of({
-      isCheckedIn: false,
-      isCheckedOut: false,
-      isAttendanceBlockedByLeave: true,
-      activeLeave: {
-        isHourly: true,
-        startTime: '10:00',
-        endTime: futureEndTime,
-        leaveCategoryName: 'مرخصی ساعتی',
-      },
-    } as TodayAttendanceDto));
+    mockAttendanceService.getCurrentAttendance.mockReturnValue(of(null));
+    mockLeaveRequestService.getLeaveRequests.mockReturnValue(
+      of([
+        {
+          id: 'leave-1',
+          leaveType: 'hourly',
+          startDate: todayIso,
+          date: todayIso,
+          startTime: '10:00',
+          endTime: '23:59:59',
+          durationText: '2 ساعت',
+          reason: 'شخصی',
+          status: 'approved',
+          categoryName: 'مرخصی ساعتی',
+          createdAt: todayIso,
+        } as LeaveRequestDto,
+      ])
+    );
 
-    runInInjectionContext(injector, () => {
-      const component = new EmployeeDashboardComponent();
-      component.ngOnInit();
+    const component = createComponent();
+    component.ngOnInit();
 
-      expect(component.isAttendanceBlocked()).toBe(true);
-      expect(component.remainingCountdown()).not.toBeNull();
-      component.ngOnDestroy();
-    });
+    expect(component.isAttendanceBlocked()).toBe(true);
+    expect(component.remainingCountdown()).not.toBeNull();
+    component.ngOnDestroy();
   });
 });

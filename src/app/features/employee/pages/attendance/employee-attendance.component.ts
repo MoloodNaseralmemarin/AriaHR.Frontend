@@ -1,11 +1,26 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef } from '@angular/core';
 
 import { PersianDateService } from '../../../../core/services/persian-date.service';
 import { PersianDigitsPipe } from '../../../../shared/pipes/persian-digits.pipe';
+import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
+import {
+  formatAttendanceTime,
+  formatWorkDuration,
+  getAttendanceStatusMeta,
+  toApiDate,
+} from '../../../../shared/utils/attendance-status.util';
 import { AttendanceService } from '../../services/attendance.service';
-import { TodayAttendanceDto, RegisterAttendanceResponseDto } from '../../models/employee-attendance.models';
+import {
+  AttendanceRecordDto,
+  AttendanceScanResponseDto,
+  ScanAttendanceRequestDto,
+} from '../../models/employee-attendance.models';
 import { QrScannerComponent } from '../../components/qr-scanner/qr-scanner.component';
+import { resolveAttendanceErrorMessage } from '../../utils/attendance-error.util';
 
 export type AttendanceViewState =
   | 'loading'
@@ -16,10 +31,19 @@ export type AttendanceViewState =
   | 'success'
   | 'error';
 
+/** History window shown under today's card. */
+const HISTORY_DAYS = 14;
+
 @Component({
   selector: 'app-employee-attendance',
   standalone: true,
-  imports: [CommonModule, PersianDigitsPipe, QrScannerComponent],
+  imports: [
+    CommonModule,
+    PersianDigitsPipe,
+    JalaliPipe,
+    StatusBadgeComponent,
+    QrScannerComponent,
+  ],
   templateUrl: './employee-attendance.component.html',
   styleUrls: ['./employee-attendance.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,60 +51,111 @@ export type AttendanceViewState =
 export class EmployeeAttendanceComponent implements OnInit {
   private readonly attendanceService = inject(AttendanceService);
   private readonly persianDateService = inject(PersianDateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly viewState = signal<AttendanceViewState>('loading');
-  readonly todayAttendance = signal<TodayAttendanceDto | null>(null);
+  readonly errorMessage = signal<string | null>(null);
+  readonly lastResult = signal<AttendanceScanResponseDto | null>(null);
+
+  /** Open attendance record of the current employee (GET /api/attendance/current). */
+  readonly currentRecord = signal<AttendanceRecordDto | null>(null);
+  readonly history = signal<AttendanceRecordDto[]>([]);
 
   readonly todayJalaliDate = signal<string>(this.persianDateService.getTodayFormatted());
 
-  readonly errorMessage = signal<string | null>(null);
-
-  readonly lastResult = signal<RegisterAttendanceResponseDto | null>(null);
-
-  readonly isAttendanceBlocked = computed(() => {
-    return !!this.todayAttendance()?.isAttendanceBlockedByLeave;
+  /** Today's record (open or completed) used for the status card. */
+  readonly todayRecord = computed<AttendanceRecordDto | null>(() => {
+    const today = toApiDate(new Date());
+    const fromHistory = this.history().find(
+      (record) => toApiDate(new Date(record.checkInTime)) === today
+    );
+    return fromHistory ?? this.currentRecord();
   });
 
-  readonly leaveRestrictionMessage = computed(() => {
-    const customMsg = this.todayAttendance()?.leaveRestrictionMessage;
-    if (customMsg) return customMsg;
-    return 'امکان ثبت حضور و غیاب در زمان مرخصی وجود ندارد.';
+  readonly isCheckedIn = computed(() => this.currentRecord() !== null);
+  readonly isCheckedOut = computed(() => !!this.todayRecord()?.checkOutTime);
+  readonly todayStatus = computed(() => getAttendanceStatusMeta(this.todayRecord()?.status));
+
+  readonly checkInTime = computed(() => formatAttendanceTime(this.todayRecord()?.checkInTime));
+  readonly checkOutTime = computed(() => formatAttendanceTime(this.todayRecord()?.checkOutTime));
+  readonly workDuration = computed(() =>
+    formatWorkDuration(this.todayRecord()?.checkInTime, this.todayRecord()?.checkOutTime)
+  );
+
+  /** Check-out is only possible while a check-in is open. */
+  readonly nextActionLabel = computed(() => (this.isCheckedIn() ? 'ثبت خروج' : 'ثبت ورود'));
+
+  readonly lastResultTitle = computed(() => {
+    const action = this.lastResult()?.data?.attendanceAction;
+    return action === 'CheckOut' ? 'خروج شما با موفقیت ثبت شد' : 'ورود شما با موفقیت ثبت شد';
   });
 
-  private scannedQrCode: string | null = null;
+  readonly historyItems = computed(() =>
+    this.history().map((record) => ({
+      record,
+      status: getAttendanceStatusMeta(record.status),
+      checkIn: formatAttendanceTime(record.checkInTime),
+      checkOut: formatAttendanceTime(record.checkOutTime),
+    }))
+  );
+
+  private scannedQrToken: string | null = null;
 
   ngOnInit(): void {
-    this.loadTodayAttendance();
+    this.loadAttendance(true);
   }
 
-  loadTodayAttendance(): void {
-    this.viewState.set('loading');
-    this.errorMessage.set(null);
+  /** Reloads the open record and the recent history from the API. */
+  loadAttendance(showLoading = false): void {
+    if (showLoading) {
+      this.viewState.set('loading');
+      this.errorMessage.set(null);
+    }
 
-    this.attendanceService.getTodayAttendance().subscribe({
-      next: (data) => {
-        this.todayAttendance.set(data);
-        this.viewState.set('ready');
-      },
-      error: (err) => {
-        // Handle initial load error gracefully
-        this.todayAttendance.set({
-          isCheckedIn: false,
-          isCheckedOut: false,
-        });
-        this.viewState.set('ready');
-      },
-    });
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - HISTORY_DAYS);
+
+    this.attendanceService
+      .getCurrentAttendance()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (record) => this.currentRecord.set(record),
+        error: () => this.currentRecord.set(null),
+      });
+
+    this.attendanceService
+      .getMyAttendanceHistory({ startDate: toApiDate(startDate), endDate: toApiDate(endDate) })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (records) => {
+          this.history.set(records ?? []);
+          if (showLoading) {
+            this.viewState.set('ready');
+          }
+        },
+        error: () => {
+          this.history.set([]);
+          if (showLoading) {
+            this.viewState.set('ready');
+          }
+        },
+      });
   }
 
   onStartScan(): void {
     this.errorMessage.set(null);
-    this.scannedQrCode = null;
+    this.lastResult.set(null);
+    this.scannedQrToken = null;
     this.viewState.set('scanner');
   }
 
-  onQrScanned(qrCode: string): void {
-    this.scannedQrCode = qrCode;
+  onQrScanned(qrToken: string): void {
+    if (!qrToken || this.viewState() === 'gettingLocation' || this.viewState() === 'submitting') {
+      return;
+    }
+
+    this.scannedQrToken = qrToken;
     this.acquireLocationAndSubmit();
   }
 
@@ -94,7 +169,9 @@ export class EmployeeAttendanceComponent implements OnInit {
   }
 
   private acquireLocationAndSubmit(): void {
-    if (!this.scannedQrCode) return;
+    if (!this.scannedQrToken) {
+      return;
+    }
 
     this.viewState.set('gettingLocation');
 
@@ -106,8 +183,7 @@ export class EmployeeAttendanceComponent implements OnInit {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
-        this.submitAttendance(latitude, longitude);
+        this.submitAttendance(position);
       },
       (error) => {
         let msg = 'دسترسی به موقعیت مکانی فعال نیست. برای ثبت حضور، دسترسی موقعیت مکانی را فعال کنید.';
@@ -121,92 +197,71 @@ export class EmployeeAttendanceComponent implements OnInit {
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
         maximumAge: 0,
       }
     );
   }
 
-  private submitAttendance(latitude: number, longitude: number): void {
-    if (!this.scannedQrCode) return;
+  private submitAttendance(position: GeolocationPosition): void {
+    if (!this.scannedQrToken || this.viewState() === 'submitting') {
+      return;
+    }
 
     this.viewState.set('submitting');
 
+    // The backend requires both a GPS accuracy value and the reading timestamp,
+    // and rejects stale or imprecise readings.
+    const accuracy = Number(position.coords.accuracy);
+    const request: ScanAttendanceRequestDto = {
+      qrCodeToken: this.scannedQrToken,
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      gpsAccuracyInMeters: Number.isFinite(accuracy) ? Math.round(accuracy * 10) / 10 : 0,
+      locationTimestampUtc: new Date(
+        Number.isFinite(position.timestamp) ? position.timestamp : Date.now()
+      ).toISOString(),
+      attendanceAction: this.isCheckedIn() ? 'CheckOut' : 'CheckIn',
+      idempotencyKey: createIdempotencyKey(),
+    };
+
     this.attendanceService
-      .registerAttendance({
-        qrCode: this.scannedQrCode,
-        latitude,
-        longitude,
-      })
+      .scanAttendance(request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res) => {
-          this.lastResult.set(res);
-
-          // Update local attendance state immediately if provided
-          const current = this.todayAttendance() || {
-            isCheckedIn: false,
-            isCheckedOut: false,
-          };
-
-          const isCheckOut = res.operationType === 'checkOut' || current.isCheckedIn;
-
-          this.todayAttendance.set({
-            ...current,
-            isCheckedIn: isCheckOut ? true : true,
-            isCheckedOut: isCheckOut ? true : false,
-            checkInTime: res.checkInTime || current.checkInTime,
-            checkOutTime: res.checkOutTime || current.checkOutTime,
-            workLocationName: res.workLocationName || current.workLocationName,
-          });
-
+        next: (response) => {
+          this.lastResult.set(response);
+          this.scannedQrToken = null;
           this.viewState.set('success');
+          this.loadAttendance();
         },
-        error: (err) => {
-          this.handleApiError(err);
+        error: (error) => {
+          // Refresh the status card without clearing the error message shown to the user.
+          this.loadAttendance();
+          this.errorMessage.set(resolveAttendanceErrorMessage(error));
           this.viewState.set('error');
         },
       });
   }
 
-  private handleApiError(err: unknown): void {
-    let message = 'ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.';
-
-    if (err && typeof err === 'object') {
-      const httpErr = err as { status?: number; error?: { message?: string; errorCode?: string; code?: string } };
-      const status = httpErr.status;
-      const errorCode = httpErr.error?.errorCode || httpErr.error?.code || '';
-      const backendMsg = httpErr.error?.message || '';
-
-      if (errorCode === 'ATTENDANCE_BLOCKED_BY_APPROVED_LEAVE' || backendMsg.includes('مرخصی')) {
-        message = backendMsg || 'امکان ثبت حضور و غیاب در زمان مرخصی وجود ندارد.';
-        this.loadTodayAttendance();
-      } else if (status === 400 || status === 422) {
-        if (backendMsg.includes('expired') || backendMsg.includes('منقضی')) {
-          message = 'QR منقضی شده است. لطفاً QR جدید محل کار را اسکن کنید.';
-        } else if (backendMsg.includes('outside') || backendMsg.includes('محدوده')) {
-          message = 'شما در محدوده محل کار نیستید. لطفاً در محل کار حضور داشته باشید و دوباره تلاش کنید.';
-        } else if (backendMsg.includes('invalid') || backendMsg.includes('نامعتبر')) {
-          message = 'QR معتبر نیست. لطفاً QR محل کار را دوباره اسکن کنید.';
-        } else if (backendMsg) {
-          message = backendMsg;
-        } else {
-          message = 'کد QR یا موقعیت مکانی معتبر نیست. لطفاً مجدداً تلاش کنید.';
-        }
-      } else if (status === 401 || status === 403) {
-        message = 'دسترسی غیرمجاز. لطفاً مجدداً وارد حساب کاربری خود شوید.';
-      } else if (status === 404) {
-        message = 'محل کار یا کد QR یافت نشد.';
-      }
-    }
-
-    this.errorMessage.set(message);
-  }
-
   onViewTodayStatus(): void {
     this.viewState.set('ready');
+    this.loadAttendance();
   }
 
   onRetry(): void {
-    this.viewState.set('ready');
+    this.loadAttendance(true);
   }
+
+  onRefreshHistory(): void {
+    this.loadAttendance();
+  }
+}
+
+/** Replay-protection key; falls back for browsers without `crypto.randomUUID`. */
+function createIdempotencyKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
 }
