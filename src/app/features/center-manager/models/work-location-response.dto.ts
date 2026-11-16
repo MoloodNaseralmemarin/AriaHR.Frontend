@@ -1,7 +1,7 @@
 import { QrCodeMode } from './qr-code-settings.dto';
 
 /**
- * `WorkLocationDto` — response of the `/api/organizations/work-locations` endpoints.
+ * `WorkLocationDto` — response of the `/api/WorkLocations/work-locations` endpoints.
  *
  * Coordinates are stored as `decimal(9,6)` and the radius as `decimal(8,1)`;
  * `qrCodeMode` is serialized as a string (`Static` | `Dynamic`).

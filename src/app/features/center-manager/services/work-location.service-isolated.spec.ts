@@ -30,7 +30,7 @@ describe('WorkLocationService (Isolated Unit Tests)', () => {
     return service;
   }
 
-  it('should POST to /api/organizations/work-locations/{id}/qrcode/generate', () => {
+  it('should POST to /api/WorkLocations/work-locations/{id}/qrcode/generate', () => {
     const mockResponse = {
       workLocationId: 'wl-123',
       qrCodeMode: 'Dynamic',
@@ -49,7 +49,7 @@ describe('WorkLocationService (Isolated Unit Tests)', () => {
     });
 
     expect(mockHttpClient.post).toHaveBeenCalledWith(
-      `${environment.apiUrl}/api/organizations/work-locations/wl-123/qrcode/generate`,
+      `${environment.apiUrl}/api/WorkLocations/work-locations/wl-123/qrcode/generate`,
       null
     );
   });
@@ -63,12 +63,12 @@ describe('WorkLocationService (Isolated Unit Tests)', () => {
 
     expect(mockHttpClient.post).toHaveBeenNthCalledWith(
       1,
-      `${environment.apiUrl}/api/organizations/work-locations/wl-1/qrcode/enable`,
+      `${environment.apiUrl}/api/WorkLocations/work-locations/wl-1/qrcode/enable`,
       null
     );
     expect(mockHttpClient.post).toHaveBeenNthCalledWith(
       2,
-      `${environment.apiUrl}/api/organizations/work-locations/wl-1/qrcode/disable`,
+      `${environment.apiUrl}/api/WorkLocations/work-locations/wl-1/qrcode/disable`,
       null
     );
   });
@@ -82,10 +82,10 @@ describe('WorkLocationService (Isolated Unit Tests)', () => {
     service.updateQrCodeSettings('wl-1', { qrCodeMode: 'Dynamic', qrRotationIntervalMinutes: 5 }).subscribe();
 
     expect(mockHttpClient.get).toHaveBeenCalledWith(
-      `${environment.apiUrl}/api/organizations/work-locations/wl-1/qrcode/settings`
+      `${environment.apiUrl}/api/WorkLocations/work-locations/wl-1/qrcode/settings`
     );
     expect(mockHttpClient.put).toHaveBeenCalledWith(
-      `${environment.apiUrl}/api/organizations/work-locations/wl-1/qrcode/settings`,
+      `${environment.apiUrl}/api/WorkLocations/work-locations/wl-1/qrcode/settings`,
       { qrCodeMode: 'Dynamic', qrRotationIntervalMinutes: 5 }
     );
   });
@@ -97,7 +97,7 @@ describe('WorkLocationService (Isolated Unit Tests)', () => {
     service.getWorkLocations('org-1').subscribe();
 
     const [url, options] = mockHttpClient.get.mock.calls[0];
-    expect(url).toBe(`${environment.apiUrl}/api/organizations/work-locations`);
+    expect(url).toBe(`${environment.apiUrl}/api/WorkLocations/work-locations`);
     expect(options.params.get('organizationId')).toBe('org-1');
   });
 });

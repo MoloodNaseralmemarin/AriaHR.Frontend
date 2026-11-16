@@ -82,7 +82,7 @@ export class CenterManagerWorkLocationsListComponent implements OnInit {
     this.loadWorkLocations();
   }
 
-  /** GET /api/organizations/work-locations (organization resolved from the JWT). */
+  /** GET /api/WorkLocations/work-locations (organization resolved from the JWT). */
   loadWorkLocations(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
