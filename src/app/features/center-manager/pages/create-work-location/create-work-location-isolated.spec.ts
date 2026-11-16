@@ -114,8 +114,8 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
     radius.setValue(0);
     expect(comp.radiusMessage()).toBe('شعاع محدوده باید حداقل ۱ متر باشد.');
 
-    radius.setValue(60000);
-    expect(comp.radiusMessage()).toBe('شعاع محدوده نمی‌تواند بیشتر از ۵۰٬۰۰۰ متر باشد.');
+    radius.setValue(5000);
+    expect(comp.radiusMessage()).toBe('شعاع محدوده نمی‌تواند بیشتر از ۱٬۰۰۰ متر باشد.');
 
     radius.setValue(250);
     expect(comp.radiusMessage()).toBeNull();

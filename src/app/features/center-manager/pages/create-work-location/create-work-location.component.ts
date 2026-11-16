@@ -55,7 +55,8 @@ const MAX_LATITUDE = 90;
 const MIN_LONGITUDE = -180;
 const MAX_LONGITUDE = 180;
 const MIN_RADIUS_METERS = 1;
-const MAX_RADIUS_METERS = 50000;
+/** Backend `WorkLocationOptions.MaxAllowedRadiusMeters` default. */
+const MAX_RADIUS_METERS = 1000;
 const DEFAULT_RADIUS_METERS = 200;
 
 const ASSET_LOAD_TIMEOUT_MS = 20000;
@@ -515,7 +516,7 @@ export class CreateWorkLocationComponent implements OnInit, AfterViewInit, OnDes
       return 'شعاع محدوده باید حداقل ۱ متر باشد.';
     }
     if (control.hasError('max')) {
-      return 'شعاع محدوده نمی‌تواند بیشتر از ۵۰٬۰۰۰ متر باشد.';
+      return 'شعاع محدوده نمی‌تواند بیشتر از ۱٬۰۰۰ متر باشد.';
     }
     return null;
   }
