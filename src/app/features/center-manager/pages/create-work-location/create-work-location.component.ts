@@ -10,12 +10,10 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Observable, finalize, of, switchMap } from 'rxjs';
+import { finalize } from 'rxjs';
 
-import { AuthService } from '../../../../core/auth/auth.service';
-import { CurrentUserDto } from '../../../../core/auth/auth.models';
 import { parseApiError } from '../../../../core/http/api-error.util';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -35,7 +33,12 @@ import {
   WORK_LOCATION_MIN_RADIUS_METERS,
   WORK_LOCATION_NAME_MAX_LENGTH,
 } from '../../utils/work-location.constants';
-import { resolveWorkLocationSubmitError } from '../../utils/work-location-error.util';
+import {
+  resolveWorkLocationFieldErrors,
+  resolveWorkLocationSubmitError,
+  WorkLocationField,
+  WorkLocationFieldErrors,
+} from '../../utils/work-location-error.util';
 import {
   coordinateMessage,
   nonWhitespaceValidator,
@@ -67,12 +70,14 @@ export class CreateWorkLocationComponent implements OnInit {
 
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly workLocationService = inject(WorkLocationService);
-  private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly submitState = signal<SubmitState>('idle');
   readonly errorMessage = signal<string | null>(null);
+  /** Field-level messages from the backend `ProblemDetails.errors` payload. */
+  readonly fieldErrors = signal<WorkLocationFieldErrors>({});
   readonly selectedLocation = signal<WorkLocationPoint | null>(null);
 
   readonly isSubmitting = computed(() => this.submitState() === 'submitting');
@@ -108,6 +113,9 @@ export class CreateWorkLocationComponent implements OnInit {
       if (this.errorMessage()) {
         this.errorMessage.set(null);
       }
+      if (Object.keys(this.fieldErrors()).length > 0) {
+        this.fieldErrors.set({});
+      }
       if (this.submitState() === 'error') {
         this.submitState.set('idle');
       }
@@ -117,6 +125,7 @@ export class CreateWorkLocationComponent implements OnInit {
   onLocationSelected(location: WorkLocationPoint): void {
     this.selectedLocation.set(location);
     this.errorMessage.set(null);
+    this.fieldErrors.set({});
   }
 
   isControlInvalid(name: 'name' | 'radiusInMeters'): boolean {
@@ -132,6 +141,11 @@ export class CreateWorkLocationComponent implements OnInit {
     return workLocationRadiusMessage(this.form.controls.radiusInMeters);
   }
 
+  /** Backend validation message for a field, if the last submission reported one. */
+  fieldError(field: WorkLocationField): string | null {
+    return this.fieldErrors()[field] ?? null;
+  }
+
   onSubmit(): void {
     // Guard against double clicks and duplicate records: a submission that is in
     // flight or already succeeded must not post again.
@@ -140,6 +154,7 @@ export class CreateWorkLocationComponent implements OnInit {
     }
 
     this.errorMessage.set(null);
+    this.fieldErrors.set({});
 
     const location = this.selectedLocation();
     if (!location) {
@@ -160,36 +175,22 @@ export class CreateWorkLocationComponent implements OnInit {
     }
 
     const value = this.form.getRawValue();
+
+    // The organization is derived from the authenticated manager's JWT on the
+    // backend, so it is deliberately absent from the payload.
+    const request: CreateWorkLocationDto = {
+      name: value.name.trim(),
+      latitude: location.lat,
+      longitude: location.lng,
+      allowedRadiusInMeters: Number(value.radiusInMeters),
+      isActive: value.isActive,
+    };
+
     this.submitState.set('submitting');
 
-    this.loadCurrentUserIfMissing()
+    this.workLocationService
+      .createWorkLocation(request)
       .pipe(
-        switchMap((user) => {
-          if (!user) {
-            this.errorMessage.set(
-              'دریافت اطلاعات حساب کاربری انجام نشد. لطفاً صفحه را دوباره بارگذاری کنید و دوباره تلاش کنید.'
-            );
-            return EMPTY;
-          }
-
-          if (!user.organizationId) {
-            this.errorMessage.set(
-              'شما به هیچ مرکزی متصل نیستید و امکان ثبت محل کار را ندارید.'
-            );
-            return EMPTY;
-          }
-
-          const request: CreateWorkLocationDto = {
-            organizationId: user.organizationId,
-            name: value.name.trim(),
-            latitude: location.lat,
-            longitude: location.lng,
-            allowedRadiusInMeters: Number(value.radiusInMeters),
-            isActive: value.isActive,
-          };
-
-          return this.workLocationService.createWorkLocation(request);
-        }),
         finalize(() => {
           if (this.submitState() === 'submitting') {
             this.submitState.set('idle');
@@ -199,38 +200,30 @@ export class CreateWorkLocationComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.submitState.set('success');
-          if (response?.id) {
-            this.createdWorkLocationId.set(response.id);
+          const createdId = response?.id ?? null;
+          if (createdId) {
+            this.createdWorkLocationId.set(createdId);
           }
           this.notificationService.showSuccess('محل کار با موفقیت ثبت شد.');
+          // The saved location is now the source of truth: return to the list.
+          // Without an id the summary stays on screen instead of navigating.
+          if (createdId) {
+            void this.router.navigate(['/center-manager/work-locations']);
+          }
         },
         error: (error) => {
           this.submitState.set('error');
+          this.fieldErrors.set(resolveWorkLocationFieldErrors(error));
           this.errorMessage.set(resolveWorkLocationSubmitError(error, 'create'));
         },
       });
-  }
-
-  /**
-   * The organization of a work location comes from the authenticated manager's
-   * profile (`/api/auth/me`), never from user input, so a manager can only create
-   * locations for the center they belong to.
-   */
-  private loadCurrentUserIfMissing(): Observable<CurrentUserDto | null> {
-    const existing = this.authService.userDetails();
-    // Re-check when the cached profile has no center: it may be stale after an
-    // organization assignment, and the user should not be blocked incorrectly.
-    if (existing?.organizationId) {
-      return of(existing);
-    }
-
-    return this.authService.getCurrentUser();
   }
 
   /** Clears the saved registration so another work location can be added. */
   startNewRegistration(): void {
     this.submitState.set('idle');
     this.errorMessage.set(null);
+    this.fieldErrors.set({});
     this.createdWorkLocationId.set(null);
     this.qrData.set(null);
     this.showQrModal.set(false);

@@ -137,7 +137,12 @@
             <circle cx="12" cy="12" r="9"></circle>
             <path d="M12 8v5M12 16h.01"></path>
           </svg>
-          <span>{{ errorMessage() }}</span>
+          <div>
+            <span>{{ errorMessage() }}</span>
+            @if (fieldErrors().general; as generalError) {
+              <p class="mt-1 text-xs text-rose-600">{{ generalError }}</p>
+            }
+          </div>
         </div>
       }
 
@@ -167,6 +172,9 @@
               {{ nameMessage() }}
             </p>
           }
+          @if (fieldError('name'); as serverError) {
+            <p class="mt-1.5 text-xs text-rose-600" role="alert">{{ serverError }}</p>
+          }
         </div>
 
         <div>
@@ -181,6 +189,9 @@
             [disabled]="isSubmitting()"
             (locationChange)="onLocationSelected($event)"
           />
+          @if (fieldError('latitude') ?? fieldError('longitude'); as serverError) {
+            <p class="mt-1.5 text-xs text-rose-600" role="alert">{{ serverError }}</p>
+          }
         </div>
 
         <div class="grid gap-5 sm:grid-cols-2">
@@ -217,6 +228,9 @@
               <p id="work-location-radius-help" class="mt-1.5 text-xs text-slate-500">
                 بین {{ minRadius | persianDigits }} تا {{ maxRadius | persianDigits }} متر؛ دایرهٔ روی نقشه با تغییر این عدد به‌روز می‌شود.
               </p>
+            }
+            @if (fieldError('radiusInMeters'); as serverError) {
+              <p class="mt-1.5 text-xs text-rose-600" role="alert">{{ serverError }}</p>
             }
           </div>
 

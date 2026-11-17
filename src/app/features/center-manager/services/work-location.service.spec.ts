@@ -103,12 +103,11 @@ describe('WorkLocationService', () => {
     expect(address).toBeNull();
   });
 
-  it('should create a work location with the expected payload and endpoint', () => {
+  it('should create a work location on the WorkLocations controller without an organizationId', () => {
     http.post.mockReturnValue(of({ id: 'wl-1' }));
 
     service
       .createWorkLocation({
-        organizationId: 'org-1',
         name: 'دفتر مرکزی',
         latitude: 35.7,
         longitude: 51.3,
@@ -119,8 +118,14 @@ describe('WorkLocationService', () => {
 
     const [url, body] = http.post.mock.calls[0];
     expect(url).toBe(`${environment.apiUrl}/api/WorkLocations/work-locations`);
-    expect(body.allowedRadiusInMeters).toBe(200);
-    expect(body.name).toBe('دفتر مرکزی');
+    expect(body).toEqual({
+      name: 'دفتر مرکزی',
+      latitude: 35.7,
+      longitude: 51.3,
+      allowedRadiusInMeters: 200,
+      isActive: true,
+    });
+    expect(body).not.toHaveProperty('organizationId');
   });
 
   it('should call generateQrCode with POST and no request body', () => {
