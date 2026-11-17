@@ -1,8 +1,11 @@
 // AriaHR Progressive Web App Service Worker
-// Cache-first for static application assets (scripts, styles, fonts, images)
-// Network-only for API requests, authentication, and user data
+// Network-first for application code (scripts/styles) so a rebuilt bundle is
+// picked up on the next load; cache-first only for immutable media.
+// Network-only for API requests, authentication, and user data.
 
-const CACHE_NAME = 'aria-hr-v1';
+// Bumped whenever the caching policy changes: `activate` deletes every other
+// cache, so clients that still hold an older bundle are purged once.
+const CACHE_NAME = 'aria-hr-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -13,6 +16,27 @@ const STATIC_ASSETS = [
   '/assets/fonts/IRANSans.ttf',
   '/assets/fonts/IRANSans.eot',
 ];
+
+/** Scripts and styles must never be pinned: their file names are stable in dev. */
+function isApplicationCode(pathname) {
+  return pathname.endsWith('.js') || pathname.endsWith('.css');
+}
+
+/** Media with content-derived names can be served from cache without staleness risk. */
+function isCacheableMedia(pathname) {
+  return (
+    pathname.endsWith('.png') ||
+    pathname.endsWith('.svg') ||
+    pathname.endsWith('.jpg') ||
+    pathname.endsWith('.jpeg') ||
+    pathname.endsWith('.webp') ||
+    pathname.endsWith('.woff') ||
+    pathname.endsWith('.woff2') ||
+    pathname.endsWith('.ttf') ||
+    pathname.endsWith('.eot') ||
+    pathname.endsWith('.ico')
+  );
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -58,42 +82,48 @@ self.addEventListener('fetch', (event) => {
     return; // Pass through directly to network without caching
   }
 
-  // 2. Navigation requests: Network-first to ensure fresh index.html, falling back to cache if offline
+  // 2. Navigation requests: always revalidate index.html so a new build's
+  //    script URLs are picked up, with the cached shell only as an offline fallback.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => {
+      fetch(request, { cache: 'no-store' }).catch(() => {
         return caches.match('/index.html');
       })
     );
     return;
   }
 
-  // 3. Static assets: Cache-first with network fallback
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(request).then((networkResponse) => {
-        // Cache successful basic static responses
-        if (
-          networkResponse &&
-          networkResponse.status === 200 &&
-          networkResponse.type === 'basic' &&
-          (url.pathname.endsWith('.js') ||
-           url.pathname.endsWith('.css') ||
-           url.pathname.endsWith('.png') ||
-           url.pathname.endsWith('.woff') ||
-           url.pathname.endsWith('.ttf') ||
-           url.pathname.endsWith('.ico'))
-        ) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
+  // 3. Application code: network-first, cache only as an offline fallback.
+  if (isApplicationCode(url.pathname)) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || Response.error()))
+    );
+    return;
+  }
+
+  // 4. Media: cache-first with network fallback.
+  if (isCacheableMedia(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
         }
-        return networkResponse;
-      });
-    })
-  );
+        return fetch(request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache));
+          }
+          return networkResponse;
+        });
+      })
+    );
+  }
 });

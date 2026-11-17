@@ -106,7 +106,9 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js').catch(function(err) {
+        // `updateViaCache: 'none'` keeps the browser's HTTP cache from pinning an
+        // older sw.js, so a new caching policy is picked up on the next load.
+        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(function(err) {
           console.warn('[PWA] Service worker registration failed:', err);
         });
       });
