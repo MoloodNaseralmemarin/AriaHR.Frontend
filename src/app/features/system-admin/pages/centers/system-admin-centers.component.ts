@@ -24,8 +24,7 @@ import { JalaliPipe } from '../../../../shared/pipes/jalali.pipe';
     PageHeaderComponent,
     EmptyStateComponent,
     SkeletonLoaderComponent,
-    PersianDigitsPipe,
-    JalaliPipe,
+    PersianDigitsPipe
   ],
   templateUrl: './system-admin-centers.component.html',
   styleUrl: './system-admin-centers.component.css',
