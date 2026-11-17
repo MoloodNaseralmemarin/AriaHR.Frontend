@@ -2,11 +2,11 @@ import '@angular/compiler';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { NonNullableFormBuilder, FormBuilder } from '@angular/forms';
+import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { CreateWorkLocationComponent } from './create-work-location.component';
 import { WorkLocationService } from '../../services/work-location.service';
-import { AuthService } from '../../../../core/auth/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 
 describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
@@ -40,12 +40,8 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
     ),
   };
 
-  const mockAuthService = {
-    userDetails: vi.fn().mockReturnValue({
-      id: 'usr-1',
-      organizationId: 'org-1',
-    }),
-    getCurrentUser: vi.fn().mockReturnValue(of(null)),
+  const mockRouter = {
+    navigate: vi.fn().mockResolvedValue(true),
   };
 
   const mockNotificationService = {
@@ -53,11 +49,8 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
   };
 
   beforeEach(() => {
-    mockWorkLocationService.createWorkLocation.mockClear();
-    mockWorkLocationService.generateQrCode.mockClear();
-    mockNotificationService.showSuccess.mockClear();
-    mockAuthService.userDetails.mockReturnValue({ id: 'usr-1', organizationId: 'org-1' });
-    mockAuthService.getCurrentUser.mockReturnValue(of(null));
+    vi.clearAllMocks();
+    mockRouter.navigate.mockResolvedValue(true);
   });
 
   function createComponent(): CreateWorkLocationComponent {
@@ -66,8 +59,8 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
       providers: [
         { provide: NonNullableFormBuilder, useValue: fb },
         { provide: WorkLocationService, useValue: mockWorkLocationService },
-        { provide: AuthService, useValue: mockAuthService },
         { provide: NotificationService, useValue: mockNotificationService },
+        { provide: Router, useValue: mockRouter },
       ],
     });
 
@@ -83,14 +76,22 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
     comp.onLocationSelected({ lat: 35.7, lng: 51.3 });
   }
 
-  it('should store createdWorkLocationId when createWorkLocation succeeds', () => {
+  it('should POST the JWT-derived payload and navigate to the list on success', () => {
     const comp = createComponent();
     fillValidForm(comp);
     comp.onSubmit();
 
+    expect(mockWorkLocationService.createWorkLocation).toHaveBeenCalledWith({
+      name: 'دفتر مرکزی',
+      latitude: 35.7,
+      longitude: 51.3,
+      allowedRadiusInMeters: 200,
+      isActive: true,
+    });
     expect(comp.createdWorkLocationId()).toBe('wl-123');
     expect(comp.submitState()).toBe('success');
     expect(mockNotificationService.showSuccess).toHaveBeenCalled();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/center-manager/work-locations']);
   });
 
   it('should call generateQrCode and set qrData when onGenerateQrCode is triggered', () => {
@@ -116,6 +117,32 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
     comp.onSubmit();
 
     expect(mockWorkLocationService.createWorkLocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('should map a 400 ProblemDetails response onto Persian field errors', () => {
+    mockWorkLocationService.createWorkLocation.mockReturnValueOnce(
+      throwError(() => ({
+        status: 400,
+        error: {
+          detail: 'One or more validation errors occurred.',
+          errors: {
+            Name: ['The Name field is required.'],
+            Latitude: ['The field Latitude must be between -90 and 90.'],
+            UnexpectedField: ['The UnexpectedField field is invalid.'],
+          },
+        },
+      }))
+    );
+
+    const comp = createComponent();
+    fillValidForm(comp);
+    comp.onSubmit();
+
+    expect(comp.submitState()).toBe('error');
+    expect(comp.fieldError('name')).toBe('نام محل کار الزامی است.');
+    expect(comp.fieldError('latitude')).toContain('عرض جغرافیایی معتبر نیست');
+    expect(comp.fieldErrors().general).toBe('The UnexpectedField field is invalid.');
+    expect(mockRouter.navigate).not.toHaveBeenCalled();
   });
 
   it('should reset all registration state when a new registration starts', () => {
@@ -163,19 +190,6 @@ describe('CreateWorkLocationComponent (Isolated Unit Tests)', () => {
 
     expect(mockWorkLocationService.createWorkLocation).not.toHaveBeenCalled();
     expect(comp.errorMessage()).toContain('عرض جغرافیایی');
-  });
-
-  it('should ask the user to reload when the profile cannot be loaded', () => {
-    mockAuthService.userDetails.mockReturnValue(null);
-    mockAuthService.getCurrentUser.mockReturnValue(of(null));
-
-    const comp = createComponent();
-    fillValidForm(comp);
-    comp.onSubmit();
-
-    expect(comp.errorMessage()).toContain('دریافت اطلاعات حساب');
-    expect(comp.errorMessage()).not.toContain('هیچ مرکزی');
-    expect(mockWorkLocationService.createWorkLocation).not.toHaveBeenCalled();
   });
 
   it('should handle generateQrCode 404 error with appropriate Persian error message', () => {
