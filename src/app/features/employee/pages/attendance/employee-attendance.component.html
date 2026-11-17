@@ -39,6 +39,58 @@
     </div>
   }
 
+  <!-- Confirmation State -->
+  @if (viewState() === 'confirming') {
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+      <div class="text-center space-y-1">
+        <h3 class="text-base font-bold text-slate-800">تأیید ثبت تردد</h3>
+        <p class="text-xs text-slate-500">لطفاً قبل از ثبت، اطلاعات زیر را بررسی کنید.</p>
+      </div>
+
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-2 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500">عملیات</span>
+          <span class="font-bold text-slate-800">{{ pendingActionLabel() }}</span>
+        </div>
+        @if (pendingPosition) {
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500">دقت GPS</span>
+            <span class="font-bold text-slate-800">{{ pendingPosition.coords.accuracy | number:'1.0-1' }} متر</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500">عرض جغرافیایی</span>
+            <span class="font-bold text-slate-800">{{ pendingPosition.coords.latitude }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500">طول جغرافیایی</span>
+            <span class="font-bold text-slate-800">{{ pendingPosition.coords.longitude }}</span>
+          </div>
+        }
+      </div>
+
+      <p class="text-[11px] text-slate-400 text-center leading-relaxed">
+        اعتبار کد QR و فاصله تا محل کار در سرور بررسی می‌شود.
+      </p>
+
+      <div class="flex gap-2">
+        <button
+          type="button"
+          (click)="onCancelConfirmation()"
+          class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition"
+        >
+          انصراف
+        </button>
+        <button
+          type="button"
+          (click)="onConfirmAttendance()"
+          class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition"
+        >
+          تأیید و ثبت
+        </button>
+      </div>
+    </div>
+  }
+
   <!-- Submitting State -->
   @if (viewState() === 'submitting') {
     <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center space-y-3">
@@ -140,6 +192,11 @@
 
   <!-- Main Today Status View (Ready State) -->
   @if (viewState() === 'ready') {
+    @if (attendanceLoadFailed()) {
+      <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-3 text-xs font-medium">
+        وضعیت ثبت حضور هنوز مشخص نیست؛ در حال بررسی مجدد هستیم.
+      </div>
+    }
     <!-- Today's Status Card -->
     <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">

@@ -54,6 +54,19 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
         }
       </div>
 
+      <div class="mt-3 flex items-center justify-center gap-2 w-full">
+        @if (torchSupported()) {
+          <button type="button" (click)="toggleTorch()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-xl transition">
+            {{ torchOn() ? 'خاموش کردن چراغ' : 'روشن کردن چراغ' }}
+          </button>
+        }
+        @if (cameras().length > 1) {
+          <button type="button" (click)="switchCamera()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-xl transition">
+            تعویض دوربین
+          </button>
+        }
+      </div>
+
       <div class="mt-4 flex justify-center w-full">
         <button
           type="button"
@@ -93,6 +106,12 @@ export class QrScannerComponent implements OnInit, OnDestroy {
 
   private html5QrCode: Html5Qrcode | null = null;
   private isScanning = false;
+  private hasDecoded = false;
+
+  readonly torchSupported = signal(false);
+  readonly torchOn = signal(false);
+  readonly cameras = signal<{ id: string; label: string }[]>([]);
+  readonly activeCameraIndex = signal(-1);
 
   async ngOnInit(): Promise<void> {
     await this.startScanner();
@@ -105,6 +124,8 @@ export class QrScannerComponent implements OnInit, OnDestroy {
   async startScanner(): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.hasDecoded = false;
+    this.torchOn.set(false);
 
     try {
       if (!this.html5QrCode) {
@@ -114,33 +135,66 @@ export class QrScannerComponent implements OnInit, OnDestroy {
         });
       }
 
-      await this.html5QrCode.start(
-        { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 220, height: 220 },
-          aspectRatio: 1.0,
-        },
-        (decodedText: string) => {
-          this.handleDecodedText(decodedText);
-        },
-        () => {
-          // Frame scan error (no QR in frame) - ignore
-        }
-      );
+      // Enumerate cameras best-effort (used for switching).
+      try {
+        const list = await Html5Qrcode.getCameras();
+        this.cameras.set(list.map((c) => ({ id: c.id, label: c.label })));
+      } catch {
+        this.cameras.set([]);
+      }
+
+      const constraints = this.buildCameraConstraints();
+
+      await Promise.race([
+        this.html5QrCode.start(
+          constraints,
+          {
+            fps: 10,
+            qrbox: { width: 220, height: 220 },
+            aspectRatio: 1.0,
+          },
+          (decodedText: string) => {
+            this.handleDecodedText(decodedText);
+          },
+          () => {
+            // Frame scan error (no QR in frame) - ignore
+          }
+        ),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Camera start timeout')), 15000)
+        ),
+      ]);
 
       this.isScanning = true;
       this.isLoading.set(false);
+
+      // Detect torch support.
+      try {
+        const caps = this.html5QrCode.getRunningTrackCameraCapabilities();
+        this.torchSupported.set(!!(caps as { torch?: boolean }).torch);
+      } catch {
+        this.torchSupported.set(false);
+      }
     } catch (err: unknown) {
       this.isLoading.set(false);
       this.handleCameraError(err);
     }
   }
 
+  private buildCameraConstraints(): { facingMode: string } | { deviceId: { exact: string } } {
+    const list = this.cameras();
+    if (list.length > 0 && this.activeCameraIndex() >= 0 && this.activeCameraIndex() < list.length) {
+      // Prefer rear camera on first run; otherwise use selected.
+      return { deviceId: { exact: list[this.activeCameraIndex()].id } };
+    }
+    return { facingMode: 'environment' };
+  }
+
   private handleDecodedText(decodedText: string): void {
-    if (!decodedText) return;
+    if (!decodedText || this.hasDecoded) return;
+    this.hasDecoded = true;
     this.stopScanner().then(() => {
-      this.scanSuccess.emit(decodedText);
+      this.scanSuccess.emit(decodedText.trim());
     });
   }
 
@@ -175,6 +229,27 @@ export class QrScannerComponent implements OnInit, OnDestroy {
         this.isScanning = false;
       }
     }
+  }
+
+  async toggleTorch(): Promise<void> {
+    if (!this.html5QrCode || !this.torchSupported()) return;
+    const next = !this.torchOn();
+    try {
+      await this.html5QrCode.applyVideoConstraints({ advanced: [{ torch: next }] } as unknown as MediaTrackConstraints);
+      this.torchOn.set(next);
+    } catch {
+      // ignore
+    }
+  }
+
+  async switchCamera(): Promise<void> {
+    const list = this.cameras();
+    if (list.length < 2) return;
+    const next = (this.activeCameraIndex() + 1 + list.length) % list.length;
+    // If currently auto (-1), start at 0.
+    const target = this.activeCameraIndex() < 0 ? 0 : next;
+    this.activeCameraIndex.set(target);
+    await this.restartScanner();
   }
 
   async onCancel(): Promise<void> {

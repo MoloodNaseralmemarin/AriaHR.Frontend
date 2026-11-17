@@ -21,12 +21,14 @@ import {
 } from '../../models/employee-attendance.models';
 import { QrScannerComponent } from '../../components/qr-scanner/qr-scanner.component';
 import { resolveAttendanceErrorMessage } from '../../utils/attendance-error.util';
+import { toUtcIsoTimestamp, validateGeolocationReading } from '../../utils/geo.util';
 
 export type AttendanceViewState =
   | 'loading'
   | 'ready'
   | 'scanner'
   | 'gettingLocation'
+  | 'confirming'
   | 'submitting'
   | 'success'
   | 'error';
@@ -73,6 +75,10 @@ export class EmployeeAttendanceComponent implements OnInit {
   });
 
   readonly isCheckedIn = computed(() => this.currentRecord() !== null);
+  readonly pendingActionLabel = computed(() =>
+    this.pendingAction === 'CheckOut' ? 'ثبت خروج' : 'ثبت ورود'
+  );
+  readonly attendanceLoadFailed = signal(false);
   readonly isCheckedOut = computed(() => !!this.todayRecord()?.checkOutTime);
   readonly todayStatus = computed(() => getAttendanceStatusMeta(this.todayRecord()?.status));
 
@@ -100,6 +106,9 @@ export class EmployeeAttendanceComponent implements OnInit {
   );
 
   private scannedQrToken: string | null = null;
+  pendingPosition: GeolocationPosition | null = null;
+  private currentIdempotencyKey: string | null = null;
+  private pendingAction: 'CheckIn' | 'CheckOut' | null = null;
 
   ngOnInit(): void {
     this.loadAttendance(true);
@@ -120,8 +129,14 @@ export class EmployeeAttendanceComponent implements OnInit {
       .getCurrentAttendance()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (record) => this.currentRecord.set(record),
-        error: () => this.currentRecord.set(null),
+        next: (record) => {
+          this.currentRecord.set(record);
+          this.attendanceLoadFailed.set(false);
+        },
+        error: () => {
+          this.currentRecord.set(null);
+          this.attendanceLoadFailed.set(true);
+        },
       });
 
     this.attendanceService
@@ -155,8 +170,16 @@ export class EmployeeAttendanceComponent implements OnInit {
       return;
     }
 
-    this.scannedQrToken = qrToken;
-    this.acquireLocationAndSubmit();
+    this.scannedQrToken = qrToken.trim();
+    this.pendingPosition = null;
+    this.pendingAction = null;
+    this.currentIdempotencyKey = createIdempotencyKey();
+    this.acquireLocation();
+  }
+
+  /** Backwards-compatible alias. */
+  acquireLocationAndSubmit(): void {
+    this.acquireLocation();
   }
 
   onScannerError(msg: string): void {
@@ -168,7 +191,41 @@ export class EmployeeAttendanceComponent implements OnInit {
     this.viewState.set('ready');
   }
 
-  private acquireLocationAndSubmit(): void {
+  onConfirmAttendance(): void {
+    if (this.viewState() !== 'confirming' || !this.pendingPosition) {
+      return;
+    }
+    this.submitAttendance(this.pendingPosition);
+  }
+
+  /** Backwards-compatible aliases. */
+  onConfirm(): void {
+    this.onConfirmAttendance();
+  }
+  confirmAttendance(): void {
+    this.onConfirmAttendance();
+  }
+  onConfirmScan(): void {
+    this.onConfirmAttendance();
+  }
+
+  onCancelConfirmation(): void {
+    this.scannedQrToken = null;
+    this.pendingPosition = null;
+    this.pendingAction = null;
+    this.currentIdempotencyKey = null;
+    this.viewState.set('ready');
+  }
+
+  /** Backwards-compatible aliases. */
+  cancelConfirmation(): void {
+    this.onCancelConfirmation();
+  }
+  onCancelConfirm(): void {
+    this.onCancelConfirmation();
+  }
+
+  private acquireLocation(): void {
     if (!this.scannedQrToken) {
       return;
     }
@@ -183,7 +240,15 @@ export class EmployeeAttendanceComponent implements OnInit {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        this.submitAttendance(position);
+        const validation = validateGeolocationReading(position);
+        if (!validation.valid) {
+          this.errorMessage.set(validation.reason ?? 'موقعیت مکانی معتبر نیست.');
+          this.viewState.set('error');
+          return;
+        }
+        this.pendingPosition = position;
+        this.pendingAction = this.isCheckedIn() ? 'CheckOut' : 'CheckIn';
+        this.viewState.set('confirming');
       },
       (error) => {
         let msg = 'دسترسی به موقعیت مکانی فعال نیست. برای ثبت حضور، دسترسی موقعیت مکانی را فعال کنید.';
@@ -208,6 +273,16 @@ export class EmployeeAttendanceComponent implements OnInit {
       return;
     }
 
+    // Validate the reading locally before hitting the backend (backend is final authority).
+    const validation = validateGeolocationReading(position);
+    if (!validation.valid) {
+      this.pendingPosition = null;
+      this.errorMessage.set(validation.reason ?? 'موقعیت مکانی معتبر نیست.');
+      this.viewState.set('error');
+      return;
+    }
+
+    this.pendingPosition = position;
     this.viewState.set('submitting');
 
     // The backend requires both a GPS accuracy value and the reading timestamp,
@@ -218,12 +293,14 @@ export class EmployeeAttendanceComponent implements OnInit {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
       gpsAccuracyInMeters: Number.isFinite(accuracy) ? Math.round(accuracy * 10) / 10 : 0,
-      locationTimestampUtc: new Date(
-        Number.isFinite(position.timestamp) ? position.timestamp : Date.now()
-      ).toISOString(),
-      attendanceAction: this.isCheckedIn() ? 'CheckOut' : 'CheckIn',
-      idempotencyKey: createIdempotencyKey(),
+      locationTimestampUtc: toUtcIsoTimestamp(position.timestamp),
+      attendanceAction: (this.pendingAction ?? (this.isCheckedIn() ? 'CheckOut' : 'CheckIn')) as 'CheckIn' | 'CheckOut',
+      idempotencyKey: this.currentIdempotencyKey ?? createIdempotencyKey(),
     };
+
+    if (!this.currentIdempotencyKey) {
+      this.currentIdempotencyKey = request.idempotencyKey ?? null;
+    }
 
     this.attendanceService
       .scanAttendance(request)
@@ -232,10 +309,14 @@ export class EmployeeAttendanceComponent implements OnInit {
         next: (response) => {
           this.lastResult.set(response);
           this.scannedQrToken = null;
+          this.pendingPosition = null;
+          this.pendingAction = null;
+          this.currentIdempotencyKey = null;
           this.viewState.set('success');
           this.loadAttendance();
         },
         error: (error) => {
+          // Keep the idempotency key and scanned token so a retry reuses them.
           // Refresh the status card without clearing the error message shown to the user.
           this.loadAttendance();
           this.errorMessage.set(resolveAttendanceErrorMessage(error));
@@ -250,6 +331,14 @@ export class EmployeeAttendanceComponent implements OnInit {
   }
 
   onRetry(): void {
+    if (this.scannedQrToken && this.pendingPosition) {
+      this.submitAttendance(this.pendingPosition);
+      return;
+    }
+    if (this.scannedQrToken) {
+      this.acquireLocationAndSubmit();
+      return;
+    }
     this.loadAttendance(true);
   }
 

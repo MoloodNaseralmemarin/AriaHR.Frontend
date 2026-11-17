@@ -161,6 +161,10 @@ describe('EmployeeAttendanceComponent (Isolated Unit Tests)', () => {
     component.onStartScan();
     component.onQrScanned('sample-qr-token');
 
+    expect(component.viewState()).toBe('confirming');
+
+    component.onConfirmAttendance();
+
     expect(mockAttendanceService.scanAttendance).toHaveBeenCalledTimes(1);
 
     const payload = mockAttendanceService.scanAttendance.mock.calls[0][0];
@@ -200,6 +204,68 @@ describe('EmployeeAttendanceComponent (Isolated Unit Tests)', () => {
     expect(component.errorMessage()).toBe(
       'کد QR منقضی شده است. لطفاً کد جدید محل کار را اسکن کنید.'
     );
+  });
+
+  it('should enter confirming state after a valid scan and location', () => {
+    const mockGeolocation = {
+      getCurrentPosition: vi.fn((success) => {
+        success({ coords: { latitude: 35.6, longitude: 51.3, accuracy: 10 }, timestamp: Date.now() });
+      }),
+    };
+    Object.defineProperty(global.navigator, 'geolocation', { value: mockGeolocation, configurable: true, writable: true });
+
+    component.onStartScan();
+    component.onQrScanned('qr-token');
+
+    expect(component.viewState()).toBe('confirming');
+    expect(mockAttendanceService.scanAttendance).not.toHaveBeenCalled();
+  });
+
+  it('should cancel confirmation and return to ready', () => {
+    const mockGeolocation = {
+      getCurrentPosition: vi.fn((success) => {
+        success({ coords: { latitude: 35.6, longitude: 51.3, accuracy: 10 }, timestamp: Date.now() });
+      }),
+    };
+    Object.defineProperty(global.navigator, 'geolocation', { value: mockGeolocation, configurable: true, writable: true });
+
+    component.onStartScan();
+    component.onQrScanned('qr-token');
+    component.onCancelConfirmation();
+
+    expect(component.viewState()).toBe('ready');
+    expect(component.pendingPosition).toBeNull();
+  });
+
+  it('should reject invalid QR token', () => {
+    component.onStartScan();
+    component.onQrScanned('   ');
+
+    expect(component.viewState()).not.toBe('confirming');
+  });
+
+  it('should prevent duplicate submission when confirming', () => {
+    const response: AttendanceScanResponseDto = {
+      success: true,
+      code: 'ATTENDANCE_REGISTERED',
+      message: 'ok',
+      data: { attendanceAction: 'CheckIn', isReplay: false },
+    };
+    mockAttendanceService.scanAttendance.mockReturnValue(of(response));
+
+    const mockGeolocation = {
+      getCurrentPosition: vi.fn((success) => {
+        success({ coords: { latitude: 35.6, longitude: 51.3, accuracy: 10 }, timestamp: Date.now() });
+      }),
+    };
+    Object.defineProperty(global.navigator, 'geolocation', { value: mockGeolocation, configurable: true, writable: true });
+
+    component.onStartScan();
+    component.onQrScanned('qr-token');
+    component.onConfirmAttendance();
+    component.onConfirmAttendance();
+
+    expect(mockAttendanceService.scanAttendance).toHaveBeenCalledTimes(1);
   });
 
   it('should show the approved-leave restriction message', () => {
