@@ -58,13 +58,16 @@
             <span class="font-bold text-slate-800">{{ pendingPosition.coords.accuracy | number:'1.0-1' }} متر</span>
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-slate-500">عرض جغرافیایی</span>
-            <span class="font-bold text-slate-800">{{ pendingPosition.coords.latitude }}</span>
+            <span class="text-slate-500">عرض جغرافیایی موقعیت شما</span>
+            <span class="font-bold text-slate-800" dir="ltr">{{ formatCoordinate(pendingPosition.coords.latitude) }}</span>
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-slate-500">طول جغرافیایی</span>
-            <span class="font-bold text-slate-800">{{ pendingPosition.coords.longitude }}</span>
+            <span class="text-slate-500">طول جغرافیایی موقعیت شما</span>
+            <span class="font-bold text-slate-800" dir="ltr">{{ formatCoordinate(pendingPosition.coords.longitude) }}</span>
           </div>
+          <p class="pt-1 text-[11px] leading-5 text-slate-400">
+            این مختصات موقعیت فعلی شماست؛ محل کار از روی کد QR در سرور تعیین می‌شود.
+          </p>
         }
       </div>
 

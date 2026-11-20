@@ -286,13 +286,21 @@ export class EmployeeAttendanceComponent implements OnInit {
     this.viewState.set('submitting');
 
     // The backend requires both a GPS accuracy value and the reading timestamp,
-    // and rejects stale or imprecise readings.
+    // and rejects stale or imprecise readings. Never fall back to 0 (the most
+    // permissive value) when the reading is malformed: fail closed instead.
     const accuracy = Number(position.coords.accuracy);
+    if (!Number.isFinite(accuracy) || accuracy < 0) {
+      this.pendingPosition = null;
+      this.errorMessage.set('دقت موقعیت مکانی معتبر نیست. لطفاً دوباره تلاش کنید.');
+      this.viewState.set('error');
+      return;
+    }
+
     const request: ScanAttendanceRequestDto = {
       qrCodeToken: this.scannedQrToken,
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
-      gpsAccuracyInMeters: Number.isFinite(accuracy) ? Math.round(accuracy * 10) / 10 : 0,
+      gpsAccuracyInMeters: Math.round(accuracy * 10) / 10,
       locationTimestampUtc: toUtcIsoTimestamp(position.timestamp),
       attendanceAction: (this.pendingAction ?? (this.isCheckedIn() ? 'CheckOut' : 'CheckIn')) as 'CheckIn' | 'CheckOut',
       idempotencyKey: this.currentIdempotencyKey ?? createIdempotencyKey(),
@@ -344,6 +352,15 @@ export class EmployeeAttendanceComponent implements OnInit {
 
   onRefreshHistory(): void {
     this.loadAttendance();
+  }
+
+  /**
+   * Stable 6-decimal rendering for the employee's own GPS reading.
+   * `toFixed` keeps ASCII digits regardless of locale and matches the
+   * precision used by the work-location map selection.
+   */
+  protected formatCoordinate(value: number): string {
+    return Number.isFinite(value) ? value.toFixed(6) : '—';
   }
 }
 
