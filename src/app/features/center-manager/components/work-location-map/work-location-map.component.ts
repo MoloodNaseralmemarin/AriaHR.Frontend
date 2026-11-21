@@ -20,6 +20,11 @@ import { Subject, catchError, map, of, switchMap } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { WorkLocationService } from '../../services/work-location.service';
 import {
+  REVERSE_GEOCODING_NOT_CONFIGURED_MESSAGE,
+  describeReverseGeocodeFailure,
+  toReverseGeocodeFailure,
+} from '../../utils/reverse-geocode.util';
+import {
   WORK_LOCATION_ASSET_LOAD_TIMEOUT_MS,
   WORK_LOCATION_CURRENT_LOCATION_ZOOM,
   WORK_LOCATION_DEFAULT_RADIUS_METERS,
@@ -45,8 +50,6 @@ const NESHAN_SDK_CSS_URL =
 const NESHAN_SDK_JS_URL =
   'https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.js';
 
-const NO_REVERSE_GEOCODING_KEY_MESSAGE =
-  'سرویس تبدیل موقعیت به آدرس فعال نیست؛ کلید سرویس نقشه نشان (Reverse Geocoding) تنظیم نشده است.';
 const ADDRESS_UNAVAILABLE_MESSAGE = 'آدرس این نقطه در دسترس نیست.';
 
 declare const L: any;
@@ -112,7 +115,7 @@ export class WorkLocationMapComponent implements AfterViewInit, OnChanges, OnDes
           // by api.neshan.org, so skip the call and explain why instead of failing
           // silently. The subscription below always clears the loading state.
           if (!this.workLocationService.hasReverseGeocodingKey) {
-            return of({ message: NO_REVERSE_GEOCODING_KEY_MESSAGE, loading: false });
+            return of({ message: REVERSE_GEOCODING_NOT_CONFIGURED_MESSAGE, loading: false });
           }
 
           return this.workLocationService.reverseGeocode(point.lat, point.lng).pipe(
@@ -120,7 +123,17 @@ export class WorkLocationMapComponent implements AfterViewInit, OnChanges, OnDes
               message: address ?? ADDRESS_UNAVAILABLE_MESSAGE,
               loading: false,
             })),
-            catchError(() => of({ message: ADDRESS_UNAVAILABLE_MESSAGE, loading: false }))
+            catchError((error: unknown) => {
+              // Never swallow the provider's reason: keep the code available in
+              // the console for support, and show the user an actionable message
+              // (a rejected key scope, quota, network failure, ...).
+              const failure = toReverseGeocodeFailure(error);
+              console.warn('[work-location-map] reverse geocoding failed:', failure);
+              return of({
+                message: describeReverseGeocodeFailure(failure, this.currentHostname()),
+                loading: false,
+              });
+            })
           );
         }),
         takeUntilDestroyed(this.destroyRef)
@@ -297,6 +310,14 @@ export class WorkLocationMapComponent implements AfterViewInit, OnChanges, OnDes
 
   private resolveAddress(point: WorkLocationPoint): void {
     this.addressRequests.next(point);
+  }
+
+  /** Host shown in key-scope errors so the missing domain is obvious. */
+  private currentHostname(): string | null {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    return window.location?.hostname || null;
   }
 
   private initMap(): void {

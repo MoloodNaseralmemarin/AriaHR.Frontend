@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, map, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { CreateWorkLocationDto } from '../models/create-work-location.dto';
@@ -14,6 +14,18 @@ import {
   NeshanReverseGeocodeResponse,
   WorkLocationResponseDto,
 } from '../models/work-location-response.dto';
+import { ReverseGeocodeError, toReverseGeocodeFailure } from '../utils/reverse-geocode.util';
+
+function isValidCoordinate(lat: number, lng: number): boolean {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180
+  );
+}
 
 @Injectable({
   providedIn: 'root',
@@ -150,13 +162,31 @@ export class WorkLocationService {
 
   /**
    * Converts coordinates into a readable Persian address using Neshan Reverse
-   * Geocoding v5. Returns `null` when no services key is configured, when the
-   * coordinates cannot be resolved, or when the request fails.
+   * Geocoding v5 (`GET /v5/reverse?lat=…&lng=…` with the `Api-Key` header).
+   *
+   * Resolves with `null` only when Neshan answered successfully but the point
+   * has no address. Every other failure is reported as a `ReverseGeocodeError`
+   * with the Neshan code, so the UI can explain the real cause (a rejected key
+   * type, a domain outside the key scope, exhausted quota, a network failure, …)
+   * instead of silently pretending no address exists.
    */
   reverseGeocode(lat: number, lng: number): Observable<string | null> {
+    if (!isValidCoordinate(lat, lng)) {
+      return throwError(
+        () =>
+          new ReverseGeocodeError({
+            reason: 'invalid-coordinates',
+            code: null,
+            detail: `lat=${lat}, lng=${lng}`,
+          })
+      );
+    }
+
     const apiKey = environment.neshanServiceApiKey;
     if (!apiKey) {
-      return of(null);
+      return throwError(
+        () => new ReverseGeocodeError({ reason: 'not-configured', code: null, detail: null })
+      );
     }
 
     const url = `https://api.neshan.org/v5/reverse?lat=${lat}&lng=${lng}`;
@@ -166,7 +196,9 @@ export class WorkLocationService {
 
     return this.http.get<NeshanReverseGeocodeResponse>(url, { headers }).pipe(
       map((res) => this.toReadableAddress(res)),
-      catchError(() => of(null))
+      catchError((error: unknown) =>
+        throwError(() => new ReverseGeocodeError(toReverseGeocodeFailure(error)))
+      )
     );
   }
 

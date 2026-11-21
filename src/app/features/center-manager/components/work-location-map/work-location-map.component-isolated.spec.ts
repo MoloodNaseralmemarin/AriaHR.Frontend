@@ -1,11 +1,12 @@
 import '@angular/compiler';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Injector, runInInjectionContext } from '@angular/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { WorkLocationMapComponent } from './work-location-map.component';
 import { WorkLocationService } from '../../services/work-location.service';
 import { environment } from '../../../../../environments/environment';
+import { ReverseGeocodeError } from '../../utils/reverse-geocode.util';
 
 describe('WorkLocationMapComponent (Isolated Unit Tests)', () => {
   const originalMapKey = environment.neshanMapApiKey;
@@ -169,6 +170,51 @@ describe('WorkLocationMapComponent (Isolated Unit Tests)', () => {
 
     expect(comp.selectedLocation()).toEqual({ lat: 35.7219, lng: 51.3347 });
     expect(map.flyTo).toHaveBeenCalledWith([35.7219, 51.3347], 16, expect.any(Object));
+  });
+
+  it('should surface the Neshan key-scope error instead of a generic message', async () => {
+    stubLeaflet();
+    reverseGeocode.mockReturnValue(
+      throwError(
+        () =>
+          new ReverseGeocodeError({
+            reason: 'key-scope-mismatch',
+            code: 484,
+            detail: 'API Key scope (ip, domain or bundle) did not match.',
+          })
+      )
+    );
+    const comp = createComponent();
+    comp.ngAfterViewInit();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    comp.selectLocation(34.796184, 48.51202);
+
+    expect(comp.selectedLocation()).toEqual({ lat: 34.796184, lng: 48.51202 });
+    expect(comp.isResolvingAddress()).toBe(false);
+    expect(comp.resolvedAddress()).toContain('۴۸۴');
+    expect(comp.resolvedAddress()).toContain('دامنهٔ جاری');
+  });
+
+  it('should reverse geocode again after the marker is dragged', async () => {
+    const marker = {
+      addTo: vi.fn().mockReturnThis(),
+      on: vi.fn(),
+      setLatLng: vi.fn(),
+    };
+    stubLeaflet({ marker: vi.fn(() => marker) });
+    const comp = createComponent();
+    comp.ngAfterViewInit();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    comp.selectLocation(34.79, 48.51);
+    const dragend = marker.on.mock.calls.find(([event]) => event === 'dragend')?.[1] as
+      | ((event: unknown) => void)
+      | undefined;
+    dragend!({ target: { getLatLng: () => ({ lat: 34.8, lng: 48.5 }) } });
+
+    expect(comp.selectedLocation()).toEqual({ lat: 34.8, lng: 48.5 });
+    expect(reverseGeocode).toHaveBeenLastCalledWith(34.8, 48.5);
   });
 
   it('should explain a missing reverse-geocoding key instead of calling the API', async () => {

@@ -1,11 +1,15 @@
 import '@angular/compiler';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Injector, runInInjectionContext } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 
 import { WorkLocationService } from './work-location.service';
 import { environment } from '../../../../environments/environment';
+import {
+  ReverseGeocodeFailure,
+  toReverseGeocodeFailure,
+} from '../utils/reverse-geocode.util';
 
 /**
  * TestBed is not usable in this project's vitest setup (every TestBed-based spec
@@ -71,26 +75,107 @@ describe('WorkLocationService', () => {
   });
 
   it('should not call the API when no services key is configured', () => {
-    let address: string | null = 'unset';
-    service.reverseGeocode(35.7, 51.3).subscribe((value) => (address = value));
+    let failure!: ReverseGeocodeFailure;
+    service.reverseGeocode(35.7, 51.3).subscribe({
+      next: () => {
+        throw new Error('reverseGeocode must not emit a value');
+      },
+      error: (error) => (failure = toReverseGeocodeFailure(error)),
+    });
 
     expect(http.get).not.toHaveBeenCalled();
-    expect(address).toBeNull();
+    expect(failure.reason).toBe('not-configured');
   });
 
-  it('should return null when Neshan rejects the key (a Web Map key is not valid for this service)', () => {
+  it('should not call the API with coordinates outside the WGS-84 ranges', () => {
+    environment.neshanServiceApiKey = 'service-key-123';
+
+    let failure!: ReverseGeocodeFailure;
+    service.reverseGeocode(91, 51.3).subscribe({
+      next: () => {
+        throw new Error('reverseGeocode must not emit a value');
+      },
+      error: (error) => (failure = toReverseGeocodeFailure(error)),
+    });
+
+    expect(http.get).not.toHaveBeenCalled();
+    expect(failure.reason).toBe('invalid-coordinates');
+  });
+
+  it('should report the key type when a Web Map key is rejected with 483', () => {
     environment.neshanServiceApiKey = 'web-key-123';
     http.get.mockReturnValue(
-      throwError(() => ({
-        status: 483,
-        error: { status: 'ERROR', code: 483, message: 'API Key type not suitable for this service.' },
-      }))
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 483,
+            error: {
+              status: 'ERROR',
+              code: 483,
+              message: 'API Key type not suitable for this service.',
+            },
+          })
+      )
     );
 
-    let address: string | null = 'unset';
-    service.reverseGeocode(35.7, 51.3).subscribe((value) => (address = value));
+    let failure!: ReverseGeocodeFailure;
+    service.reverseGeocode(35.7, 51.3).subscribe({
+      next: () => {
+        throw new Error('reverseGeocode must not emit a value');
+      },
+      error: (error) => (failure = toReverseGeocodeFailure(error)),
+    });
 
-    expect(address).toBeNull();
+    expect(failure.reason).toBe('key-type-mismatch');
+    expect(failure.code).toBe(483);
+  });
+
+  it('should report a key-scope mismatch (484) instead of a missing address', () => {
+    environment.neshanServiceApiKey = 'service-key-123';
+    http.get.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 484,
+            error: {
+              status: 'ERROR',
+              code: 484,
+              message: 'API Key scope (ip, domain or bundle) did not match.',
+            },
+          })
+      )
+    );
+
+    let failure!: ReverseGeocodeFailure;
+    service.reverseGeocode(34.796184, 48.51202).subscribe({
+      next: () => {
+        throw new Error('reverseGeocode must not emit a value');
+      },
+      error: (error) => (failure = toReverseGeocodeFailure(error)),
+    });
+
+    expect(http.get.mock.calls[0][0]).toBe(
+      'https://api.neshan.org/v5/reverse?lat=34.796184&lng=48.51202'
+    );
+    expect(failure.reason).toBe('key-scope-mismatch');
+    expect(failure.code).toBe(484);
+  });
+
+  it('should report a network failure when the request never reaches Neshan', () => {
+    environment.neshanServiceApiKey = 'service-key-123';
+    http.get.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 0, statusText: 'Unknown Error' }))
+    );
+
+    let failure!: ReverseGeocodeFailure;
+    service.reverseGeocode(35.7, 51.3).subscribe({
+      next: () => {
+        throw new Error('reverseGeocode must not emit a value');
+      },
+      error: (error) => (failure = toReverseGeocodeFailure(error)),
+    });
+
+    expect(failure.reason).toBe('network');
   });
 
   it('should return null for an empty response body', () => {
